@@ -1,0 +1,225 @@
+/**
+ * 喜欢歌曲状态管理工具
+ * 提供全局的收藏歌曲状态管理功能
+ */
+
+import { ref, reactive } from 'vue'
+import { favoriteSong, getUserFavoriteSongs, isSongFavorited } from '@/api/song.js'
+import { ElMessage } from 'element-plus'
+
+// 全局状态
+const favoriteSongs = ref([])
+const favoriteStatus = reactive(new Map()) // songId -> boolean
+
+/**
+ * 获取用户ID
+ */
+export const getUserId = () => {
+  let userId = localStorage.getItem('userId')
+  
+  // 如果没有用户ID，使用默认用户ID以便测试
+  if (!userId) {
+    userId = '1' // 默认使用用户ID为1
+    localStorage.setItem('userId', userId)
+    console.log('👤 使用默认用户ID:', userId)
+  }
+  
+  return userId
+}
+
+/**
+ * 初始化用户喜欢的歌曲列表
+ */
+export const initFavoriteSongs = async () => {
+  try {
+    const userId = getUserId()
+    if (!userId) {
+      console.log('用户未登录，无法获取喜欢的歌曲')
+      return
+    }
+
+    console.log('正在获取用户喜欢的歌曲，用户ID:', userId)
+    const response = await getUserFavoriteSongs(userId, 1, 50)
+    
+    if (response && response.code === 200 && response.data) {
+      // 处理分页数据结构
+      const songsData = response.data.content || response.data.data || response.data || []
+      
+      // 转换数据格式以兼容前端显示
+      favoriteSongs.value = songsData.map(song => ({
+        id: song.id,
+        name: song.name,
+        artist: song.artistName || song.artist || '未知歌手',
+        album: song.albumName || song.album || '未知专辑',
+        duration: formatDuration(song.duration || 0),
+        cover: song.coverUrl || song.cover || 'https://qpic.y.qq.com/music_cover/N6GhicG06jmQnia2FZRicpvhQXiaLPoEJcRlnjtIlFeBXTuPgsgdFwykWg/600?n=1',
+        audioUrl: song.audioUrl || song.filePath || song.file_path || ''
+      }))
+      
+      // 更新收藏状态映射
+      favoriteStatus.clear()
+      favoriteSongs.value.forEach(song => {
+        favoriteStatus.set(song.id, true)
+      })
+      
+      console.log('成功获取用户喜欢的歌曲:', favoriteSongs.value.length, '首')
+    } else {
+      console.warn('获取用户喜欢歌曲失败:', response?.message || '未知错误')
+      favoriteSongs.value = []
+    }
+  } catch (error) {
+    console.error('获取用户喜欢歌曲失败:', error)
+    favoriteSongs.value = []
+  }
+}
+
+/**
+ * 检查歌曲是否被喜欢
+ */
+export const isSongLiked = (songId) => {
+  return favoriteStatus.get(songId) || false
+}
+
+/**
+ * 切换歌曲喜欢状态
+ */
+export const toggleSongLike = async (song) => {
+  try {
+    const userId = getUserId()
+    if (!userId) {
+      console.warn('用户未登录，无法执行收藏操作')
+      return false
+    }
+    
+    if (!song || !song.id) {
+      console.warn('歌曲信息不完整')
+      return false
+    }
+    
+    const isCurrentlyLiked = isSongLiked(song.id)
+    const action = isCurrentlyLiked ? 'unlike' : 'like'
+    
+    const response = await favoriteSong(userId, song.id, action)
+    
+    if (response && response.code === 200) {
+      // 更新本地状态
+      if (isCurrentlyLiked) {
+        // 移除
+        favoriteSongs.value = favoriteSongs.value.filter(s => s.id !== song.id)
+        favoriteStatus.set(song.id, false)
+        console.log(`♡ 已从我喜欢中移除：${song.name}`)
+      } else {
+        // 添加
+        favoriteSongs.value.unshift(song)
+        favoriteStatus.set(song.id, true)
+        console.log(`♥ 已添加到我喜欢：${song.name}`)
+      }
+      
+      // 触发自定义事件，通知其他组件更新
+      window.dispatchEvent(new CustomEvent('songLikeChanged', {
+        detail: { 
+          songId: song.id, 
+          isLiked: !isCurrentlyLiked,
+          song: song
+        }
+      }))
+      
+      return !isCurrentlyLiked
+    } else {
+      console.error('收藏操作失败，请稍后重试')
+      return isCurrentlyLiked
+    }
+  } catch (error) {
+    let shouldShowError = true
+    let errorMessage = '操作失败'
+    
+    if (error.message === 'Network Error' || error.code === 'ECONNABORTED' || error.code === 'ECONNREFUSED') {
+      // 网络错误已在httpUtils.js中处理
+      shouldShowError = false
+    } else if (error.response?.data?.message) {
+      errorMessage = error.response.data.message
+    } else if (error.message) {
+      errorMessage = error.message
+    }
+    
+    if (shouldShowError) {
+      console.error('收藏操作失败:', errorMessage)
+    }
+    
+    return isSongLiked(song.id)
+  }
+}
+
+/**
+ * 获取喜欢的歌曲列表
+ */
+export const getFavoriteSongs = () => {
+  return favoriteSongs.value
+}
+
+/**
+ * 刷新喜欢的歌曲列表
+ */
+export const refreshFavoriteSongs = async () => {
+  await initFavoriteSongs()
+}
+
+/**
+ * 批量检查歌曲喜欢状态
+ */
+export const checkSongsLikeStatus = async (songs) => {
+  try {
+    const userId = getUserId()
+    if (!userId || !songs || songs.length === 0) return
+    
+    // 批量检查可以优化为单个API调用，这里先用现有API
+    const promises = songs.map(async (song) => {
+      try {
+        const response = await isSongFavorited(userId, song.id)
+        const isFavorited = response?.data === true || response?.data?.isFavorited === true
+        favoriteStatus.set(song.id, isFavorited)
+        console.log(`歌曲 ${song.id} 收藏状态:`, isFavorited)
+      } catch (error) {
+        console.log(`检查歌曲${song.id}喜欢状态失败:`, error)
+        favoriteStatus.set(song.id, false)
+      }
+    })
+    
+    await Promise.all(promises)
+  } catch (error) {
+    console.log('批量检查歌曲喜欢状态失败:', error)
+  }
+}
+
+/**
+ * 单独检查歌曲收藏状态
+ */
+export const checkSongLikeStatus = async (songId) => {
+  try {
+    const userId = getUserId()
+    if (!userId || !songId) return false
+    
+    const response = await isSongFavorited(userId, songId)
+    const isFavorited = response?.data === true || response?.data?.isFavorited === true
+    favoriteStatus.set(songId, isFavorited)
+    console.log(`检查歌曲 ${songId} 收藏状态:`, isFavorited)
+    return isFavorited
+  } catch (error) {
+    console.log(`检查歌曲${songId}收藏状态失败:`, error)
+    favoriteStatus.set(songId, false)
+    return false
+  }
+}
+
+/**
+ * 格式化时长（秒转为mm:ss格式）
+ */
+const formatDuration = (seconds) => {
+  if (!seconds || seconds === 0) return '00:00'
+  const minutes = Math.floor(seconds / 60)
+  const remainingSeconds = seconds % 60
+  return `${minutes.toString().padStart(2, '0')}:${remainingSeconds.toString().padStart(2, '0')}`
+}
+
+// 导出状态供外部使用
+export { favoriteSongs, favoriteStatus }

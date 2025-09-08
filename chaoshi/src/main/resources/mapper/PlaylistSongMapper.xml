@@ -1,0 +1,109 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="org.example.chaoshi.mapper.PlaylistSongMapper">
+
+    <!-- 结果集映射 -->
+    <resultMap id="BaseResultMap" type="org.example.chaoshi.entity.PlaylistSong">
+        <id column="id" property="id" jdbcType="BIGINT"/>
+        <result column="playlist_id" property="playlistId" jdbcType="BIGINT"/>
+        <result column="song_id" property="songId" jdbcType="BIGINT"/>
+        <result column="sort_order" property="sortOrder" jdbcType="INTEGER"/>
+        <result column="created_at" property="createdAt" jdbcType="TIMESTAMP"/>
+        <result column="deleted" property="deleted" jdbcType="INTEGER"/>
+    </resultMap>
+
+    <!-- 基础列 -->
+    <sql id="Base_Column_List">
+        id, playlist_id, song_id, sort_order, created_at, deleted
+    </sql>
+
+    <!-- 添加歌曲到播放列表 -->
+    <insert id="insertPlaylistSong" parameterType="org.example.chaoshi.entity.PlaylistSong" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO playlist_songs (playlist_id, song_id, sort_order, created_at)
+        VALUES (#{playlistId}, #{songId}, #{sortOrder}, NOW())
+    </insert>
+
+    <!-- 批量添加歌曲到播放列表 -->
+    <insert id="insertBatch" parameterType="java.util.List">
+        INSERT INTO playlist_songs (playlist_id, song_id, sort_order, created_at)
+        VALUES
+        <foreach collection="list" item="item" separator=",">
+            (#{item.playlistId}, #{item.songId}, #{item.sortOrder}, NOW())
+        </foreach>
+    </insert>
+
+    <!-- 根据播放列表ID查询歌曲 -->
+    <select id="selectByPlaylistId" parameterType="java.lang.Long" resultMap="BaseResultMap">
+        SELECT
+        <include refid="Base_Column_List"/>
+        FROM playlist_songs
+        WHERE playlist_id = #{playlistId} AND deleted = 0
+        ORDER BY sort_order ASC
+    </select>
+
+    <!-- 根据歌曲ID查询所在的播放列表 -->
+    <select id="selectBySongId" parameterType="java.lang.Long" resultMap="BaseResultMap">
+        SELECT
+        <include refid="Base_Column_List"/>
+        FROM playlist_songs
+        WHERE song_id = #{songId} AND deleted = 0
+        ORDER BY created_at DESC
+    </select>
+
+    <!-- 检查歌曲是否在播放列表中 -->
+    <select id="existsInPlaylist" resultType="java.lang.Boolean">
+        SELECT COUNT(*) > 0
+        FROM playlist_songs
+        WHERE playlist_id = #{playlistId} AND song_id = #{songId} AND deleted = 0
+    </select>
+
+    <!-- 获取播放列表中歌曲的最大排序号 -->
+    <select id="getMaxSortOrder" parameterType="java.lang.Long" resultType="java.lang.Integer">
+        SELECT COALESCE(MAX(sort_order), 0)
+        FROM playlist_songs
+        WHERE playlist_id = #{playlistId} AND deleted = 0
+    </select>
+
+    <!-- 更新歌曲排序 -->
+    <update id="updateSortOrder">
+        UPDATE playlist_songs
+        SET sort_order = #{sortOrder}
+        WHERE playlist_id = #{playlistId} AND song_id = #{songId} AND deleted = 0
+    </update>
+
+    <!-- 从播放列表中移除歌曲 -->
+    <update id="removeFromPlaylist">
+        UPDATE playlist_songs
+        SET deleted = 1
+        WHERE playlist_id = #{playlistId} AND song_id = #{songId} AND deleted = 0
+    </update>
+
+    <!-- 清空播放列表 -->
+    <update id="clearPlaylist" parameterType="java.lang.Long">
+        UPDATE playlist_songs
+        SET deleted = 1
+        WHERE playlist_id = #{playlistId} AND deleted = 0
+    </update>
+
+    <!-- 统计播放列表中的歌曲数量 -->
+    <select id="countSongsInPlaylist" parameterType="java.lang.Long" resultType="java.lang.Long">
+        SELECT COUNT(*)
+        FROM playlist_songs
+        WHERE playlist_id = #{playlistId} AND deleted = 0
+    </select>
+
+    <!-- 批量更新排序 -->
+    <update id="batchUpdateSortOrder" parameterType="java.util.List">
+        UPDATE playlist_songs
+        SET sort_order = 
+        <foreach collection="list" item="item" open="CASE" close="END" separator=" ">
+            WHEN id = #{item.id} THEN #{item.sortOrder}
+        </foreach>
+        WHERE id IN
+        <foreach collection="list" item="item" open="(" separator="," close=")">
+            #{item.id}
+        </foreach>
+        AND deleted = 0
+    </update>
+
+</mapper>

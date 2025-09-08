@@ -1,0 +1,100 @@
+/* 通用播放按钮SVG图标样式 */
+
+/* 基础SVG播放图标样式 */
+.play-icon-svg {
+  transition: all 0.3s ease;
+  fill: currentColor;
+}
+
+/* 小型播放图标 (16px) - 用于卡片悬停 */
+.chaoshi-play-icon-svg {
+  width: 16px;
+  height: 16px;
+  color: #31c27c;
+  transition: all 0.3s ease;
+}
+
+.chaoshi-play-btn:hover .chaoshi-play-icon-svg {
+  color: #28a745;
+  transform: scale(1.1);
+}
+
+/* 中型播放图标 (20px) - 用于列表和按钮 */
+.play-icon-svg-medium {
+  width: 20px;
+  height: 20px;
+  transition: all 0.3s ease;
+}
+
+/* 大型播放图标 (24px) - 用于主要播放按钮 */
+.play-icon-svg-large {
+  width: 24px;
+  height: 24px;
+  transition: all 0.3s ease;
+}
+
+/* 超大播放图标 (32px) - 用于专辑/详情页主按钮 */
+.play-icon-svg-xlarge {
+  width: 32px;
+  height: 32px;
+  transition: all 0.3s ease;
+}
+
+/* 按钮内的播放图标样式 */
+.play-btn .play-icon-svg,
+.play-all-btn .play-icon-svg {
+  width: 14px;
+  height: 14px;
+  margin-right: 6px;
+  transition: all 0.3s ease;
+}
+
+.play-btn:hover .play-icon-svg,
+.play-all-btn:hover .play-icon-svg {
+  transform: scale(1.1);
+}
+
+/* 排行榜卡片中的大播放按钮 */
+.toplist-play-section .play-icon-svg {
+  width: 24px;
+  height: 24px;
+  color: #333;
+  transition: all 0.3s ease;
+}
+
+.play-btn-large:hover .play-icon-svg {
+  color: #000;
+  transform: scale(1.05);
+}
+
+/* 响应式适配 */
+@media (max-width: 1199px) and (min-width: 1000px) {
+  .toplist-play-section .play-icon-svg {
+    width: 20px;
+    height: 20px;
+  }
+}
+
+@media (max-width: 768px) {
+  .toplist-play-section .play-icon-svg {
+    width: 20px;
+    height: 20px;
+  }
+  
+  .chaoshi-play-icon-svg {
+    width: 14px;
+    height: 14px;
+  }
+}
+
+@media (max-width: 480px) {
+  .toplist-play-section .play-icon-svg {
+    width: 16px;
+    height: 16px;
+  }
+  
+  .chaoshi-play-icon-svg {
+    width: 12px;
+    height: 12px;
+  }
+}
