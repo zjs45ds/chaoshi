@@ -8,18 +8,17 @@ import io.jsonwebtoken.security.Keys;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.example.chaoshi.dto.request.LoginRequest;
+import org.example.chaoshi.dto.request.ProfileRequest;
 import org.example.chaoshi.dto.request.RegisterRequest;
 import org.example.chaoshi.dto.response.LoginResponse;
 import org.example.chaoshi.dto.response.UserResponse;
 import org.example.chaoshi.entity.User;
 import org.example.chaoshi.mapper.UserMapper;
-import org.example.chaoshi.service.FileUploadService;
 import org.example.chaoshi.service.UserService;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.multipart.MultipartFile;
 
 import javax.crypto.SecretKey;
 import java.nio.charset.StandardCharsets;
@@ -35,7 +34,6 @@ import java.util.Date;
 public class UserServiceImpl implements UserService {
     
     private final UserMapper userMapper;
-    private final FileUploadService fileUploadService;
     
     @Value("${jwt.secret}")
     private String jwtSecret;
@@ -109,7 +107,6 @@ public class UserServiceImpl implements UserService {
             LoginResponse loginResponse = new LoginResponse();
             loginResponse.setId(user.getId());
             loginResponse.setUsername(user.getUsername());
-            loginResponse.setNickname(user.getNickname());
             loginResponse.setAvatar(user.getAvatar());
             loginResponse.setToken(token);
             loginResponse.setCreatedAt(user.getCreatedAt());
@@ -147,61 +144,6 @@ public class UserServiceImpl implements UserService {
         return userResponse;
     }
     
-    @Override
-    @Transactional(rollbackFor = Exception.class)
-    public String uploadAvatar(Long userId, MultipartFile file) {
-        try {
-            // 验证用户是否存在
-            User user = userMapper.selectById(userId);
-            if (user == null) {
-                throw new RuntimeException("用户不存在");
-            }
-            
-            // 验证文件
-            if (file == null || file.isEmpty()) {
-                throw new RuntimeException("请选择要上传的头像文件");
-            }
-            
-            // 验证文件类型
-            String contentType = file.getContentType();
-            if (contentType == null || !contentType.startsWith("image/")) {
-                throw new RuntimeException("只支持图片格式的头像文件");
-            }
-            
-            // 验证文件大小 (5MB)
-            if (file.getSize() > 5 * 1024 * 1024) {
-                throw new RuntimeException("头像文件大小不能超过5MB");
-            }
-            
-            // 删除旧头像（如果存在）
-            if (user.getAvatar() != null && !user.getAvatar().trim().isEmpty()) {
-                try {
-                    fileUploadService.deleteFile(user.getAvatar());
-                } catch (Exception e) {
-                    log.warn("删除旧头像失败: {}", user.getAvatar(), e);
-                }
-            }
-            
-            // 上传新头像到MinIO
-            String avatarUrl = fileUploadService.uploadFile(file, "image");
-            
-            // 更新用户头像信息
-            user.setAvatar(avatarUrl);
-            user.setUpdatedAt(LocalDateTime.now());
-            
-            int updateResult = userMapper.updateUser(user);
-            if (updateResult <= 0) {
-                throw new RuntimeException("更新用户头像信息失败");
-            }
-            
-            log.info("用户头像上传成功: userId={}, avatarUrl={}", userId, avatarUrl);
-            return avatarUrl;
-            
-        } catch (Exception e) {
-            log.error("用户头像上传失败: userId={}", userId, e);
-            throw new RuntimeException("头像上传失败: " + e.getMessage());
-        }
-    }
     
     @Override
     @Transactional(rollbackFor = Exception.class)
@@ -221,6 +163,88 @@ public class UserServiceImpl implements UserService {
         user.setUpdatedAt(LocalDateTime.now());
         
         return userMapper.updateUser(user) > 0;
+    }
+    
+    @Override
+    public UserResponse getUserProfile(Long userId) {
+        User user = userMapper.selectById(userId);
+        if (user == null) {
+            throw new RuntimeException("用户不存在");
+        }
+        
+        UserResponse userResponse = new UserResponse();
+        BeanUtils.copyProperties(user, userResponse);
+        return userResponse;
+    }
+    
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public UserResponse updateUserProfile(Long userId, ProfileRequest profileRequest) {
+        User user = userMapper.selectById(userId);
+        if (user == null) {
+            throw new RuntimeException("用户不存在");
+        }
+        
+        // 更新用户信息
+        if (profileRequest.getUsername() != null && !profileRequest.getUsername().trim().isEmpty()) {
+            String newUsername = profileRequest.getUsername().trim();
+            // 检查用户名是否与当前用户名相同
+            if (!newUsername.equals(user.getUsername())) {
+                // 检查新用户名是否已被其他用户使用
+                User existingUser = userMapper.selectByUsername(newUsername);
+                if (existingUser != null && !existingUser.getId().equals(userId)) {
+                    throw new RuntimeException("用户名已被使用，请选择其他用户名");
+                }
+                user.setUsername(newUsername);
+            }
+        }
+        if (profileRequest.getEmail() != null) {
+            user.setEmail(profileRequest.getEmail().trim());
+        }
+        if (profileRequest.getPhone() != null) {
+            user.setPhone(profileRequest.getPhone().trim());
+        }
+        if (profileRequest.getBio() != null) {
+            user.setBio(profileRequest.getBio().trim());
+        }
+        if (profileRequest.getAvatar() != null) {
+            user.setAvatar(profileRequest.getAvatar());
+        }
+        
+        user.setUpdatedAt(LocalDateTime.now());
+        
+        int result = userMapper.updateUser(user);
+        if (result <= 0) {
+            throw new RuntimeException("更新个人资料失败");
+        }
+        
+        // 返回更新后的用户信息
+        UserResponse userResponse = new UserResponse();
+        BeanUtils.copyProperties(user, userResponse);
+        return userResponse;
+    }
+    
+    @Override
+    public boolean isUsernameAvailable(String username, Long currentUserId) {
+        if (username == null || username.trim().isEmpty()) {
+            return false;
+        }
+        
+        String trimmedUsername = username.trim();
+        User existingUser = userMapper.selectByUsername(trimmedUsername);
+        
+        // 如果没有找到用户，说明用户名可用
+        if (existingUser == null) {
+            return true;
+        }
+        
+        // 如果找到了用户，但是是当前用户自己，也认为可用
+        if (currentUserId != null && existingUser.getId().equals(currentUserId)) {
+            return true;
+        }
+        
+        // 否则用户名已被其他用户使用
+        return false;
     }
     
     /**

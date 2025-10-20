@@ -6,7 +6,7 @@
     <resultMap id="BaseResultMap" type="org.example.chaoshi.entity.Playlist">
         <id column="id" property="id" jdbcType="BIGINT"/>
         <result column="name" property="name" jdbcType="VARCHAR"/>
-        <result column="cover_url" property="coverUrl" jdbcType="VARCHAR"/>
+        <result column="cover" property="coverUrl" jdbcType="VARCHAR"/>
         <result column="description" property="description" jdbcType="LONGVARCHAR"/>
         <result column="user_id" property="userId" jdbcType="BIGINT"/>
         <result column="is_public" property="isPublic" jdbcType="BOOLEAN"/>
@@ -19,14 +19,23 @@
 
     <!-- 基础列 -->
     <sql id="Base_Column_List">
-        id, name, cover_url, description, user_id, is_public, play_count, song_count, created_at, updated_at, deleted
+        id, name, cover, description, user_id, is_public, song_count,created_at, updated_at, deleted
     </sql>
 
     <!-- 插入播放列表 -->
     <insert id="insertPlaylist" parameterType="org.example.chaoshi.entity.Playlist" useGeneratedKeys="true" keyProperty="id">
-        INSERT INTO playlists (name, cover_url, description, user_id, is_public, created_at, updated_at)
+        INSERT INTO playlists (name, cover, description, user_id, is_public, created_at, updated_at)
         VALUES (#{name}, #{coverUrl}, #{description}, #{userId}, #{isPublic}, NOW(), NOW())
     </insert>
+
+    <!-- 查询所有播放列表 -->
+    <select id="selectAll" resultMap="BaseResultMap">
+        SELECT
+        <include refid="Base_Column_List"/>
+        FROM playlists
+        WHERE deleted = 0
+        ORDER BY created_at DESC
+    </select>
 
     <!-- 根据ID查询播放列表 -->
     <select id="selectById" parameterType="java.lang.Long" resultMap="BaseResultMap">
@@ -98,8 +107,8 @@
                 name = #{name},
             </if>
             <if test="coverUrl != null">
-                cover_url = #{coverUrl},
-            </if>
+            cover = #{coverUrl},
+        </if>
             <if test="description != null">
                 description = #{description},
             </if>

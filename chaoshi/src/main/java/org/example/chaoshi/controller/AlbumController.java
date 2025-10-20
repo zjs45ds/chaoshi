@@ -11,10 +11,10 @@ import org.example.chaoshi.entity.Album;
 import org.example.chaoshi.entity.Artist;
 import org.example.chaoshi.service.AlbumService;
 import org.example.chaoshi.service.ArtistService;
-import org.springframework.http.MediaType;
+
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.multipart.MultipartFile;
+
 
 import jakarta.validation.Valid;
 import java.util.HashMap;
@@ -36,21 +36,23 @@ public class AlbumController {
     
     private final AlbumService albumService;
     private final ArtistService artistService;
+
     
-    @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    @Operation(summary = "创建专辑", description = "创建新的专辑，支持封面图片上传")
+    @PostMapping
+    @Operation(summary = "创建专辑", description = "创建新的专辑")
     public ApiResult<Album> createAlbum(
-            @Parameter(description = "专辑信息") @Valid @ModelAttribute Album album,
-            @Parameter(description = "封面图片") @RequestParam(value = "cover", required = false) MultipartFile coverFile) {
+            @Parameter(description = "专辑信息") @Valid @RequestBody Album album) {
         
         try {
-            Album result = albumService.createAlbum(album, coverFile);
+            Album result = albumService.createAlbum(album);
             return ApiResult.success(result);
         } catch (Exception e) {
             log.error("创建专辑失败", e);
             return ApiResult.error("创建专辑失败: " + e.getMessage());
         }
     }
+    
+
     
     @GetMapping("/{id}")
     @Operation(summary = "获取专辑详情", description = "根据ID获取专辑详细信息")
@@ -59,6 +61,10 @@ public class AlbumController {
         
         try {
             Album album = albumService.getAlbumById(id);
+            // 添加默认封面支持
+            if (album != null && (album.getCover() == null || album.getCover().isEmpty())) {
+                album.setCover("/src/assets/1音乐.png");
+            }
             return ApiResult.success(album);
         } catch (Exception e) {
             log.error("获取专辑失败: {}", id, e);
@@ -66,15 +72,14 @@ public class AlbumController {
         }
     }
     
-    @PutMapping(value = "/{id}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    @Operation(summary = "更新专辑", description = "更新专辑信息，支持更新封面图片")
+    @PutMapping("/{id}")
+    @Operation(summary = "更新专辑", description = "更新专辑信息")
     public ApiResult<Album> updateAlbum(
             @Parameter(description = "专辑ID") @PathVariable Long id,
-            @Parameter(description = "专辑信息") @Valid @ModelAttribute Album album,
-            @Parameter(description = "封面图片") @RequestParam(value = "cover", required = false) MultipartFile coverFile) {
+            @Parameter(description = "专辑信息") @Valid @RequestBody Album album) {
         
         try {
-            Album result = albumService.updateAlbum(id, album, coverFile);
+            Album result = albumService.updateAlbum(id, album);
             return ApiResult.success(result);
         } catch (Exception e) {
             log.error("更新专辑失败: {}", id, e);
@@ -128,7 +133,8 @@ public class AlbumController {
                     Map<String, Object> albumMap = new HashMap<>();
                     albumMap.put("id", album.getId());
                     albumMap.put("name", album.getName());
-                    albumMap.put("cover", album.getCover());
+                    // 添加默认封面支持，当cover为空时使用默认图片
+                    albumMap.put("cover", album.getCover() != null && !album.getCover().isEmpty() ? album.getCover() : "/src/assets/1音乐.png");
                     albumMap.put("releaseDate", album.getReleaseDate());
                     albumMap.put("description", album.getDescription());
                     albumMap.put("artistId", album.getArtistId());
@@ -166,6 +172,12 @@ public class AlbumController {
         
         try {
             List<Album> albums = albumService.getAlbumsByArtistId(artistId);
+            // 添加默认封面支持
+            for (Album album : albums) {
+                if (album.getCover() == null || album.getCover().isEmpty()) {
+                    album.setCover("/src/assets/1音乐.png");
+                }
+            }
             return ApiResult.success(albums);
         } catch (Exception e) {
             log.error("获取歌手专辑失败: {}", artistId, e);
@@ -182,6 +194,14 @@ public class AlbumController {
         
         try {
             PageResult<Album> result = albumService.searchAlbums(keyword, page, size);
+            // 为结果集中的每个专辑添加默认封面支持
+            if (result.getContent() != null) {
+                for (Album album : result.getContent()) {
+                    if (album.getCover() == null || album.getCover().isEmpty()) {
+                        album.setCover("/src/assets/1音乐.png");
+                    }
+                }
+            }
             return ApiResult.success(result);
         } catch (Exception e) {
             log.error("搜索专辑失败", e);
@@ -196,10 +216,78 @@ public class AlbumController {
         
         try {
             List<Album> albums = albumService.getLatestAlbums(limit);
+            // 添加默认封面支持
+            for (Album album : albums) {
+                if (album.getCover() == null || album.getCover().isEmpty()) {
+                    album.setCover("/src/assets/1音乐.png");
+                }
+            }
             return ApiResult.success(albums);
         } catch (Exception e) {
             log.error("获取最新专辑失败", e);
             return ApiResult.error("获取最新专辑失败: " + e.getMessage());
+        }
+    }
+
+    @PostMapping("/{id}/favorite")
+    @Operation(summary = "收藏/取消收藏专辑", description = "收藏或取消收藏指定专辑")
+    public ApiResult<Map<String, Object>> favoriteAlbum(
+            @Parameter(description = "专辑ID") @PathVariable Long id,
+            @Parameter(description = "用户ID") @RequestParam Long userId,
+            @Parameter(description = "操作类型：like/unlike") @RequestParam String action) {
+        
+        try {
+            boolean isFavorited = albumService.favoriteAlbum(userId, id, action);
+            
+            Map<String, Object> result = new HashMap<>();
+            result.put("albumId", id);
+            result.put("isFavorited", isFavorited);
+            result.put("action", action);
+            
+            return ApiResult.success(result);
+        } catch (Exception e) {
+            log.error("专辑收藏操作失败: albumId={}, userId={}, action={}", id, userId, action, e);
+            return ApiResult.error("专辑收藏操作失败: " + e.getMessage());
+        }
+    }
+
+    @GetMapping("/{id}/favorite-status")
+    @Operation(summary = "检查专辑收藏状态", description = "检查用户是否收藏了指定专辑")
+    public ApiResult<Map<String, Object>> getAlbumFavoriteStatus(
+            @Parameter(description = "专辑ID") @PathVariable Long id,
+            @Parameter(description = "用户ID") @RequestParam Long userId) {
+        
+        try {
+            boolean isFavorited = albumService.isAlbumFavorited(userId, id);
+            
+            Map<String, Object> result = new HashMap<>();
+            result.put("albumId", id);
+            result.put("isFavorited", isFavorited);
+            
+            return ApiResult.success(result);
+        } catch (Exception e) {
+            log.error("检查专辑收藏状态失败: albumId={}, userId={}", id, userId, e);
+            return ApiResult.error("检查专辑收藏状态失败: " + e.getMessage());
+        }
+    }
+
+    @GetMapping("/favorites")
+    @Operation(summary = "获取用户收藏的专辑", description = "获取用户收藏的专辑列表")
+    public ApiResult<List<Album>> getUserFavoriteAlbums(
+            @Parameter(description = "用户ID") @RequestParam Long userId) {
+        
+        try {
+            List<Album> albums = albumService.getUserFavoriteAlbums(userId);
+            // 添加默认封面支持
+            for (Album album : albums) {
+                if (album.getCover() == null || album.getCover().isEmpty()) {
+                    album.setCover("/src/assets/1音乐.png");
+                }
+            }
+            return ApiResult.success(albums);
+        } catch (Exception e) {
+            log.error("获取用户收藏专辑失败: userId={}", userId, e);
+            return ApiResult.error("获取用户收藏专辑失败: " + e.getMessage());
         }
     }
 }

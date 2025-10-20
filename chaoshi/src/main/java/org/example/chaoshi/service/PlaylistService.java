@@ -3,7 +3,6 @@ package org.example.chaoshi.service;
 import org.example.chaoshi.dto.PageResult;
 import org.example.chaoshi.entity.Playlist;
 import org.example.chaoshi.entity.Song;
-import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 
@@ -11,12 +10,7 @@ import java.util.List;
  * 播放列表Service接口
  */
 public interface PlaylistService {
-    
-    /**
-     * 创建播放列表
-     */
-    Playlist createPlaylist(Playlist playlist, MultipartFile coverFile);
-    
+
     /**
      * 根据ID获取播放列表
      */
@@ -25,7 +19,7 @@ public interface PlaylistService {
     /**
      * 更新播放列表信息
      */
-    Playlist updatePlaylist(Long id, Playlist playlist, MultipartFile coverFile);
+    Playlist updatePlaylist(Long id, Playlist playlist);
     
     /**
      * 删除播放列表

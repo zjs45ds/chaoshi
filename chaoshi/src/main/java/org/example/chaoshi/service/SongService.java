@@ -3,7 +3,6 @@ package org.example.chaoshi.service;
 import org.example.chaoshi.dto.PageResult;
 import org.example.chaoshi.dto.response.SongResponse;
 import org.example.chaoshi.entity.Song;
-import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 
@@ -15,7 +14,7 @@ public interface SongService {
     /**
      * 创建歌曲
      */
-    Song createSong(Song song, MultipartFile audioFile, MultipartFile coverFile);
+    Song createSong(Song song);
     
     /**
      * 根据ID获取歌曲
@@ -25,17 +24,17 @@ public interface SongService {
     /**
      * 更新歌曲信息
      */
-    Song updateSong(Long id, Song song, MultipartFile audioFile, MultipartFile coverFile);
+    Song updateSong(Long id, Song song);
     
     /**
      * 删除歌曲
      */
-    boolean deleteSong(Long id);
+    void deleteSong(Long id);
     
     /**
      * 批量删除歌曲
      */
-    boolean deleteSongs(List<Long> ids);
+    void deleteSongs(List<Long> ids);
     
     /**
      * 分页查询歌曲
@@ -90,7 +89,11 @@ public interface SongService {
      * @return 是否收藏
      */
     boolean isSongFavorited(Long userId, Long songId);
-    
+
+    List<Song> getSongsByArtist(Long artistId);
+
+    List<Song> getSongsByAlbum(Long albumId);
+
     /**
      * 获取歌曲流媒体URL
      * @param songId 歌曲ID

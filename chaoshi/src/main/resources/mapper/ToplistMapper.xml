@@ -8,7 +8,6 @@
         <result column="name" property="name" jdbcType="VARCHAR"/>
         <result column="cover" property="cover" jdbcType="VARCHAR"/>
         <result column="description" property="description" jdbcType="LONGVARCHAR"/>
-        <result column="update_frequency" property="updateFrequency" jdbcType="VARCHAR"/>
         <result column="created_at" property="createdAt" jdbcType="TIMESTAMP"/>
         <result column="updated_at" property="updatedAt" jdbcType="TIMESTAMP"/>
         <result column="deleted" property="deleted" jdbcType="INTEGER"/>
@@ -16,21 +15,21 @@
 
     <!-- 基础列 -->
     <sql id="Base_Column_List">
-        id, name, cover, description, update_frequency, created_at, updated_at, deleted
+        id, name, cover, description, created_at, updated_at, deleted
     </sql>
 
     <!-- 插入排行榜 -->
     <insert id="insertToplist" parameterType="org.example.chaoshi.entity.Toplist" useGeneratedKeys="true" keyProperty="id">
-        INSERT INTO toplists (name, cover, description, update_frequency, created_at, updated_at)
-        VALUES (#{name}, #{cover}, #{description}, #{updateFrequency}, NOW(), NOW())
+        INSERT INTO toplists (name, cover, description, created_at, updated_at)
+        VALUES (#{name}, #{cover}, #{description}, NOW(), NOW())
     </insert>
 
     <!-- 批量插入排行榜 -->
     <insert id="insertBatch" parameterType="java.util.List">
-        INSERT INTO toplists (name, cover, description, update_frequency, created_at, updated_at)
+        INSERT INTO toplists (name, cover, description, created_at, updated_at)
         VALUES
         <foreach collection="list" item="item" separator=",">
-            (#{item.name}, #{item.cover}, #{item.description}, #{item.updateFrequency}, NOW(), NOW())
+            (#{item.name}, #{item.cover}, #{item.description}, NOW(), NOW())
         </foreach>
     </insert>
 
@@ -86,9 +85,6 @@
             </if>
             <if test="description != null">
                 description = #{description},
-            </if>
-            <if test="updateFrequency != null and updateFrequency != ''">
-                update_frequency = #{updateFrequency},
             </if>
             updated_at = NOW()
         </set>

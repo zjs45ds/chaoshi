@@ -135,22 +135,6 @@ public class PasswordEncryptUtil {
     }
     
     /**
-     * 生成测试用密码hash（用于测试和开发）
-     * 
-     * @param passwords 密码数组
-     */
-    public static void generateTestPasswordHashes(String[] passwords) {
-        System.out.println("=== 生成标准密码hash ===");
-        for (String password : passwords) {
-            String hash = encryptPassword(password);
-            System.out.println("密码: '" + password + "'");
-            System.out.println("Hash: " + hash);
-            System.out.println("验证: " + (verifyPassword(password, hash) ? "✅ 通过" : "❌ 失败"));
-            System.out.println();
-        }
-    }
-    
-    /**
      * 私有构造函数，防止实例化
      */
     private PasswordEncryptUtil() {

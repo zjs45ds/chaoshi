@@ -149,16 +149,17 @@
     <select id="searchMvs" resultMap="BaseResultMap">
         SELECT
         <include refid="Base_Column_List"/>
-        FROM mvs
-        WHERE deleted = 0
-        AND (name LIKE CONCAT('%', #{keyword}, '%') OR description LIKE CONCAT('%', #{keyword}, '%'))
+        FROM mvs m
+        LEFT JOIN artists a ON m.artist_id = a.id AND a.deleted = 0
+        WHERE m.deleted = 0
+        AND (m.name LIKE CONCAT('%', #{keyword}, '%') OR m.description LIKE CONCAT('%', #{keyword}, '%'))
         ORDER BY
         CASE
-            WHEN name LIKE CONCAT(#{keyword}, '%') THEN 1
-            WHEN name LIKE CONCAT('%', #{keyword}, '%') THEN 2
+            WHEN m.name LIKE CONCAT(#{keyword}, '%') THEN 1
+            WHEN m.name LIKE CONCAT('%', #{keyword}, '%') THEN 2
             ELSE 3
         END,
-        play_count DESC
+        m.play_count DESC
         LIMIT #{offset}, #{size}
     </select>
 

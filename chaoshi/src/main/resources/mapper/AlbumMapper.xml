@@ -35,6 +35,15 @@
         </foreach>
     </insert>
 
+    <!-- 查询所有专辑 -->
+    <select id="selectAll" resultMap="BaseResultMap">
+        SELECT
+        <include refid="Base_Column_List"/>
+        FROM albums
+        WHERE deleted = 0
+        ORDER BY release_date DESC
+    </select>
+
     <!-- 根据ID查询专辑 -->
     <select id="selectById" parameterType="java.lang.Long" resultMap="BaseResultMap">
         SELECT

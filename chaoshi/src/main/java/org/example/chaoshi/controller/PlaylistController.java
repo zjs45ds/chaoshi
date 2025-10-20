@@ -10,10 +10,8 @@ import org.example.chaoshi.dto.PageResult;
 import org.example.chaoshi.entity.Playlist;
 import org.example.chaoshi.entity.Song;
 import org.example.chaoshi.service.PlaylistService;
-import org.springframework.http.MediaType;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.multipart.MultipartFile;
 
 import jakarta.validation.Valid;
 import java.util.List;
@@ -31,22 +29,7 @@ import java.util.List;
 public class PlaylistController {
     
     private final PlaylistService playlistService;
-    
-    @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    @Operation(summary = "创建歌单", description = "创建新的歌单，支持封面图片上传")
-    public ApiResult<Playlist> createPlaylist(
-            @Parameter(description = "歌单信息") @Valid @ModelAttribute Playlist playlist,
-            @Parameter(description = "封面图片") @RequestParam(value = "cover", required = false) MultipartFile coverFile) {
-        
-        try {
-            Playlist result = playlistService.createPlaylist(playlist, coverFile);
-            return ApiResult.success(result);
-        } catch (Exception e) {
-            log.error("创建歌单失败", e);
-            return ApiResult.error("创建歌单失败: " + e.getMessage());
-        }
-    }
-    
+
     @GetMapping("/{id}")
     @Operation(summary = "获取歌单详情", description = "根据ID获取歌单详细信息")
     public ApiResult<Playlist> getPlaylist(
@@ -61,15 +44,14 @@ public class PlaylistController {
         }
     }
     
-    @PutMapping(value = "/{id}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    @Operation(summary = "更新歌单", description = "更新歌单信息，支持更新封面图片")
+    @PutMapping("/{id}")
+    @Operation(summary = "更新歌单", description = "更新歌单信息")
     public ApiResult<Playlist> updatePlaylist(
             @Parameter(description = "歌单ID") @PathVariable Long id,
-            @Parameter(description = "歌单信息") @Valid @ModelAttribute Playlist playlist,
-            @Parameter(description = "封面图片") @RequestParam(value = "cover", required = false) MultipartFile coverFile) {
+            @Parameter(description = "歌单信息") @Valid @RequestBody Playlist playlist) {
         
         try {
-            Playlist result = playlistService.updatePlaylist(id, playlist, coverFile);
+            Playlist result = playlistService.updatePlaylist(id, playlist);
             return ApiResult.success(result);
         } catch (Exception e) {
             log.error("更新歌单失败: {}", id, e);

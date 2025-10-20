@@ -5,14 +5,15 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.example.chaoshi.dto.ApiResult;
 import org.example.chaoshi.dto.PageResult;
-import org.springframework.web.bind.annotation.*;
-
-import java.time.LocalDateTime;
-
+import org.example.chaoshi.entity.*;
+import org.example.chaoshi.mapper.*;
+import org.example.chaoshi.service.SearchHistoryService;
+import org.springframework.web.bind.annotation.*; 
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 /**
  * 搜索Controller
@@ -23,6 +24,13 @@ import java.util.Map;
 @RequiredArgsConstructor
 @CrossOrigin(origins = "*", maxAge = 3600)
 public class SearchController {
+    
+    private final SongMapper songMapper;
+    private final ArtistMapper artistMapper;
+    private final AlbumMapper albumMapper;
+    private final PlaylistMapper playlistMapper;
+    private final MvMapper mvMapper;
+    private final SearchHistoryService searchHistoryService;
     
     @Operation(summary = "综合搜索", description = "根据关键词搜索歌曲、专辑、歌手、播放列表等")
     @GetMapping("")
@@ -51,44 +59,18 @@ public class SearchController {
         }
     }
     
-    @Operation(summary = "获取热门搜索", description = "获取热门搜索关键词列表")
-    @GetMapping("/hot")
-    public ApiResult<List<Map<String, Object>>> getHotSearch() {
-        try {
-            List<Map<String, Object>> hotSearches = new ArrayList<>();
-            
-            // 模拟热门搜索数据
-            String[] hotKeywords = {"薛之谦", "周杰伦", "林俊杰", "邓紫棋", "张学友", "陈奕迅", "演员", "稻香", "华语流行", "经典老歌"};
-            String[] types = {"artist", "artist", "artist", "artist", "artist", "artist", "song", "song", "playlist", "playlist"};
-            
-            for (int i = 0; i < hotKeywords.length; i++) {
-                Map<String, Object> hotItem = new HashMap<>();
-                hotItem.put("id", (long) (i + 1));
-                hotItem.put("keyword", hotKeywords[i]);
-                hotItem.put("name", hotKeywords[i]);
-                hotItem.put("type", types[i]);
-                hotItem.put("hot", i < 3); // 前3个标记为热门
-                hotItem.put("searchCount", 10000 - i * 1000); // 模拟搜索次数
-                hotSearches.add(hotItem);
-            }
-            
-            return ApiResult.success(hotSearches);
-        } catch (Exception e) {
-            return ApiResult.error(e.getMessage());
-        }
-    }
-    
     @Operation(summary = "获取搜索历史", description = "获取用户搜索历史")
     @GetMapping("/history")
-    public ApiResult<List<String>> getSearchHistory() {
+    public ApiResult<List<String>> getSearchHistory(@RequestParam(required = false) Long userId) {
         try {
-            // 模拟搜索历史数据
-            List<String> history = new ArrayList<>();
-            history.add("薛之谦");
-            history.add("演员");
-            history.add("周杰伦");
-            history.add("稻香");
-            history.add("林俊杰");
+            if (userId == null) {
+                return ApiResult.success(new ArrayList<>());
+            }
+            
+            List<SearchHistory> searchHistories = searchHistoryService.getUserSearchHistory(userId, 20);
+            List<String> history = searchHistories.stream()
+                .map(SearchHistory::getKeyword)
+                .collect(Collectors.toList());
             
             return ApiResult.success(history);
         } catch (Exception e) {
@@ -98,11 +80,47 @@ public class SearchController {
     
     @Operation(summary = "保存搜索历史", description = "保存用户搜索关键词到历史记录")
     @PostMapping("/history")
-    public ApiResult<String> saveSearchHistory(@RequestBody Map<String, String> request) {
+    public ApiResult<String> saveSearchHistory(@RequestBody Map<String, Object> request) {
         try {
-            String keyword = request.get("keyword");
-            // 这里应该保存到数据库，暂时只返回成功
+            String keyword = (String) request.get("keyword");
+            Long userId = null;
+            
+            // 尝试从请求中获取用户ID
+            Object userIdObj = request.get("userId");
+            if (userIdObj != null) {
+                if (userIdObj instanceof Number) {
+                    userId = ((Number) userIdObj).longValue();
+                } else if (userIdObj instanceof String) {
+                    try {
+                        userId = Long.parseLong((String) userIdObj);
+                    } catch (NumberFormatException ignored) {
+                    }
+                }
+            }
+            
+            if (userId != null && keyword != null && !keyword.trim().isEmpty()) {
+                searchHistoryService.saveSearchHistory(userId, keyword.trim());
             return ApiResult.success("搜索历史保存成功");
+            } else {
+                return ApiResult.error("用户ID或关键词不能为空");
+            }
+        } catch (Exception e) {
+            return ApiResult.error(e.getMessage());
+        }
+    }
+    
+    @Operation(summary = "删除单个搜索历史", description = "删除指定的搜索历史项")
+    @DeleteMapping("/history/{keyword}")
+    public ApiResult<String> deleteSearchHistoryItem(
+            @PathVariable String keyword, 
+            @RequestParam(required = false) Long userId) {
+        try {
+            if (userId == null) {
+                return ApiResult.error("用户ID不能为空");
+            }
+            
+            searchHistoryService.deleteSearchHistoryItem(userId, keyword);
+            return ApiResult.success("搜索历史项已删除");
         } catch (Exception e) {
             return ApiResult.error(e.getMessage());
         }
@@ -110,9 +128,13 @@ public class SearchController {
     
     @Operation(summary = "清空搜索历史", description = "清空用户所有搜索历史")
     @DeleteMapping("/history")
-    public ApiResult<String> clearSearchHistory() {
+    public ApiResult<String> clearSearchHistory(@RequestParam(required = false) Long userId) {
         try {
-            // 这里应该从数据库删除，暂时只返回成功
+            if (userId == null) {
+                return ApiResult.error("用户ID不能为空");
+            }
+            
+            searchHistoryService.clearUserSearchHistory(userId);
             return ApiResult.success("搜索历史已清空");
         } catch (Exception e) {
             return ApiResult.error(e.getMessage());
@@ -124,51 +146,47 @@ public class SearchController {
     public ApiResult<Map<String, Object>> searchAll(
             @RequestParam String keyword,
             @RequestParam(defaultValue = "0") Integer page,
-            @RequestParam(defaultValue = "10") Integer size) {
+            @RequestParam(defaultValue = "10") Integer size,
+            @RequestParam(required = false) Long userId) {
         try {
             Map<String, Object> result = new HashMap<>();
             
-            // 模拟歌曲搜索结果
-            List<Map<String, Object>> songs = new ArrayList<>();
-            Map<String, Object> song1 = new HashMap<>();
-            song1.put("id", 1L);
-            song1.put("name", "演员");
-            song1.put("artistName", "薛之谦");
-            song1.put("duration", 240);
-            songs.add(song1);
+            // 保存搜索历史（如果提供了用户ID）
+            if (userId != null && keyword != null && !keyword.trim().isEmpty()) {
+                searchHistoryService.saveSearchHistory(userId, keyword.trim());
+            }
             
-            // 模拟歌手搜索结果
-            List<Map<String, Object>> artists = new ArrayList<>();
-            Map<String, Object> artist1 = new HashMap<>();
-            artist1.put("id", 1L);
-            artist1.put("name", "薛之谦");
-            artist1.put("description", "华语流行歌手");
-            artists.add(artist1);
+            long offset = (long) page * size;
             
-            // 模拟专辑搜索结果
-            List<Map<String, Object>> albums = new ArrayList<>();
-            Map<String, Object> album1 = new HashMap<>();
-            album1.put("id", 1L);
-            album1.put("name", "天外来物");
-            album1.put("artistName", "薛之谦");
-            albums.add(album1);
+            // 从数据库搜索歌曲
+            List<Song> songEntities = songMapper.searchSongs(keyword, offset, 5L);
+            List<Map<String, Object>> songs = songEntities.stream()
+                .map(this::convertSongToMap)
+                .collect(Collectors.toList());
             
-            // 模拟歌单搜索结果
-            List<Map<String, Object>> playlists = new ArrayList<>();
-            Map<String, Object> playlist1 = new HashMap<>();
-            playlist1.put("id", 1L);
-            playlist1.put("name", "华语流行");
-            playlist1.put("description", "1000万播放");
-            playlist1.put("trackCount", 50);
-            playlists.add(playlist1);
+            // 从数据库搜索歌手
+            List<Artist> artistEntities = artistMapper.searchArtists(keyword, offset, 3L);
+            List<Map<String, Object>> artists = artistEntities.stream()
+                .map(this::convertArtistToMap)
+                .collect(Collectors.toList());
             
-            // 模拟MV搜索结果
-            List<Map<String, Object>> mvs = new ArrayList<>();
-            Map<String, Object> mv1 = new HashMap<>();
-            mv1.put("id", 1L);
-            mv1.put("name", "演员MV");
-            mv1.put("artistName", "薛之谦");
-            mvs.add(mv1);
+            // 从数据库搜索专辑
+            List<Album> albumEntities = albumMapper.searchAlbums(keyword, offset, 3L);
+            List<Map<String, Object>> albums = albumEntities.stream()
+                .map(this::convertAlbumToMap)
+                .collect(Collectors.toList());
+            
+            // 从数据库搜索歌单
+            List<Playlist> playlistEntities = playlistMapper.searchPlaylists(keyword, offset, 3L);
+            List<Map<String, Object>> playlists = playlistEntities.stream()
+                .map(this::convertPlaylistToMap)
+                .collect(Collectors.toList());
+            
+            // 从数据库搜索MV
+            List<Mv> mvEntities = mvMapper.searchMvs(keyword, offset, 2L);
+            List<Map<String, Object>> mvs = mvEntities.stream()
+                .map(this::convertMvToMap)
+                .collect(Collectors.toList());
             
             result.put("songs", songs);
             result.put("artists", artists);
@@ -255,53 +273,59 @@ public class SearchController {
         }
     }
     
-    @Operation(summary = "获取热门歌手", description = "获取热门歌手列表")
-    @GetMapping("/hot-artists")
-    public ApiResult<List<Map<String, Object>>> getHotArtists(
-            @RequestParam(defaultValue = "10") Integer limit) {
-        try {
-            List<Map<String, Object>> hotArtists = new ArrayList<>();
-            
-            String[] artistNames = {"薛之谦", "周杰伦", "林俊杰", "邓紫棋", "张学友", "陈奕迅", "王菲", "刘德华", "张信哲", "梁静茹"};
-            
-            for (int i = 0; i < Math.min(limit, artistNames.length); i++) {
-                Map<String, Object> artist = new HashMap<>();
-                artist.put("id", (long) (i + 1));
-                artist.put("name", artistNames[i]);
-                artist.put("description", "华语流行歌手");
-                artist.put("fanCount", 1000000 - i * 50000);
-                hotArtists.add(artist);
-            }
-            
-            return ApiResult.success(hotArtists);
-        } catch (Exception e) {
-            return ApiResult.error(e.getMessage());
-        }
+    // 实体转换为Map的方法
+    private Map<String, Object> convertSongToMap(Song song) {
+        Map<String, Object> map = new HashMap<>();
+        map.put("id", song.getId());
+        map.put("name", song.getName());
+        map.put("artistId", song.getArtistId());
+        map.put("albumId", song.getAlbumId());
+        map.put("duration", song.getDuration());
+        map.put("cover", song.getCover());
+        map.put("filePath", song.getFilePath());
+        // 需要通过关联查询获取艺术家和专辑名称，这里暂时使用ID
+        return map;
     }
     
-    @Operation(summary = "获取热门歌曲", description = "获取热门歌曲列表")
-    @GetMapping("/hot-songs")
-    public ApiResult<List<Map<String, Object>>> getHotSongs(
-            @RequestParam(defaultValue = "10") Integer limit) {
-        try {
-            List<Map<String, Object>> hotSongs = new ArrayList<>();
-            
-            String[] songNames = {"演员", "稻香", "青花瓷", "光年之外", "吻别", "十年", "传奇", "冰雨", "爱如潮水", "月亮代表我的心"};
-            String[] artistNames = {"薛之谦", "周杰伦", "周杰伦", "邓紫棋", "张学友", "陈奕迅", "王菲", "刘德华", "张信哲", "邓丽君"};
-            
-            for (int i = 0; i < Math.min(limit, songNames.length); i++) {
-                Map<String, Object> song = new HashMap<>();
-                song.put("id", (long) (i + 1));
-                song.put("name", songNames[i]);
-                song.put("artistName", artistNames[i]);
-                song.put("duration", 240 + i * 10);
-                song.put("playCount", 10000000 - i * 500000);
-                hotSongs.add(song);
-            }
-            
-            return ApiResult.success(hotSongs);
-        } catch (Exception e) {
-            return ApiResult.error(e.getMessage());
-        }
+    private Map<String, Object> convertArtistToMap(Artist artist) {
+        Map<String, Object> map = new HashMap<>();
+        map.put("id", artist.getId());
+        map.put("name", artist.getName());
+        map.put("description", artist.getDescription());
+        map.put("avatar", artist.getAvatar());
+        return map;
+    }
+    
+    private Map<String, Object> convertAlbumToMap(Album album) {
+        Map<String, Object> map = new HashMap<>();
+        map.put("id", album.getId());
+        map.put("name", album.getName());
+        map.put("artistId", album.getArtistId());
+        // 添加默认封面支持
+        map.put("cover", album.getCover() != null && !album.getCover().isEmpty() ? album.getCover() : "/src/assets/1音乐.png");
+        map.put("releaseDate", album.getReleaseDate());
+        // 需要通过关联查询获取艺术家名称，这里暂时使用ID
+        return map;
+    }
+    
+    private Map<String, Object> convertPlaylistToMap(Playlist playlist) {
+        Map<String, Object> map = new HashMap<>();
+        map.put("id", playlist.getId());
+        map.put("name", playlist.getName());
+        map.put("description", playlist.getDescription());
+        map.put("coverUrl", playlist.getCoverUrl());
+        map.put("songCount", playlist.getSongCount());
+        return map;
+    }
+    
+    private Map<String, Object> convertMvToMap(Mv mv) {
+        Map<String, Object> map = new HashMap<>();
+        map.put("id", mv.getId());
+        map.put("name", mv.getName());
+        map.put("artistId", mv.getArtistId());
+        map.put("cover", mv.getCover());
+        map.put("videoPath", mv.getVideoPath());
+        map.put("artist", mv.getArtist()); // 这个是@Transient字段
+        return map;
     }
 }

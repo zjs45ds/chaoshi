@@ -23,7 +23,7 @@ public class CorsConfig {
         CorsConfiguration configuration = new CorsConfiguration();
         
         // 设置允许的源
-        configuration.setAllowedOriginPatterns(Arrays.asList(allowedOrigins.split(",")));
+        configuration.setAllowedOrigins(Arrays.asList(allowedOrigins.split(",")));
         
         // 设置允许的HTTP方法
         configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS", "HEAD"));

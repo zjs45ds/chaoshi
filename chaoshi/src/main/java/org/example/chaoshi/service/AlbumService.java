@@ -2,7 +2,6 @@ package org.example.chaoshi.service;
 
 import org.example.chaoshi.dto.PageResult;
 import org.example.chaoshi.entity.Album;
-import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 
@@ -14,7 +13,7 @@ public interface AlbumService {
     /**
      * 创建专辑
      */
-    Album createAlbum(Album album, MultipartFile coverFile);
+    Album createAlbum(Album album);
     
     /**
      * 根据ID获取专辑
@@ -24,7 +23,7 @@ public interface AlbumService {
     /**
      * 更新专辑信息
      */
-    Album updateAlbum(Long id, Album album, MultipartFile coverFile);
+    Album updateAlbum(Long id, Album album);
     
     /**
      * 删除专辑
@@ -55,4 +54,28 @@ public interface AlbumService {
      * 获取最新专辑
      */
     List<Album> getLatestAlbums(Integer limit);
+    
+    /**
+     * 收藏/取消收藏专辑
+     * @param userId 用户ID
+     * @param albumId 专辑ID
+     * @param action 操作类型：like/unlike
+     * @return 是否收藏
+     */
+    boolean favoriteAlbum(Long userId, Long albumId, String action);
+    
+    /**
+     * 检查用户是否收藏了指定专辑
+     * @param userId 用户ID
+     * @param albumId 专辑ID
+     * @return 是否收藏
+     */
+    boolean isAlbumFavorited(Long userId, Long albumId);
+    
+    /**
+     * 获取用户收藏的专辑列表
+     * @param userId 用户ID
+     * @return 用户收藏的专辑列表
+     */
+    List<Album> getUserFavoriteAlbums(Long userId);
 }

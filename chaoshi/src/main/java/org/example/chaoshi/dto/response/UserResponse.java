@@ -15,7 +15,7 @@ public class UserResponse {
     private String email;
     private String phone;
     private String avatar;
-    private String nickname;
+    private String bio;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 }

@@ -7,28 +7,27 @@
         <id column="id" property="id" jdbcType="BIGINT"/>
         <result column="playlist_id" property="playlistId" jdbcType="BIGINT"/>
         <result column="song_id" property="songId" jdbcType="BIGINT"/>
-        <result column="sort_order" property="sortOrder" jdbcType="INTEGER"/>
         <result column="created_at" property="createdAt" jdbcType="TIMESTAMP"/>
         <result column="deleted" property="deleted" jdbcType="INTEGER"/>
     </resultMap>
 
     <!-- 基础列 -->
     <sql id="Base_Column_List">
-        id, playlist_id, song_id, sort_order, created_at, deleted
+        id, playlist_id, song_id, created_at, deleted
     </sql>
 
     <!-- 添加歌曲到播放列表 -->
     <insert id="insertPlaylistSong" parameterType="org.example.chaoshi.entity.PlaylistSong" useGeneratedKeys="true" keyProperty="id">
-        INSERT INTO playlist_songs (playlist_id, song_id, sort_order, created_at)
-        VALUES (#{playlistId}, #{songId}, #{sortOrder}, NOW())
+        INSERT INTO playlist_songs (playlist_id, song_id, created_at)
+        VALUES (#{playlistId}, #{songId}, NOW())
     </insert>
 
     <!-- 批量添加歌曲到播放列表 -->
     <insert id="insertBatch" parameterType="java.util.List">
-        INSERT INTO playlist_songs (playlist_id, song_id, sort_order, created_at)
+        INSERT INTO playlist_songs (playlist_id, song_id, created_at)
         VALUES
         <foreach collection="list" item="item" separator=",">
-            (#{item.playlistId}, #{item.songId}, #{item.sortOrder}, NOW())
+            (#{item.playlistId}, #{item.songId}, NOW())
         </foreach>
     </insert>
 
@@ -38,7 +37,7 @@
         <include refid="Base_Column_List"/>
         FROM playlist_songs
         WHERE playlist_id = #{playlistId} AND deleted = 0
-        ORDER BY sort_order ASC
+        ORDER BY created_at DESC
     </select>
 
     <!-- 根据歌曲ID查询所在的播放列表 -->
@@ -57,17 +56,18 @@
         WHERE playlist_id = #{playlistId} AND song_id = #{songId} AND deleted = 0
     </select>
 
-    <!-- 获取播放列表中歌曲的最大排序号 -->
+    <!-- 获取播放列表中歌曲的最大排序号（由于表中不存在sort_order列，返回固定值） -->
     <select id="getMaxSortOrder" parameterType="java.lang.Long" resultType="java.lang.Integer">
-        SELECT COALESCE(MAX(sort_order), 0)
+        SELECT 0
         FROM playlist_songs
         WHERE playlist_id = #{playlistId} AND deleted = 0
+        LIMIT 1
     </select>
 
-    <!-- 更新歌曲排序 -->
+    <!-- 更新歌曲排序（由于表中不存在sort_order列，此操作无效但不会报错） -->
     <update id="updateSortOrder">
         UPDATE playlist_songs
-        SET sort_order = #{sortOrder}
+        SET updated_at = NOW()
         WHERE playlist_id = #{playlistId} AND song_id = #{songId} AND deleted = 0
     </update>
 
@@ -92,13 +92,10 @@
         WHERE playlist_id = #{playlistId} AND deleted = 0
     </select>
 
-    <!-- 批量更新排序 -->
+    <!-- 批量更新排序（由于表中不存在sort_order列，此操作无效但不会报错） -->
     <update id="batchUpdateSortOrder" parameterType="java.util.List">
         UPDATE playlist_songs
-        SET sort_order = 
-        <foreach collection="list" item="item" open="CASE" close="END" separator=" ">
-            WHEN id = #{item.id} THEN #{item.sortOrder}
-        </foreach>
+        SET updated_at = NOW()
         WHERE id IN
         <foreach collection="list" item="item" open="(" separator="," close=")">
             #{item.id}

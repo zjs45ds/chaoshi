@@ -5,12 +5,12 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.example.chaoshi.dto.ApiResult;
 import org.example.chaoshi.dto.request.LoginRequest;
+import org.example.chaoshi.dto.request.ProfileRequest;
 import org.example.chaoshi.dto.request.RegisterRequest;
 import org.example.chaoshi.dto.response.LoginResponse;
 import org.example.chaoshi.dto.response.UserResponse;
 import org.example.chaoshi.service.UserService;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.multipart.MultipartFile;
 
 /**
  * 用户Controller
@@ -46,9 +46,8 @@ public class UserController {
             LoginResponse loginResponse = userService.login(loginRequest);
             System.out.println("[LOGIN] 登录成功: " + loginResponse.getUsername());
             
-            // 返回成功消息，包含用户昵称
-            String successMessage = String.format("🎉 欢迎回来，%s！登录成功", 
-                loginResponse.getNickname() != null ? loginResponse.getNickname() : loginResponse.getUsername());
+            // 返回成功消息，包含用户名
+            String successMessage = String.format("🎉 欢迎回来，%s！登录成功", loginResponse.getUsername());
             return ApiResult.success(successMessage, loginResponse);
         } catch (Exception e) {
             System.out.println("[LOGIN] 登录失败: " + e.getMessage());
@@ -71,17 +70,6 @@ public class UserController {
         }
     }
     
-    @Operation(summary = "上传头像", description = "用户头像上传接口")
-    @PostMapping("/upload-avatar")
-    public ApiResult<String> uploadAvatar(@RequestParam Long userId,
-                                          @RequestParam("avatar") MultipartFile file) {
-        try {
-            String avatarUrl = userService.uploadAvatar(userId, file);
-            return ApiResult.success("上传成功", avatarUrl);
-        } catch (Exception e) {
-            return ApiResult.error(e.getMessage());
-        }
-    }
     
     @Operation(summary = "修改密码", description = "用户修改密码接口")
     @PostMapping("/change-password")
@@ -97,6 +85,42 @@ public class UserController {
             }
         } catch (Exception e) {
             return ApiResult.error("❌ " + e.getMessage());
+        }
+    }
+    
+    @Operation(summary = "获取用户个人资料", description = "获取用户个人资料信息")
+    @GetMapping("/profile")
+    public ApiResult<UserResponse> getUserProfile(@RequestParam Long userId) {
+        try {
+            UserResponse userResponse = userService.getUserProfile(userId);
+            return ApiResult.success(userResponse);
+        } catch (Exception e) {
+            return ApiResult.error(e.getMessage());
+        }
+    }
+    
+    @Operation(summary = "更新用户个人资料", description = "更新用户个人资料信息")
+    @PutMapping("/profile")
+    public ApiResult<UserResponse> updateUserProfile(@RequestParam Long userId,
+                                                  @RequestBody ProfileRequest profileRequest) {
+        try {
+            UserResponse userResponse = userService.updateUserProfile(userId, profileRequest);
+            return ApiResult.success("✅ 个人资料更新成功", userResponse);
+        } catch (Exception e) {
+            return ApiResult.error("❌ " + e.getMessage());
+        }
+    }
+    
+    @Operation(summary = "检查用户名可用性", description = "实时检查用户名是否可用")
+    @GetMapping("/check-username")
+    public ApiResult<Boolean> checkUsernameAvailability(@RequestParam String username,
+                                                        @RequestParam(required = false) Long currentUserId) {
+        try {
+            boolean isAvailable = userService.isUsernameAvailable(username, currentUserId);
+            String message = isAvailable ? "✅ 用户名可用" : "❌ 用户名已被使用";
+            return ApiResult.success(message, isAvailable);
+        } catch (Exception e) {
+            return ApiResult.error("❌ 检查用户名失败: " + e.getMessage());
         }
     }
     

@@ -9,13 +9,13 @@ import org.example.chaoshi.dto.ApiResult;
 import org.example.chaoshi.dto.PageResult;
 import org.example.chaoshi.entity.Mv;
 import org.example.chaoshi.service.MvService;
-import org.springframework.http.MediaType;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.multipart.MultipartFile;
 
 import jakarta.validation.Valid;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * MV控制器
@@ -31,15 +31,13 @@ public class MvController {
     
     private final MvService mvService;
     
-    @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    @Operation(summary = "创建MV", description = "创建新的MV，支持视频文件和封面图片上传")
+    @PostMapping
+    @Operation(summary = "创建MV", description = "创建新的MV")
     public ApiResult<Mv> createMv(
-            @Parameter(description = "MV信息") @Valid @ModelAttribute Mv mv,
-            @Parameter(description = "视频文件") @RequestParam(value = "video", required = false) MultipartFile videoFile,
-            @Parameter(description = "封面图片") @RequestParam(value = "cover", required = false) MultipartFile coverFile) {
+            @Parameter(description = "MV信息") @Valid @RequestBody Mv mv) {
         
         try {
-            Mv result = mvService.createMv(mv, videoFile, coverFile);
+            Mv result = mvService.createMv(mv);
             return ApiResult.success(result);
         } catch (Exception e) {
             log.error("创建MV失败", e);
@@ -60,17 +58,16 @@ public class MvController {
             return ApiResult.error("获取MV失败: " + e.getMessage());
         }
     }
+
     
-    @PutMapping(value = "/{id}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    @Operation(summary = "更新MV", description = "更新MV信息，支持更新视频文件和封面图片")
+    @PutMapping("/{id}")
+    @Operation(summary = "更新MV", description = "更新MV信息")
     public ApiResult<Mv> updateMv(
             @Parameter(description = "MV ID") @PathVariable Long id,
-            @Parameter(description = "MV信息") @Valid @ModelAttribute Mv mv,
-            @Parameter(description = "视频文件") @RequestParam(value = "video", required = false) MultipartFile videoFile,
-            @Parameter(description = "封面图片") @RequestParam(value = "cover", required = false) MultipartFile coverFile) {
+            @Parameter(description = "MV信息") @Valid @RequestBody Mv mv) {
         
         try {
-            Mv result = mvService.updateMv(id, mv, videoFile, coverFile);
+            Mv result = mvService.updateMv(id, mv);
             return ApiResult.success(result);
         } catch (Exception e) {
             log.error("更新MV失败: {}", id, e);
@@ -192,6 +189,62 @@ public class MvController {
         } catch (Exception e) {
             log.error("增加MV播放次数失败: {}", id, e);
             return ApiResult.error("增加播放次数失败: " + e.getMessage());
+        }
+    }
+
+    @PostMapping("/{id}/favorite")
+    @Operation(summary = "收藏/取消收藏MV", description = "收藏或取消收藏指定MV")
+    public ApiResult<Map<String, Object>> favoriteMv(
+            @Parameter(description = "MV ID") @PathVariable Long id,
+            @Parameter(description = "用户ID") @RequestParam Long userId,
+            @Parameter(description = "操作类型：like/unlike") @RequestParam String action) {
+        
+        try {
+            boolean isFavorited = mvService.favoriteMv(userId, id, action);
+            
+            Map<String, Object> result = new HashMap<>();
+            result.put("mvId", id);
+            result.put("isFavorited", isFavorited);
+            result.put("action", action);
+            
+            return ApiResult.success(result);
+        } catch (Exception e) {
+            log.error("MV收藏操作失败: mvId={}, userId={}, action={}", id, userId, action, e);
+            return ApiResult.error("MV收藏操作失败: " + e.getMessage());
+        }
+    }
+
+    @GetMapping("/{id}/favorite-status")
+    @Operation(summary = "检查MV收藏状态", description = "检查用户是否收藏了指定MV")
+    public ApiResult<Map<String, Object>> getMvFavoriteStatus(
+            @Parameter(description = "MV ID") @PathVariable Long id,
+            @Parameter(description = "用户ID") @RequestParam Long userId) {
+        
+        try {
+            boolean isFavorited = mvService.isMvFavorited(userId, id);
+            
+            Map<String, Object> result = new HashMap<>();
+            result.put("mvId", id);
+            result.put("isFavorited", isFavorited);
+            
+            return ApiResult.success(result);
+        } catch (Exception e) {
+            log.error("检查MV收藏状态失败: mvId={}, userId={}", id, userId, e);
+            return ApiResult.error("检查MV收藏状态失败: " + e.getMessage());
+        }
+    }
+
+    @GetMapping("/favorites")
+    @Operation(summary = "获取用户收藏的MV", description = "获取用户收藏的MV列表")
+    public ApiResult<List<Mv>> getUserFavoriteMvs(
+            @Parameter(description = "用户ID") @RequestParam Long userId) {
+        
+        try {
+            List<Mv> mvs = mvService.getUserFavoriteMvs(userId);
+            return ApiResult.success(mvs);
+        } catch (Exception e) {
+            log.error("获取用户收藏MV失败: userId={}", userId, e);
+            return ApiResult.error("获取用户收藏MV失败: " + e.getMessage());
         }
     }
 }

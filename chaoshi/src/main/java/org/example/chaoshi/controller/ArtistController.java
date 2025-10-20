@@ -9,7 +9,6 @@ import org.example.chaoshi.dto.PageResult;
 import org.example.chaoshi.dto.response.AlbumResponse;
 import org.example.chaoshi.dto.response.SongResponse;
 import org.example.chaoshi.entity.Artist;
-import org.example.chaoshi.entity.ArtistTimeline;
 import org.example.chaoshi.service.ArtistService;
 import org.springframework.web.bind.annotation.*;
 
@@ -23,7 +22,7 @@ import java.util.Map;
 @RestController
 @RequestMapping("/api/artists")
 @RequiredArgsConstructor
-@CrossOrigin(origins = "*")
+@CrossOrigin(origins = {"http://localhost:3000", "http://127.0.0.1:3000"})
 public class ArtistController {
     
     private final ArtistService artistService;
@@ -81,17 +80,7 @@ public class ArtistController {
             return ApiResult.error(e.getMessage());
         }
     }
-    
-    @Operation(summary = "获取薛之谦时间线", description = "获取薛之谦的职业生涯时间线")
-    @GetMapping("/xuezhiqian/timeline")
-    public ApiResult<List<ArtistTimeline>> getXueZhiQianTimeline() {
-        try {
-            List<ArtistTimeline> timeline = artistService.getXueZhiQianTimeline();
-            return ApiResult.success(timeline);
-        } catch (Exception e) {
-            return ApiResult.error(e.getMessage());
-        }
-    }
+
     
     @Operation(summary = "获取薛之谦热门歌曲", description = "获取薛之谦的热门歌曲列表")
     @GetMapping("/xuezhiqian/hotsongs")

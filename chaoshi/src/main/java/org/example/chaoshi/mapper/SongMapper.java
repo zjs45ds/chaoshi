@@ -18,6 +18,11 @@ public interface SongMapper {
     Song selectById(@Param("id") Long id);
     
     /**
+     * 根据ID查询歌曲(带歌手和专辑信息)
+     */
+    Song selectByIdWithArtistAndAlbum(@Param("id") Long id);
+    
+    /**
      * 查询所有歌曲
      */
     List<Song> selectAll();
@@ -38,9 +43,19 @@ public interface SongMapper {
     List<Song> selectByAlbumId(@Param("albumId") Long albumId);
     
     /**
+     * 根据专辑ID查询歌曲列表(带歌手和专辑信息)
+     */
+    List<Song> selectByAlbumIdWithArtistAndAlbum(@Param("albumId") Long albumId);
+    
+    /**
      * 根据歌手ID查询歌曲列表
      */
     List<Song> selectByArtistId(@Param("artistId") Long artistId);
+    
+    /**
+     * 根据歌手ID查询歌曲列表(带歌手和专辑信息)
+     */
+    List<Song> selectByArtistIdWithArtistAndAlbum(@Param("artistId") Long artistId);
     
     /**
      * 分页查询歌曲

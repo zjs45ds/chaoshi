@@ -1,11 +1,11 @@
 package org.example.chaoshi.service;
 
 import org.example.chaoshi.dto.request.LoginRequest;
+import org.example.chaoshi.dto.request.ProfileRequest;
 import org.example.chaoshi.dto.request.RegisterRequest;
 import org.example.chaoshi.dto.response.LoginResponse;
 import org.example.chaoshi.dto.response.UserResponse;
 import org.example.chaoshi.entity.User;
-import org.springframework.web.multipart.MultipartFile;
 
 /**
  * 用户Service接口
@@ -40,13 +40,6 @@ public interface UserService {
      */
     UserResponse getUserInfo(Long userId);
     
-    /**
-     * 上传用户头像
-     * @param userId 用户ID
-     * @param file 头像文件
-     * @return 头像URL
-     */
-    String uploadAvatar(Long userId, MultipartFile file);
     
     /**
      * 修改密码
@@ -56,4 +49,27 @@ public interface UserService {
      * @return 是否成功
      */
     boolean changePassword(Long userId, String oldPassword, String newPassword);
+    
+    /**
+     * 获取用户个人资料
+     * @param userId 用户ID
+     * @return 用户个人资料
+     */
+    UserResponse getUserProfile(Long userId);
+    
+    /**
+     * 更新用户个人资料
+     * @param userId 用户ID
+     * @param profileRequest 个人资料请求
+     * @return 更新后的用户信息
+     */
+    UserResponse updateUserProfile(Long userId, ProfileRequest profileRequest);
+    
+    /**
+     * 检查用户名是否可用
+     * @param username 用户名
+     * @param currentUserId 当前用户ID（可选，用于排除自己）
+     * @return 用户名是否可用
+     */
+    boolean isUsernameAvailable(String username, Long currentUserId);
 }

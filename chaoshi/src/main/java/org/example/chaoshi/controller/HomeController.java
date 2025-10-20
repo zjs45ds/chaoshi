@@ -7,10 +7,12 @@ import org.example.chaoshi.dto.ApiResult;
 import org.example.chaoshi.dto.PageResult;
 import org.example.chaoshi.entity.Artist;
 import org.example.chaoshi.entity.Album;
+import org.example.chaoshi.entity.Banner;
 import org.example.chaoshi.entity.Playlist;
 import org.example.chaoshi.entity.Toplist;
 import org.example.chaoshi.service.AlbumService;
 import org.example.chaoshi.service.ArtistService;
+import org.example.chaoshi.service.BannerService;
 import org.example.chaoshi.service.PlaylistService;
 import org.example.chaoshi.service.SongService;
 import org.example.chaoshi.service.ToplistService;
@@ -35,6 +37,7 @@ public class HomeController {
     private final PlaylistService playlistService;
     private final ToplistService toplistService;
     private final MvService mvService;
+    private final BannerService bannerService;
     
     @Operation(summary = "首页", description = "应用首页接口")
     @GetMapping("")
@@ -76,50 +79,30 @@ public class HomeController {
     
     // ====== 首页数据 API 接口 ======
     
-    @Operation(summary = "获取首页轮播图", description = "获取首页轮播图列表")
     @GetMapping("/api/home/banners")
     public ApiResult<List<Map<String, Object>>> getBanners() {
         try {
-            // 返回模拟轮播图数据
-            List<Map<String, Object>> banners = new ArrayList<>();
+            // 从数据库获取启用的轮播图
+            List<Banner> bannersList = bannerService.getEnabledBanners();
             
-            // 添加轮播图数据
-            Map<String, Object> banner1 = new HashMap<>();
-            banner1.put("id", 1);
-            banner1.put("title", "欢迎来到潮石音乐");
-            banner1.put("img", "https://img2.woyaogexing.com/2024/12/19/banner1_welcome.jpg");
-            banner1.put("link", "/");
-            banners.add(banner1);
+            if (bannersList != null && !bannersList.isEmpty()) {
+                // 转换为前端需要的格式
+                List<Map<String, Object>> banners = bannersList.stream()
+                    .map(banner -> {
+                        Map<String, Object> bannerMap = new HashMap<>();
+                        bannerMap.put("id", banner.getId());
+                        bannerMap.put("title", banner.getTitle());
+                        bannerMap.put("img_url", banner.getImgUrl());
+                        bannerMap.put("link", banner.getLink());
+                        return bannerMap;
+                    })
+                    .toList();
+                
+                return ApiResult.success("获取轮播图成功", banners);
+            }
             
-            Map<String, Object> banner2 = new HashMap<>();
-            banner2.put("id", 2);
-            banner2.put("title", "周杰伦新专辑首发");
-            banner2.put("img", "https://img2.woyaogexing.com/2024/12/19/banner2_jay_new_album.jpg");
-            banner2.put("link", "/artist/1");
-            banners.add(banner2);
-            
-            Map<String, Object> banner3 = new HashMap<>();
-            banner3.put("id", 3);
-            banner3.put("title", "华语金曲榜");
-            banner3.put("img", "https://img2.woyaogexing.com/2024/12/19/banner3_chinese_hits.jpg");
-            banner3.put("link", "/playlist/1");
-            banners.add(banner3);
-            
-            Map<String, Object> banner4 = new HashMap<>();
-            banner4.put("id", 4);
-            banner4.put("title", "新歌首发专区");
-            banner4.put("img", "https://img2.woyaogexing.com/2024/12/19/banner4_new_releases.jpg");
-            banner4.put("link", "/discover");
-            banners.add(banner4);
-            
-            Map<String, Object> banner5 = new HashMap<>();
-            banner5.put("id", 5);
-            banner5.put("title", "音乐人招募");
-            banner5.put("img", "https://img2.woyaogexing.com/2024/12/19/banner5_musician_recruitment.jpg");
-            banner5.put("link", "/musician");
-            banners.add(banner5);
-            
-            return ApiResult.success("获取轮播图成功", banners);
+            // 如果数据库没有数据，返回空列表
+            return ApiResult.success("获取轮播图成功", new ArrayList<>());
         } catch (Exception e) {
             return ApiResult.error("获取轮播图失败: " + e.getMessage());
         }
@@ -271,7 +254,6 @@ public class HomeController {
                         toplistMap.put("name", toplist.getName());
                         toplistMap.put("cover", toplist.getCover());
                         toplistMap.put("description", toplist.getDescription());
-                        toplistMap.put("updateFrequency", toplist.getUpdateFrequency());
                         return toplistMap;
                     })
                     .toList();

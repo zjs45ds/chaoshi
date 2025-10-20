@@ -2,19 +2,14 @@ package org.example.chaoshi.service;
 
 import org.example.chaoshi.dto.PageResult;
 import org.example.chaoshi.entity.Mv;
-import org.springframework.web.multipart.MultipartFile;
-
 import java.util.List;
 
-/**
- * MV Service接口
- */
 public interface MvService {
     
     /**
      * 创建MV
      */
-    Mv createMv(Mv mv, MultipartFile videoFile, MultipartFile coverFile);
+    Mv createMv(Mv mv);
     
     /**
      * 根据ID获取MV
@@ -24,7 +19,7 @@ public interface MvService {
     /**
      * 更新MV信息
      */
-    Mv updateMv(Long id, Mv mv, MultipartFile videoFile, MultipartFile coverFile);
+    Mv updateMv(Long id, Mv mv);
     
     /**
      * 删除MV
@@ -65,4 +60,28 @@ public interface MvService {
      * 增加播放次数
      */
     boolean incrementPlayCount(Long id);
+    
+    /**
+     * 收藏/取消收藏MV
+     * @param userId 用户ID
+     * @param mvId MV ID
+     * @param action 操作类型：like/unlike
+     * @return 是否收藏
+     */
+    boolean favoriteMv(Long userId, Long mvId, String action);
+    
+    /**
+     * 检查用户是否收藏了指定MV
+     * @param userId 用户ID
+     * @param mvId MV ID
+     * @return 是否收藏
+     */
+    boolean isMvFavorited(Long userId, Long mvId);
+    
+    /**
+     * 获取用户收藏的MV列表
+     * @param userId 用户ID
+     * @return 用户收藏的MV列表
+     */
+    List<Mv> getUserFavoriteMvs(Long userId);
 }

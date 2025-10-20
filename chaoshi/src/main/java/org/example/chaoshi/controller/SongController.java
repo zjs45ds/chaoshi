@@ -2,7 +2,6 @@ package org.example.chaoshi.controller;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
-import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.example.chaoshi.dto.ApiResult;
@@ -10,10 +9,8 @@ import org.example.chaoshi.dto.PageResult;
 import org.example.chaoshi.dto.response.SongResponse;
 import org.example.chaoshi.entity.Song;
 import org.example.chaoshi.service.SongService;
-import org.springframework.http.MediaType;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.multipart.MultipartFile;
 
 import jakarta.validation.Valid;
 import java.util.HashMap;
@@ -23,7 +20,6 @@ import java.util.Map;
 /**
  * 歌曲Controller
  */
-@Tag(name = "歌曲管理", description = "歌曲的增删改查操作")
 @RestController
 @RequestMapping("/api/songs")
 @RequiredArgsConstructor
@@ -34,15 +30,10 @@ public class SongController {
     
     private final SongService songService;
     
-    @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    @Operation(summary = "创建歌曲", description = "创建新的歌曲，支持音频文件和封面图片上传")
-    public ApiResult<Song> createSong(
-            @Parameter(description = "歌曲信息") @Valid @ModelAttribute Song song,
-            @Parameter(description = "音频文件") @RequestParam(value = "audio", required = false) MultipartFile audioFile,
-            @Parameter(description = "封面图片") @RequestParam(value = "cover", required = false) MultipartFile coverFile) {
-        
+    @PostMapping
+    public ApiResult<Song> createSong(@Parameter(description = "歌曲信息") @Valid @RequestBody Song song) {
         try {
-            Song result = songService.createSong(song, audioFile, coverFile);
+            Song result = songService.createSong(song);
             return ApiResult.success(result);
         } catch (Exception e) {
             log.error("创建歌曲失败", e);
@@ -65,7 +56,6 @@ public class SongController {
     }
     
     @GetMapping("/{id}/stream-url")
-    @Operation(summary = "获取歌曲流媒体URL", description = "获取用于播放的音频文件URL")
     public ApiResult<Map<String, Object>> getSongStreamUrl(
             @Parameter(description = "歌曲ID") @PathVariable Long id) {
         
@@ -78,16 +68,13 @@ public class SongController {
         }
     }
     
-    @PutMapping(value = "/{id}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    @Operation(summary = "更新歌曲", description = "更新歌曲信息，支持更新音频文件和封面图片")
+    @PutMapping("/{id}")
+    @Operation(summary = "更新歌曲", description = "更新歌曲信息")
     public ApiResult<Song> updateSong(
             @Parameter(description = "歌曲ID") @PathVariable Long id,
-            @Parameter(description = "歌曲信息") @Valid @ModelAttribute Song song,
-            @Parameter(description = "音频文件") @RequestParam(value = "audio", required = false) MultipartFile audioFile,
-            @Parameter(description = "封面图片") @RequestParam(value = "cover", required = false) MultipartFile coverFile) {
-        
+            @Parameter(description = "歌曲信息") @Valid @RequestBody Song song) {
         try {
-            Song result = songService.updateSong(id, song, audioFile, coverFile);
+            Song result = songService.updateSong(id, song);
             return ApiResult.success(result);
         } catch (Exception e) {
             log.error("更新歌曲失败: {}", id, e);
@@ -99,10 +86,9 @@ public class SongController {
     @Operation(summary = "删除歌曲", description = "根据ID删除歌曲")
     public ApiResult<Boolean> deleteSong(
             @Parameter(description = "歌曲ID") @PathVariable Long id) {
-        
         try {
-            boolean result = songService.deleteSong(id);
-            return ApiResult.success(result);
+            songService.deleteSong(id);
+            return ApiResult.success(true);
         } catch (Exception e) {
             log.error("删除歌曲失败: {}", id, e);
             return ApiResult.error("删除歌曲失败: " + e.getMessage());
@@ -113,10 +99,9 @@ public class SongController {
     @Operation(summary = "批量删除歌曲", description = "根据ID列表批量删除歌曲")
     public ApiResult<Boolean> deleteSongs(
             @Parameter(description = "歌曲ID列表") @RequestBody List<Long> ids) {
-        
         try {
-            boolean result = songService.deleteSongs(ids);
-            return ApiResult.success(result);
+            songService.deleteSongs(ids);
+            return ApiResult.success(true);
         } catch (Exception e) {
             log.error("批量删除歌曲失败", e);
             return ApiResult.error("批量删除歌曲失败: " + e.getMessage());

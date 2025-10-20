@@ -2,7 +2,7 @@
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="org.example.chaoshi.mapper.SongMapper">
 
-    <!-- 结果集映射 -->
+    <!-- 基础结果集映射 -->
     <resultMap id="BaseResultMap" type="org.example.chaoshi.entity.Song">
         <id column="id" property="id" jdbcType="BIGINT"/>
         <result column="name" property="name" jdbcType="VARCHAR"/>
@@ -12,10 +12,16 @@
         <result column="file_path" property="filePath" jdbcType="VARCHAR"/>
         <result column="lyrics" property="lyrics" jdbcType="LONGVARCHAR"/>
         <result column="cover" property="cover" jdbcType="VARCHAR"/>
-        <result column="play_count" property="playCount" jdbcType="BIGINT"/>
         <result column="created_at" property="createdAt" jdbcType="TIMESTAMP"/>
         <result column="updated_at" property="updatedAt" jdbcType="TIMESTAMP"/>
         <result column="deleted" property="deleted" jdbcType="INTEGER"/>
+    </resultMap>
+
+    <!-- 带歌手和专辑信息的结果集映射 -->
+    <resultMap id="SongWithArtistAndAlbumResultMap" type="org.example.chaoshi.entity.Song" extends="BaseResultMap">
+        <!-- 额外的结果映射，用于返回歌手名和专辑名 -->
+        <result column="artist_name" property="artist" jdbcType="VARCHAR"/>
+        <result column="album_name" property="album" jdbcType="VARCHAR"/>
     </resultMap>
 
     <!-- 基础列 -->
@@ -24,7 +30,7 @@
         file_path,
         lyrics, 
         cover, 
-        play_count, created_at, updated_at, deleted
+        created_at, updated_at, deleted
     </sql>
 
     <!-- 插入歌曲 -->
@@ -50,6 +56,28 @@
         WHERE id = #{id} AND deleted = 0
     </select>
 
+    <!-- 根据ID查询歌曲(带歌手和专辑信息) -->
+    <select id="selectByIdWithArtistAndAlbum" parameterType="java.lang.Long" resultMap="SongWithArtistAndAlbumResultMap">
+        SELECT
+        s.id,
+        s.name,
+        s.album_id,
+        s.artist_id,
+        s.duration,
+        s.file_path,
+        s.lyrics,
+        s.cover,
+        s.created_at,
+        s.updated_at,
+        s.deleted,
+        a.name as artist_name,
+        al.name as album_name
+        FROM songs s
+        LEFT JOIN artists a ON s.artist_id = a.id AND a.deleted = 0
+        LEFT JOIN albums al ON s.album_id = al.id AND al.deleted = 0
+        WHERE s.id = #{id} AND s.deleted = 0
+    </select>
+
     <!-- 查询所有歌曲 -->
     <select id="selectAll" resultMap="BaseResultMap">
         SELECT
@@ -68,12 +96,58 @@
         ORDER BY id ASC
     </select>
 
+    <!-- 根据专辑ID查询歌曲列表(带歌手和专辑信息) -->
+    <select id="selectByAlbumIdWithArtistAndAlbum" parameterType="java.lang.Long" resultMap="SongWithArtistAndAlbumResultMap">
+        SELECT
+        s.id,
+        s.name,
+        s.album_id,
+        s.artist_id,
+        s.duration,
+        s.file_path,
+        s.lyrics,
+        s.cover,
+        s.created_at,
+        s.updated_at,
+        s.deleted,
+        a.name as artist_name,
+        al.name as album_name
+        FROM songs s
+        LEFT JOIN artists a ON s.artist_id = a.id AND a.deleted = 0
+        LEFT JOIN albums al ON s.album_id = al.id AND al.deleted = 0
+        WHERE s.album_id = #{albumId} AND s.deleted = 0
+        ORDER BY id ASC
+    </select>
+
     <!-- 根据歌手ID查询歌曲列表 -->
     <select id="selectByArtistId" parameterType="java.lang.Long" resultMap="BaseResultMap">
         SELECT
         <include refid="Base_Column_List"/>
         FROM songs
         WHERE artist_id = #{artistId} AND deleted = 0
+        ORDER BY created_at DESC
+    </select>
+
+    <!-- 根据歌手ID查询歌曲列表(带歌手和专辑信息) -->
+    <select id="selectByArtistIdWithArtistAndAlbum" parameterType="java.lang.Long" resultMap="SongWithArtistAndAlbumResultMap">
+        SELECT
+        s.id,
+        s.name,
+        s.album_id,
+        s.artist_id,
+        s.duration,
+        s.file_path,
+        s.lyrics,
+        s.cover,
+        s.created_at,
+        s.updated_at,
+        s.deleted,
+        a.name as artist_name,
+        al.name as album_name
+        FROM songs s
+        LEFT JOIN artists a ON s.artist_id = a.id AND a.deleted = 0
+        LEFT JOIN albums al ON s.album_id = al.id AND al.deleted = 0
+        WHERE s.artist_id = #{artistId} AND s.deleted = 0
         ORDER BY created_at DESC
     </select>
 
