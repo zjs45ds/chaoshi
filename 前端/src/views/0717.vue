@@ -1,3 +1,4 @@
+// 0717.vue
 <template>
   <div class="xue-theme-page">
     <!-- 顶部英雄区域 -->
@@ -11,97 +12,98 @@
           </div>
         </a>
         <a href="https://weibo.com/xuezhiqian" target="_blank" class="name-link">
-          <h1 class="hero-title">薛之谦</h1>
+          <BoxReveal :duration="0.6" :delay="0.08" :blur="'10px'" :yOffset="20">
+            <h1 class="hero-title">薛之谦</h1>
+          </BoxReveal>
         </a>
         <p class="hero-subtitle">音乐才子 · 创作歌手 · 演员</p>
         <div class="hero-badge">
-          <span>出道20周年</span>
+          <span><LetterPullup :words="'出道20周年'" :delay="0.08" /></span>
           <span class="celebration-icon">🎉</span>
         </div>
-        <div class="hero-stats">
-          <div class="stat-item">
-            <span class="stat-number">15+</span>
-            <span class="stat-label">专辑</span>
-          </div>
-          <div class="stat-item">
-            <span class="stat-number">100+</span>
-            <span class="stat-label">歌曲</span>
-          </div>
-          <div class="stat-item">
-            <span class="stat-number">50+</span>
-            <span class="stat-label">奖项</span>
-          </div>
-          <div class="stat-item">
-            <span class="stat-number">10M+</span>
-            <span class="stat-label">粉丝</span>
-          </div>
-        </div>
+        <Marquee 
+          :pause-on-hover="true"
+          :line1-duration="30"
+          :line2-duration="45"
+        />
       </div>
     </div>
 
     <!-- 人物简介 -->
     <div class="profile-section">
       <div class="container">
-        <h2 class="section-title"><span>人物简介</span></h2>
+        <h2 class="section-title">
+          <BoxReveal :duration="0.6" :delay="0.08" :blur="'10px'" :yOffset="20">
+            <span>人物简介</span>
+          </BoxReveal>
+        </h2>
         <div class="profile-card">
-          <p>薛之谦(Joker Xue)，1983年7月17日出生于上海，毕业于格里昂酒店管理学院，华语流行乐男歌手、影视演员、音乐制作人。2005年，因参加选秀节目《我型我秀》而正式出道。</p>
-          <p>2006年6月12日，发行个人首张同名专辑《薛之谦》，随后凭借歌曲《认真的雪》获得广泛关注。2007年，发行个人第二张专辑《你过得好吗》，该专辑首月销量突破15万。</p>
-          <p>薛之谦以其独特的音乐风格和真挚的歌词创作而备受喜爱。他的音乐作品融合了流行、摇滚、民谣等多种元素，擅长用音乐表达生活中的情感和感悟。除了音乐事业，薛之谦还活跃于影视和综艺领域，展现了多方面的才华。</p>
+          <div class="profile-content-wrapper">
+            <LetterPullup 
+              :words="'薛之谦(Joker Xue)，1983年7月17日出生于上海，毕业于格里昂酒店管理学院，华语流行乐男歌手、影视演员、音乐制作人。2005年，因参加选秀节目《我型我秀》而正式出道。2006年6月12日，发行个人首张同名专辑《薛之谦》，随后凭借歌曲《认真的雪》获得广泛关注。2007年，发行个人第二张专辑《你过得好吗》，该专辑首月销量突破15万。薛之谦以其独特的音乐风格和真挚的歌词创作而备受喜爱。他的音乐作品融合了流行、摇滚、民谣等多种元素，擅长用音乐表达生活中的情感和感悟。除了音乐事业，薛之谦还活跃于影视和综艺领域，展现了多方面的才华。'"
+              :delay="0.05"
+              class="profile-animated-text"
+            />
+          </div>
         </div>
       </div>
     </div>
 
     <div class="personal-info-section">
       <div class="container">
-        <h2 class="section-title"><span>个人档案</span></h2>
+        <h2 class="section-title">
+          <BoxReveal :duration="0.6" :delay="0.08" :blur="'10px'" :yOffset="20">
+            <span>个人档案</span>
+          </BoxReveal>
+        </h2>
         <div class="info-grid">
           <div class="info-item">
-            <span class="info-label">出生日期</span>
-            <span class="info-value">1983年7月17日</span>
+            <span class="info-label"><LetterPullup :words="'出生日期'" :delay="0.08" /></span>
+            <span class="info-value"><LetterPullup :words="'1983年7月17日'" :delay="0.06" /></span>
           </div>
           <div class="info-item">
-            <span class="info-label">籍贯</span>
-            <span class="info-value">上海市</span>
+            <span class="info-label"><LetterPullup :words="'籍贯'" :delay="0.08" /></span>
+            <span class="info-value"><LetterPullup :words="'上海市'" :delay="0.06" /></span>
           </div>
           <div class="info-item">
-            <span class="info-label">星座</span>
-            <span class="info-value">巨蟹座</span>
+            <span class="info-label"><LetterPullup :words="'星座'" :delay="0.08" /></span>
+            <span class="info-value"><LetterPullup :words="'巨蟹座'" :delay="0.06" /></span>
           </div>
           <div class="info-item">
-            <span class="info-label">身高</span>
-            <span class="info-value">172cm</span>
+            <span class="info-label"><LetterPullup :words="'身高'" :delay="0.08" /></span>
+            <span class="info-value"><LetterPullup :words="'172cm'" :delay="0.06" /></span>
           </div>
           <div class="info-item">
-            <span class="info-label">体重</span>
-            <span class="info-value">55kg</span>
+            <span class="info-label"><LetterPullup :words="'体重'" :delay="0.08" /></span>
+            <span class="info-value"><LetterPullup :words="'55kg'" :delay="0.06" /></span>
           </div>
           <div class="info-item">
-            <span class="info-label">血型</span>
-            <span class="info-value">O型</span>
+            <span class="info-label"><LetterPullup :words="'血型'" :delay="0.08" /></span>
+            <span class="info-value"><LetterPullup :words="'O型'" :delay="0.06" /></span>
           </div>
           <div class="info-item">
-            <span class="info-label">昵称</span>
-            <span class="info-value">谦谦、薛老板</span>
+            <span class="info-label"><LetterPullup :words="'昵称'" :delay="0.08" /></span>
+            <span class="info-value"><LetterPullup :words="'谦谦、薛老板'" :delay="0.06" /></span>
           </div>
           <div class="info-item">
-            <span class="info-label">特长</span>
-            <span class="info-value">唱歌、创作、主持</span>
+            <span class="info-label"><LetterPullup :words="'特长'" :delay="0.08" /></span>
+            <span class="info-value"><LetterPullup :words="'唱歌、创作、主持'" :delay="0.06" /></span>
           </div>
           <div class="info-item">
-            <span class="info-label">爱好</span>
-            <span class="info-value">音乐、喜剧、火锅</span>
+            <span class="info-label"><LetterPullup :words="'爱好'" :delay="0.08" /></span>
+            <span class="info-value"><LetterPullup :words="'音乐、喜剧、火锅'" :delay="0.06" /></span>
           </div>
           <div class="info-item">
-            <span class="info-label">性格</span>
-            <span class="info-value">幽默、感性、执着</span>
+            <span class="info-label"><LetterPullup :words="'性格'" :delay="0.08" /></span>
+            <span class="info-value"><LetterPullup :words="'幽默、感性、执着'" :delay="0.06" /></span>
           </div>
           <div class="info-item">
-            <span class="info-label">座右铭</span>
-            <span class="info-value">笑对人生，音乐为伴</span>
+            <span class="info-label"><LetterPullup :words="'座右铭'" :delay="0.08" /></span>
+            <span class="info-value"><LetterPullup :words="'笑对人生，音乐为伴'" :delay="0.06" /></span>
           </div>
           <div class="info-item">
-            <span class="info-label">经纪公司</span>
-            <span class="info-value">海蝶音乐</span>
+            <span class="info-label"><LetterPullup :words="'经纪公司'" :delay="0.08" /></span>
+            <span class="info-value"><LetterPullup :words="'海蝶音乐'" :delay="0.06" /></span>
           </div>
         </div>
       </div>
@@ -110,90 +112,94 @@
     <!-- 音乐生涯时间轴 -->
     <div class="career-section">
       <div class="container">
-        <h2 class="section-title"><span>音乐生涯</span></h2>
+        <h2 class="section-title">
+          <BoxReveal :duration="0.6" :delay="0.08" :blur="'10px'" :yOffset="20">
+            <span>音乐生涯</span>
+          </BoxReveal>
+        </h2>
         <div class="timeline">
           <div class="timeline-item">
             <div class="timeline-date">2005年</div>
             <div class="timeline-content">
               <h3>出道</h3>
-              <p>参加东方卫视《我型我秀》比赛，获得全国四强，正式进入演艺圈。12月发行首张同名专辑《薛之谦》，主打歌《认真的雪》红遍大江南北，成为其代表作之一。</p>
+              <p><LetterPullup :words="'参加东方卫视《我型我秀》比赛，获得全国四强，正式进入演艺圈。12月发行首张同名专辑《薛之谦》，主打歌《认真的雪》红遍大江南北，成为其代表作之一。'" :delay="0.03" /></p>
             </div>
           </div>
           <div class="timeline-item">
             <div class="timeline-date">2006年</div>
             <div class="timeline-content">
               <h3>第二张专辑</h3>
-              <p>发行第二张专辑《薛之谦》（同名专辑改版），收录《黄色枫叶》《王子归来》等歌曲。获得雪碧中国原创音乐流行榜最受欢迎新人奖。</p>
+              <p><LetterPullup :words="'发行第二张专辑《薛之谦》（同名专辑改版），收录《黄色枫叶》《王子归来》等歌曲。获得雪碧中国原创音乐流行榜最受欢迎新人奖。'" :delay="0.03" /></p>
             </div>
           </div>
           <div class="timeline-item">
             <div class="timeline-date">2007年</div>
             <div class="timeline-content">
               <h3>第三张专辑</h3>
-              <p>发行第三张专辑《你过得好吗》，同名主打歌《你过得好吗》获得多个音乐奖项。</p>
+              <p><LetterPullup :words="'发行第三张专辑《你过得好吗》，同名主打歌《你过得好吗》获得多个音乐奖项。'" :delay="0.03" /></p>
             </div>
           </div>
           <div class="timeline-item">
             <div class="timeline-date">2008年</div>
             <div class="timeline-content">
               <h3>第四张专辑</h3>
-              <p>发行第四张专辑《深深爱过你》，尝试抒情和摇滚两种风格，同名主打歌《深深爱过你》获得广泛好评。同年，在上海举行个人首场演唱会"谦年传说"。</p>
+              <p><LetterPullup :words="'发行第四张专辑《深深爱过你》，尝试抒情和摇滚两种风格，同名主打歌《深深爱过你》获得广泛好评。同年，在上海举行个人首场演唱会「谦年传说」。'" :delay="0.03" /></p>
             </div>
           </div>
           <div class="timeline-item">
             <div class="timeline-date">2012年</div>
             <div class="timeline-content">
               <h3>独立发展</h3>
-              <p>成立个人工作室，开始独立音乐创作与制作。发行专辑《几个薛之谦》，包办了专辑中大部分歌曲的词曲创作。</p>
+              <p><LetterPullup :words="'成立个人工作室，开始独立音乐创作与制作。发行专辑《几个薛之谦》，包办了专辑中大部分歌曲的词曲创作。'" :delay="0.03" /></p>
             </div>
           </div>
           <div class="timeline-item">
             <div class="timeline-date">2013年</div>
             <div class="timeline-content">
               <h3>第五张专辑</h3>
-              <p>发行个人第五张专辑《意外》。</p>
+              <p><LetterPullup :words="'发行个人第五张专辑《意外》。'" :delay="0.03" /></p>
             </div>
           </div>
           <div class="timeline-item">
             <div class="timeline-date">2014年</div>
             <div class="timeline-content">
               <h3>获得奖项</h3>
-              <p>获得第21届东方风云榜最佳唱作人奖、音悦V榜年度盛典年度创作歌手奖。</p>
+              <p><LetterPullup :words="'获得第21届东方风云榜最佳唱作人奖、音悦V榜年度盛典年度创作歌手奖。'" :delay="0.03" /></p>
             </div>
           </div>
           <div class="timeline-item">
             <div class="timeline-date">2015年</div>
             <div class="timeline-content">
               <h3>事业转机</h3>
-              <p>首度担当制作人，并发行原创EP《绅士》；同年，主演都市励志剧《妈妈像花儿一样》。凭借《演员》再度受到关注，歌曲在各大音乐平台排行榜上取得优异成绩。</p>
+              <p><LetterPullup :words="'首度担当制作人，并发行原创EP《绅士》；同年，主演都市励志剧《妈妈像花儿一样》。凭借《演员》再度受到关注，歌曲在各大音乐平台排行榜上取得优异成绩。'" :delay="0.03" /></p>
             </div>
           </div>
           <div class="timeline-item">
             <div class="timeline-date">2016年</div>
             <div class="timeline-content">
               <h3>事业巅峰</h3>
-              <p>发行专辑《初学者》，收录《丑八怪》《刚刚好》等热门歌曲，横扫各大音乐榜单。获得第16届全球华语歌曲排行榜最受欢迎男歌手、五大最受欢迎男歌手奖、上海地区杰出歌手奖及最受欢迎创作歌手奖，而歌曲《初学者》则获得年度二十大金曲奖。</p>
+              <p><LetterPullup :words="'发行专辑《初学者》，收录《丑八怪》《刚刚好》等热门歌曲，横扫各大音乐榜单。获得第16届全球华语歌曲排行榜最受欢迎男歌手、五大最受欢迎男歌手奖、上海地区杰出歌手奖及最受欢迎创作歌手奖，而歌曲《初学者》则获得年度二十大金曲奖。'" :delay="0.03" /></p>
             </div>
           </div>
           <div class="timeline-item">
             <div class="timeline-date">2017年</div>
             <div class="timeline-content">
               <h3>持续突破</h3>
-              <p>开启"我好像在哪见过你"全国巡回演唱会；同年，获得第7届全球流行音乐年度盛典年度最佳男歌手、MusicRadio榜中国TOP排行榜内地最佳男歌手。发行专辑《渡 The Crossing》，尝试电子音乐风格。</p>
+              <p><LetterPullup :words="'开启「我好像在哪见过你」全国巡回演唱会；同年，获得第7届全球流行音乐年度盛典年度最佳男歌手、MusicRadio榜中国TOP排行榜内地最佳男歌手。发行专辑《渡 The Crossing》，尝试电子音乐风格。'" :delay="0.03" /></p>
             </div>
           </div>
           <div class="timeline-item">
             <div class="timeline-date">2018年</div>
             <div class="timeline-content">
               <h3>音乐创新</h3>
-              <p>薛之谦"摩天大楼"世界巡回演唱会于北京站启程，整个巡演横跨4大洲，21个城市，累计上演场次23场。发行专辑《怪咖》，继续音乐风格的探索与创新。</p>
+              <p><LetterPullup :words="'薛之谦「摩天大楼」世界巡回演唱会于北京站启程，整个巡演横跨4大洲，21个城市，累计上演场次23场。发行专辑《怪咖》，继续音乐风格的探索与创新。'" :delay="0.03" /></p>
             </div>
           </div>
           <div class="timeline-item">
             <div class="timeline-date">2019年</div>
             <div class="timeline-content">
               <h3>获得奖项</h3>
-              <p>获得2019华人歌曲音乐盛典内地年度最受欢迎歌手奖。</p>
+              <p><LetterPullup :words="'获得2019华人歌曲音乐盛典内地年度最受欢迎歌手奖。'" :delay="0.03" /></p>
             </div>
           </div>
           <div class="timeline-item">
@@ -202,11 +208,11 @@
               <h3>音乐探索</h3>
               <div class="timeline-subitem">
                 <div class="timeline-subdate">7月</div>
-                <p>发行专辑《天外来物》，尝试多元音乐风格。</p>
+                <p><LetterPullup :words="'发行专辑《天外来物》，尝试多元音乐风格。'" :delay="0.03" /></p>
               </div>
               <div class="timeline-subitem">
                 <div class="timeline-subdate">8月</div>
-                <p>参与音乐综艺节目《明日之子乐团季》担任星推官。</p>
+                <p><LetterPullup :words="'参与音乐综艺节目《明日之子乐团季》担任星推官。'" :delay="0.03" /></p>
               </div>
             </div>
           </div>
@@ -216,15 +222,15 @@
               <h3>持续创作</h3>
               <div class="timeline-subitem">
                 <div class="timeline-subdate">1月</div>
-                <p>发行单曲《变废为宝》。</p>
+                <p><LetterPullup :words="'发行单曲《变废为宝》。'" :delay="0.03" /></p>
               </div>
               <div class="timeline-subitem">
                 <div class="timeline-subdate">7月</div>
-                <p>发行单曲《耗尽》。</p>
+                <p><LetterPullup :words="'发行单曲《耗尽》。'" :delay="0.03" /></p>
               </div>
               <div class="timeline-subitem">
                 <div class="timeline-subdate">全年</div>
-                <p>"摩天大楼"巡回演唱会继续进行，因疫情影响部分场次延期。</p>
+                <p><LetterPullup :words="'「摩天大楼」巡回演唱会继续进行，因疫情影响部分场次延期。'" :delay="0.03" /></p>
               </div>
             </div>
           </div>
@@ -234,11 +240,11 @@
               <h3>专辑发布</h3>
               <div class="timeline-subitem">
                 <div class="timeline-subdate">9月</div>
-                <p>发行专辑《无数》，包含《可》《男二号》等热门歌曲。</p>
+                <p><LetterPullup :words="'发行专辑《无数》，包含《可》《男二号》等热门歌曲。'" :delay="0.03" /></p>
               </div>
               <div class="timeline-subitem">
                 <div class="timeline-subdate">12月</div>
-                <p>获得网易云音乐年度音乐奖。</p>
+                <p><LetterPullup :words="'获得网易云音乐年度音乐奖。'" :delay="0.03" /></p>
               </div>
             </div>
           </div>
@@ -248,15 +254,15 @@
               <h3>巡回演出</h3>
               <div class="timeline-subitem">
                 <div class="timeline-subdate">3月</div>
-                <p>"天外来物"巡回演唱会重启并扩展，覆盖多个城市。</p>
+                <p><LetterPullup :words="'「天外来物」巡回演唱会重启并扩展，覆盖多个城市。'" :delay="0.03" /></p>
               </div>
               <div class="timeline-subitem">
                 <div class="timeline-subdate">5月</div>
-                <p>发行单曲《崇拜》。</p>
+                <p><LetterPullup :words="'发行单曲《崇拜》。'" :delay="0.03" /></p>
               </div>
               <div class="timeline-subitem">
                 <div class="timeline-subdate">10月</div>
-                <p>发行单曲《念》。</p>
+                <p><LetterPullup :words="'发行单曲《念》。'" :delay="0.03" /></p>
               </div>
             </div>
           </div>
@@ -266,11 +272,11 @@
               <h3>音乐综艺与创新</h3>
               <div class="timeline-subitem">
                 <div class="timeline-subdate">4月</div>
-                <p>参与江苏卫视《音乐缘计划》，担任节目嘉宾。</p>
+                <p><LetterPullup :words="'参与江苏卫视《音乐缘计划》，担任节目嘉宾。'" :delay="0.03" /></p>
               </div>
               <div class="timeline-subitem">
                 <div class="timeline-subdate">全年</div>
-                <p>尝试音乐风格创新，探索多元化音乐表达。</p>
+                <p><LetterPullup :words="'尝试音乐风格创新，探索多元化音乐表达。'" :delay="0.03" /></p>
               </div>
             </div>
           </div>
@@ -280,23 +286,23 @@
               <h3>多元发展与舞台魅力</h3>
               <div class="timeline-subitem">
                 <div class="timeline-subdate">5月1日</div>
-                <p>参加南京咪豆音乐节，燃爆现场。</p>
+                <p><LetterPullup :words="'参加南京咪豆音乐节，燃爆现场。'" :delay="0.03" /></p>
               </div>
               <div class="timeline-subitem">
                 <div class="timeline-subdate">5月15日</div>
-                <p>"天外来物"巡回演唱会重庆站开启售票，新增的"银河探秘区"虽因部分视线遮挡引发争议，但仍在几分钟内售罄，彰显超高人气。</p>
+                <p><LetterPullup :words="'「天外来物」巡回演唱会重庆站开启售票，新增的「银河探秘区」虽因部分视线遮挡引发争议，但仍在几分钟内售罄，彰显超高人气。'" :delay="0.03" /></p>
               </div>
               <div class="timeline-subitem">
                 <div class="timeline-subdate">7月17日</div>
-                <p>发布生日单曲《跃》，以温暖旋律传递积极能量。</p>
+                <p><LetterPullup :words="'发布生日单曲《跃》，以温暖旋律传递积极能量。'" :delay="0.03" /></p>
               </div>
               <div class="timeline-subitem">
                 <div class="timeline-subdate">8月5日</div>
-                <p>大胆尝试工业摇滚风格，发布单曲《金斧子银斧子》，展现音乐多元化探索。</p>
+                <p><LetterPullup :words="'大胆尝试工业摇滚风格，发布单曲《金斧子银斧子》，展现音乐多元化探索。'" :delay="0.03" /></p>
               </div>
               <div class="timeline-subitem">
                 <div class="timeline-subdate">8月16日</div>
-                <p>官宣将参加2025年太湖湾音乐节，具体场次信息待官方进一步确认（注：目前网络信息显示存在时间和届数不一致的情况，建议以官方最新公告为准）。</p>
+                <p><LetterPullup :words="'官宣将参加2025年太湖湾音乐节，具体场次信息待官方进一步确认（注：目前网络信息显示存在时间和届数不一致的情况，建议以官方最新公告为准）。'" :delay="0.03" /></p>
               </div>
             </div>
           </div>
@@ -309,7 +315,11 @@
 <!-- 演唱会记录 -->
 <div class="concert-section">
   <div class="container">
-    <h2 class="section-title"><span>演唱会记录</span></h2>
+    <h2 class="section-title">
+      <BoxReveal :duration="0.6" :delay="0.08" :blur="'10px'" :yOffset="20">
+        <span>演唱会记录</span>
+      </BoxReveal>
+    </h2>
     
     
     <div class="concert-table-container">
@@ -1019,151 +1029,86 @@
 
 <!-- 代表作品 -->
 <div class="works-section">
-      <div class="container">
-        <h2 class="section-title"><span>代表作品</span></h2>
-        <div class="works-grid">
-          <div class="work-item-container">
-            <div class="work-item" :style="{backgroundImage: 'url(https://picsum.photos/seed/song1/300/300)'}">
-              <div class="work-overlay"></div>
+  <div class="container">
+    <h2 class="section-title">
+      <BoxReveal :duration="0.6" :delay="0.08" :blur="'10px'" :yOffset="20">
+        <span>代表作品</span>
+      </BoxReveal>
+    </h2>
+    <div class="works-grid">
+      <FlipCard v-for="work in representativeWorks" :key="work.id" class="work-flip-card">
+        <template #default>
+          <div class="work-front" :style="{backgroundImage: `url(${work.image})`}">
+            <div class="work-overlay"></div>
+            <div class="work-info">
+              <h3>{{ work.title }}</h3>
+              <p>{{ work.year }}</p>
             </div>
-            <h3>认真的雪</h3>
-            <p>2006年</p>
           </div>
-          <div class="work-item-container">
-            <div class="work-item" :style="{backgroundImage: 'url(https://picsum.photos/seed/song9/300/300)'}">
-              <div class="work-overlay"></div>
+        </template>
+        <template #back>
+          <div class="work-back">
+            <h4>{{ work.title }}</h4>
+            <div class="work-details">
+              <p><strong>发行年份:</strong> {{ work.year }}</p>
+              <p><strong>类型:</strong> {{ work.type }}</p>
+              <p><strong>成就:</strong></p>
+              <ul>
+                <li v-for="achievement in work.achievements" :key="achievement">{{ achievement }}</li>
+              </ul>
+              <p class="work-description">{{ work.description }}</p>
             </div>
-            <h3>你过得好吗</h3>
-            <p>2007年</p>
           </div>
-          <div class="work-item-container">
-            <div class="work-item" :style="{backgroundImage: 'url(https://picsum.photos/seed/song10/300/300)'}">
-              <div class="work-overlay"></div>
-            </div>
-            <h3>深深爱过你</h3>
-            <p>2008年</p>
-          </div>
-          <div class="work-item-container">
-            <div class="work-item" :style="{backgroundImage: 'url(https://picsum.photos/seed/song2/300/300)'}">
-              <div class="work-overlay"></div>
-            </div>
-            <h3>演员</h3>
-            <p>2015年</p>
-          </div>
-          <div class="work-item-container">
-            <div class="work-item" :style="{backgroundImage: 'url(https://picsum.photos/seed/song3/300/300)'}">
-              <div class="work-overlay"></div>
-            </div>
-            <h3>丑八怪</h3>
-            <p>2013年</p>
-          </div>
-          <div class="work-item-container">
-            <div class="work-item" :style="{backgroundImage: 'url(https://picsum.photos/seed/song4/300/300)'}">
-              <div class="work-overlay"></div>
-            </div>
-            <h3>绅士</h3>
-            <p>2015年</p>
-          </div>
-          <div class="work-item-container">
-            <div class="work-item" :style="{backgroundImage: 'url(https://picsum.photos/seed/song5/300/300)'}">
-              <div class="work-overlay"></div>
-            </div>
-            <h3>刚刚好</h3>
-            <p>2016年</p>
-          </div>
-          <div class="work-item-container">
-            <div class="work-item" :style="{backgroundImage: 'url(https://picsum.photos/seed/song6/300/300)'}">
-              <div class="work-overlay"></div>
-            </div>
-            <h3>我好像在哪见过你</h3>
-            <p>2016年</p>
-          </div>
-          <div class="work-item-container">
-            <div class="work-item" :style="{backgroundImage: 'url(https://picsum.photos/seed/award/300/300)'}">
-              <div class="work-overlay"></div>
-            </div>
-            <h3>第16届全球华语歌曲排行榜</h3>
-            <p>2016年</p>
-          </div>
-          <div class="work-item-container">
-            <div class="work-item" :style="{backgroundImage: 'url(https://picsum.photos/seed/concert/300/300)'}">
-              <div class="work-overlay"></div>
-            </div>
-            <h3>摩天大楼世界巡回演唱会</h3>
-            <p>2018年</p>
-          </div>
-          <div class="work-item-container">
-            <div class="work-item" :style="{backgroundImage: 'url(https://picsum.photos/seed/song7/300/300)'}">
-              <div class="work-overlay"></div>
-            </div>
-            <h3>怪咖</h3>
-            <p>2018年</p>
-          </div>
-          <div class="work-item-container">
-            <div class="work-item" :style="{backgroundImage: 'url(https://picsum.photos/seed/song8/300/300)'}">
-              <div class="work-overlay"></div>
-            </div>
-            <h3>天外来物</h3>
-            <p>2020年</p>
-          </div>
-          <div class="work-item-container">
-            <div class="work-item" :style="{backgroundImage: 'url(https://picsum.photos/seed/concert2/300/300)'}">
-              <div class="work-overlay"></div>
-            </div>
-            <h3>天外来物巡回演唱会</h3>
-            <p>2021-2023年</p>
-          </div>
-          <div class="work-item-container">
-            <div class="work-item" :style="{backgroundImage: 'url(https://picsum.photos/seed/song9/300/300)'}">
-              <div class="work-overlay"></div>
-            </div>
-            <h3>无数</h3>
-            <p>2022年</p>
-          </div>
-        </div>
-      </div>
+        </template>
+      </FlipCard>
+    </div>
+  </div>
 </div>
     
 
     <!-- 音乐成就 -->
     <div class="achievements-section">
       <div class="container">
-        <h2 class="section-title"><span>音乐成就</span></h2>
+        <h2 class="section-title">
+          <BoxReveal :duration="0.6" :delay="0.08" :blur="'10px'" :yOffset="20">
+            <span>音乐成就</span>
+          </BoxReveal>
+        </h2>
         <div class="achievements-list">
           <div class="achievement-item">
             <img class="achievement-icon" src="/src/assets/星球.png" alt="音乐成就图标">
-            <h3>2006雪碧中国原创音乐流行榜</h3>
-            <p>最受欢迎新人奖</p>
+            <h3><LetterPullup :words="'2006雪碧中国原创音乐流行榜'" :delay="0.05" /></h3>
+            <p><LetterPullup :words="'最受欢迎新人奖'" :delay="0.04" /></p>
           </div>
           <div class="achievement-item">
             <img class="achievement-icon" src="/src/assets/星球.png" alt="音乐成就图标">
-            <h3>2007东方风云榜</h3>
-            <p>最佳新人奖</p>
+            <h3><LetterPullup :words="'2007东方风云榜'" :delay="0.05" /></h3>
+            <p><LetterPullup :words="'最佳新人奖'" :delay="0.04" /></p>
           </div>
           <div class="achievement-item">
             <img class="achievement-icon" src="/src/assets/星球.png" alt="音乐成就图标">
-            <h3>2014东方风云榜</h3>
-            <p>最佳唱作人奖</p>
+            <h3><LetterPullup :words="'2014东方风云榜'" :delay="0.05" /></h3>
+            <p><LetterPullup :words="'最佳唱作人奖'" :delay="0.04" /></p>
           </div>
           <div class="achievement-item">
             <img class="achievement-icon" src="/src/assets/星球.png" alt="音乐成就图标">
-            <h3>2016全球华语歌曲排行榜</h3>
-            <p>最受欢迎男歌手、最受欢迎创作歌手奖</p>
+            <h3><LetterPullup :words="'2016全球华语歌曲排行榜'" :delay="0.05" /></h3>
+            <p><LetterPullup :words="'最受欢迎男歌手、最受欢迎创作歌手奖'" :delay="0.04" /></p>
           </div>
           <div class="achievement-item">
             <img class="achievement-icon" src="/src/assets/星球.png" alt="音乐成就图标">
-            <h3>2017全球流行音乐盛典</h3>
-            <p>年度最佳男歌手</p>
+            <h3><LetterPullup :words="'2017全球流行音乐盛典'" :delay="0.05" /></h3>
+            <p><LetterPullup :words="'年度最佳男歌手'" :delay="0.04" /></p>
           </div>
           <div class="achievement-item">
             <img class="achievement-icon" src="/src/assets/星球.png" alt="音乐成就图标">
-            <h3>2017MusicRadio中国TOP排行榜</h3>
-            <p>内地最佳男歌手</p>
+            <h3><LetterPullup :words="'2017MusicRadio中国TOP排行榜'" :delay="0.05" /></h3>
+            <p><LetterPullup :words="'内地最佳男歌手'" :delay="0.04" /></p>
           </div>
           <div class="achievement-item">
             <img class="achievement-icon" src="/src/assets/星球.png" alt="音乐成就图标">
-            <h3>2019华人歌曲音乐盛典</h3>
-            <p>内地年度最受欢迎歌手奖、年度最佳专辑《怪咖》</p>
+            <h3><LetterPullup :words="'2019华人歌曲音乐盛典'" :delay="0.05" /></h3>
+            <p><LetterPullup :words="'内地年度最受欢迎歌手奖、年度最佳专辑《怪咖》'" :delay="0.04" /></p>
           </div>
         </div>
       </div>
@@ -1171,26 +1116,36 @@
 
     <div class="acting-section">
       <div class="container">
-        <h2 class="section-title"><span>演艺经历</span></h2>
+        <h2 class="section-title">
+          <BoxReveal :duration="0.6" :delay="0.08" :blur="'10px'" :yOffset="20">
+            <span>演艺经历</span>
+          </BoxReveal>
+        </h2>
         <div class="acting-content">
-          <p>除了音乐事业，薛之谦还积极参与影视表演和综艺节目，展现了多方面的才华：</p>
+          <p><LetterPullup :words="'除了音乐事业，薛之谦还积极参与影视表演和综艺节目，展现了多方面的才华：'" :delay="0.03" /></p>
 
-          <h3>电视剧作品</h3>
+          <BoxReveal :duration="0.6" :delay="0.08" :blur="'10px'" :yOffset="20">
+            <h3>电视剧作品</h3>
+          </BoxReveal>
           <ul class="acting-list">
-            <li><span class="year">2015年</span> 《妈妈像花儿一样》饰演 张幸福的弟弟</li>
-            <li><span class="year">2017年</span> 《我们的少年时代》饰演 陶西</li>
+            <li><LetterPullup :words="'2015年 《妈妈像花儿一样》饰演 张幸福的弟弟'" :delay="0.04" /></li>
+            <li><LetterPullup :words="'2017年 《我们的少年时代》饰演 陶西'" :delay="0.04" /></li>
           </ul>
 
-          <h3>电影作品</h3>
+          <BoxReveal :duration="0.6" :delay="0.08" :blur="'10px'" :yOffset="20">
+            <h3>电影作品</h3>
+          </BoxReveal>
           <ul class="acting-list">
-            <li><span class="year">2017年</span> 《有完没完》饰演 和平</li>
+            <li><LetterPullup :words="'2017年 《有完没完》饰演 和平'" :delay="0.04" /></li>
           </ul>
 
-          <h3>综艺节目</h3>
+          <BoxReveal :duration="0.6" :delay="0.08" :blur="'10px'" :yOffset="20">
+            <h3>综艺节目</h3>
+          </BoxReveal>
           <ul class="acting-list">
-            <li><span class="year">2016-2018年</span> 《火星情报局》高级特工</li>
-            <li><span class="year">2017年</span> 《明日之子》盛世独秀赛道星推官</li>
-            <li><span class="year">2018年</span> 《创造101》特邀嘉宾</li>
+            <li><LetterPullup :words="'2016-2018年 《火星情报局》高级特工'" :delay="0.04" /></li>
+            <li><LetterPullup :words="'2017年 《明日之子》盛世独秀赛道星推官'" :delay="0.04" /></li>
+            <li><LetterPullup :words="'2018年 《创造101》特邀嘉宾'" :delay="0.04" /></li>
           </ul>
         </div>
       </div>
@@ -1198,34 +1153,48 @@
 
     <div class="music-style-section">
       <div class="container">
-        <h2 class="section-title"><span>音乐风格</span></h2>
+        <h2 class="section-title">
+          <BoxReveal :duration="0.6" :delay="0.08" :blur="'10px'" :yOffset="20">
+            <span>音乐风格</span>
+          </BoxReveal>
+        </h2>
         <div class="music-style-content">
-          <p>薛之谦的音乐风格多样，融合了流行、摇滚、民谣、电子等多种元素。他的作品以情感真挚、歌词细腻著称，擅长用音乐表达生活中的感悟和情感故事。</p>
+          <p><LetterPullup :words="'薛之谦的音乐风格多样，融合了流行、摇滚、民谣、电子等多种元素。他的作品以情感真挚、歌词细腻著称，擅长用音乐表达生活中的感悟和情感故事。'" :delay="0.03" /></p>
 
           <div class="style-evolution">
-            <h3>音乐风格演变</h3>
+            <BoxReveal :duration="0.6" :delay="0.08" :blur="'10px'" :yOffset="20">
+              <h3>音乐风格演变</h3>
+            </BoxReveal>
             <div class="evolution-item">
-              <h4>早期（2005-2010年）</h4>
-              <p>以抒情慢歌为主，如《认真的雪》《深深爱过你》等，旋律优美，歌词深情，展现了薛之谦出色的演唱实力和创作才华。</p>
+              <BoxReveal :duration="0.6" :delay="0.08" :blur="'10px'" :yOffset="20">
+                <h4>早期（2005-2010年）</h4>
+              </BoxReveal>
+              <p><LetterPullup :words="'以抒情慢歌为主，如《认真的雪》《深深爱过你》等，旋律优美，歌词深情，展现了薛之谦出色的演唱实力和创作才华。'" :delay="0.03" /></p>
             </div>
             <div class="evolution-item">
-              <h4>中期（2012-2015年）</h4>
-              <p>开始尝试更多风格，如摇滚、民谣等，作品更加成熟，歌词也更加深刻，如《丑八怪》《绅士》等。</p>
+              <BoxReveal :duration="0.6" :delay="0.08" :blur="'10px'" :yOffset="20">
+                <h4>中期（2012-2015年）</h4>
+              </BoxReveal>
+              <p><LetterPullup :words="'开始尝试更多风格，如摇滚、民谣等，作品更加成熟，歌词也更加深刻，如《丑八怪》《绅士》等。'" :delay="0.03" /></p>
             </div>
             <div class="evolution-item">
-              <h4>近期（2016-2023年）</h4>
-              <p>音乐风格更加多元化，融合了电子、R&B、古典等元素，同时保持了情感真挚的特点，如《初学者》《渡 The Crossing》《怪咖》《天外来物》《无数》等专辑。</p>
+              <BoxReveal :duration="0.6" :delay="0.08" :blur="'10px'" :yOffset="20">
+                <h4>近期（2016-2023年）</h4>
+              </BoxReveal>
+              <p><LetterPullup :words="'音乐风格更加多元化，融合了电子、R&B、古典等元素，同时保持了情感真挚的特点，如《初学者》《渡 The Crossing》《怪咖》《天外来物》《无数》等专辑。'" :delay="0.03" /></p>
             </div>
           </div>
 
           <div class="style-characteristics">
-            <h3>音乐特点</h3>
+            <BoxReveal :duration="0.6" :delay="0.08" :blur="'10px'" :yOffset="20">
+              <h3>音乐特点</h3>
+            </BoxReveal>
             <ul>
-              <li><span class="characteristic">情感真挚</span>：薛之谦的歌曲往往来源于真实的生活经历和情感体验，能够引发听众的共鸣。</li>
-              <li><span class="characteristic">歌词细腻</span>：他的歌词注重细节描写，语言生动，能够准确表达复杂的情感。</li>
-              <li><span class="characteristic">旋律优美</span>：他的歌曲旋律流畅，易于传唱，同时又不失艺术性。</li>
-              <li><span class="characteristic">风格多样</span>：从抒情慢歌到摇滚、电子，薛之谦不断尝试不同的音乐风格，展现了多方面的才华。</li>
-              <li><span class="characteristic">独特嗓音</span>：薛之谦的嗓音深情而富有辨识度，能够将歌曲中的情感完美传递给听众。</li>
+              <li><LetterPullup :words="'情感真挚：薛之谦的歌曲往往来源于真实的生活经历和情感体验，能够引发听众的共鸣。'" :delay="0.04" /></li>
+              <li><LetterPullup :words="'歌词细腻：他的歌词注重细节描写，语言生动，能够准确表达复杂的情感。'" :delay="0.04" /></li>
+              <li><LetterPullup :words="'旋律优美：他的歌曲旋律流畅，易于传唱，同时又不失艺术性。'" :delay="0.04" /></li>
+              <li><LetterPullup :words="'风格多样：从抒情慢歌到摇滚、电子，薛之谦不断尝试不同的音乐风格，展现了多方面的才华。'" :delay="0.04" /></li>
+              <li><LetterPullup :words="'独特嗓音：薛之谦的嗓音深情而富有辨识度，能够将歌曲中的情感完美传递给听众。'" :delay="0.04" /></li>
             </ul>
           </div>
         </div>
@@ -1234,29 +1203,41 @@
 
     <div class="charity-section">
       <div class="container">
-        <h2 class="section-title"><span>社会贡献</span></h2>
+        <h2 class="section-title">
+          <BoxReveal :duration="0.6" :delay="0.08" :blur="'10px'" :yOffset="20">
+            <span>社会贡献</span>
+          </BoxReveal>
+        </h2>
         <div class="charity-content">
-          <p>薛之谦积极参与公益事业，实际行动回馈社会，传递正能量。</p>
+          <p><LetterPullup :words="'薛之谦积极参与公益事业，实际行动回馈社会，传递正能量。'" :delay="0.03" /></p>
 
           <div class="charity-activities">
-            <h3>公益活动</h3>
+            <BoxReveal :duration="0.6" :delay="0.08" :blur="'10px'" :yOffset="20">
+              <h3>公益活动</h3>
+            </BoxReveal>
             <div class="charity-item">
-              <h4>地震灾区捐款捐物</h4>
-              <p>2008年汶川地震、2013年雅安地震等，薛之谦均第一时间捐款捐物，帮助灾区人民度过难关。</p>
+              <BoxReveal :duration="0.6" :delay="0.08" :blur="'10px'" :yOffset="20">
+                <h4>地震灾区捐款捐物</h4>
+              </BoxReveal>
+              <p><LetterPullup :words="'2008年汶川地震、2013年雅安地震等，薛之谦均第一时间捐款捐物，帮助灾区人民度过难关。'" :delay="0.04" /></p>
             </div>
             <div class="charity-item">
-              <h4>慈善演唱会</h4>
-              <p>多次参与慈善演唱会，为公益事业筹集善款。</p>
+              <BoxReveal :duration="0.6" :delay="0.08" :blur="'10px'" :yOffset="20">
+                <h4>慈善演唱会</h4>
+              </BoxReveal>
+              <p><LetterPullup :words="'多次参与慈善演唱会，为公益事业筹集善款。'" :delay="0.04" /></p>
             </div>
             <div class="charity-item">
-              <h4>儿童教育支持</h4>
-              <p>关注儿童教育，为贫困山区学校捐赠图书和教学设备。</p>
+              <BoxReveal :duration="0.6" :delay="0.08" :blur="'10px'" :yOffset="20">
+                <h4>儿童教育支持</h4>
+              </BoxReveal>
+              <p><LetterPullup :words="'关注儿童教育，为贫困山区学校捐赠图书和教学设备。'" :delay="0.04" /></p>
             </div>
           </div>
 
           <div class="charity-quote">
             <blockquote>
-              <p>"作为公众人物，我有责任用自己的影响力去帮助更多需要帮助的人，传递正能量。"</p>
+              <p><LetterPullup :words="'「作为公众人物，我有责任用自己的影响力去帮助更多需要帮助的人，传递正能量。」'" :delay="0.03" /></p>
               <footer>— 薛之谦</footer>
             </blockquote>
           </div>
@@ -1267,7 +1248,11 @@
     <!-- 图片墙 -->
     <div class="gallery-section">
       <div class="container">
-        <h2 class="section-title"><span>精彩瞬间</span></h2>
+        <h2 class="section-title">
+          <BoxReveal :duration="0.6" :delay="0.08" :blur="'10px'" :yOffset="20">
+            <span>精彩瞬间</span>
+          </BoxReveal>
+        </h2>
         <div class="gallery-grid">
           <div class="gallery-item" :style="{backgroundImage: 'url(https://picsum.photos/seed/album1/400/300)'}"></div>
           <div class="gallery-item" :style="{backgroundImage: 'url(https://picsum.photos/seed/album2/400/300)'}"></div>
@@ -1281,12 +1266,25 @@
   </template>
 
   <script>
+import LetterPullup from '@/components/LetterPullup.vue'
+import FlipCard from '@/components/FlipCard.vue'
+import BoxReveal from '@/components/BoxReveal.vue'
+import LampEffect from '@/components/LampEffect.vue'
+import Marquee from '@/components/Marquee.vue'
+
 export default {
+  components: {
+    LetterPullup,
+    FlipCard,
+    BoxReveal,
+    LampEffect,
+    Marquee
+  },
   data() {
     return {
       // 背景相关
       heroBackgroundStyle: {
-        background: "url('https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=1920&h=1080&fit=crop&q=80') center/cover",
+        background: "url('@/assets/薛之谦.jpg') center/cover",
         filter: 'brightness(0.4)',
         transform: 'scale(1.02)'
       },
@@ -1400,6 +1398,63 @@ export default {
             {time: '2008-12-20', location: '上海', venue: '上海大舞台',场次: 1}
           ]
         }
+      ],
+      // 代表作品数据
+      representativeWorks: [
+        {
+          id: 1,
+          title: '认真的雪',
+          year: '2006年',
+          type: '单曲',
+          image: 'https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=300&h=300&fit=crop&q=80',
+          achievements: ['雪碧中国原创音乐流行榜最受欢迎新人奖', '东方风云榜最佳新人奖'],
+          description: '薛之谦的成名作，奠定了其在华语乐坛的地位。深情的演唱和真挚的情感表达深受听众喜爱。'
+        },
+        {
+          id: 2,
+          title: '演员',
+          year: '2015年',
+          type: '单曲',
+          image: 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=300&h=300&fit=crop&q=80',
+          achievements: ['全球华语歌曲排行榜年度金曲', 'MV播放量破亿'],
+          description: '薛之谦复出后的代表作之一，以其独特的创作风格和深刻的歌词内容获得广泛认可。'
+        },
+        {
+          id: 3,
+          title: '丑八怪',
+          year: '2013年',
+          type: '单曲',
+          image: 'https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=300&h=300&fit=crop&q=80',
+          achievements: ['各大音乐平台热门单曲', '演唱会必唱曲目'],
+          description: '一首充满自嘲和幽默的作品，展现了薛之谦独特的音乐个性和创作才华。'
+        },
+        {
+          id: 4,
+          title: '绅士',
+          year: '2015年',
+          type: '单曲',
+          image: 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=300&h=300&fit=crop&q=80',
+          achievements: ['华语流行音乐榜前十', '各大音乐节点播率极高'],
+          description: '展现了薛之谦在音乐创作上的成熟和多样性，歌曲旋律朗朗上口。'
+        },
+        {
+          id: 5,
+          title: '刚刚好',
+          year: '2016年',
+          type: '单曲',
+          image: 'https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=300&h=300&fit=crop&q=80',
+          achievements: ['年度热门金曲', '各大音乐平台冠军单曲'],
+          description: '温暖治愈的情歌，体现了薛之谦细腻的情感表达能力。'
+        },
+        {
+          id: 6,
+          title: '天外来物',
+          year: '2020年',
+          type: '专辑',
+          image: 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=300&h=300&fit=crop&q=80',
+          achievements: ['年度最佳专辑提名', '全国巡回演唱会主题'],
+          description: '薛之谦近年来的重要作品，展现了其音乐创作的新高度和艺术追求。'
+        }
       ]
     };
   },
@@ -1456,13 +1511,40 @@ export default {
   overflow: hidden;
 }
 
+/* 夸赞语句样式 */
+.praise-messages {
+  display: flex;
+  gap: 3rem;
+  align-items: center;
+  padding: 1rem 0;
+}
+
+.praise-item {
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(10px);
+  padding: 1rem 2rem;
+  border-radius: 30px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: white;
+  font-size: 1.1rem;
+  white-space: nowrap;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+  transition: all 0.3s ease;
+}
+
+.praise-item:hover {
+  transform: translateY(-3px);
+  background: rgba(255, 255, 255, 0.15);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.3);
+}
+
 .hero-background {
   position: absolute;
   top: 0;
   left: 0;
   width: 100%;
   height: 100%;
-  background: url('https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=1920&h=1080&fit=crop&q=80') center/cover;
+  background: url('@/assets/薛之谦.jpg') center/cover;
   filter: brightness(0.4);
   transform: scale(1.02);
 }
@@ -1555,9 +1637,9 @@ export default {
 
 .hero-stats {
   display: flex;
-  justify-content: center;
   gap: 3rem;
-  margin-top: 2rem;
+  margin: 0;
+  padding: 0 1rem;
 }
 
 .stat-item {
@@ -1569,12 +1651,15 @@ export default {
   font-size: 2.5rem;
   font-weight: bold;
   margin-bottom: 0.5rem;
-  color: var(--text-primary);
+  color: #ffffff;
+  text-shadow: 0 2px 8px rgba(0,0,0,0.3);
 }
 
 .stat-label {
   font-size: 1rem;
-  opacity: 0.8;
+  color: #ffffff;
+  opacity: 0.9;
+  text-shadow: 0 1px 4px rgba(0,0,0,0.2);
 }
 
 /* 章节标题 */
@@ -1626,6 +1711,31 @@ export default {
   padding: 6rem 2rem;
   background: var(--background);
 }
+
+.profile-card {
+  background: rgba(255,255,255,0.05);
+  padding: 2rem;
+  border-radius: 15px;
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255,255,255,0.1);
+  box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+}
+
+.profile-content-wrapper {
+  text-align: left;
+  line-height: 1.6;
+}
+
+.profile-animated-text {
+  color: var(--text-primary) !important;
+  font-size: inherit !important;
+  font-weight: inherit !important;
+  line-height: inherit !important;
+}
+
+/* 移除了章节标题动画样式，因为个人档案不再使用动画效果 */
+
+/* 移除了 .profile-description 样式，因为现在所有内容都使用动画效果 */
 
 .personal-info-section {
   padding: 6rem 2rem;
@@ -1720,30 +1830,94 @@ export default {
 }
 
 .timeline-content {
-  padding: 1.5rem;
-  background: rgba(255,255,255,0.05);
-  border-radius: 10px;
-  backdrop-filter: blur(5px);
-  border: 1px solid rgba(255,255,255,0.05);
-  box-shadow: 0 5px 15px rgba(0,0,0,0.05);
+  padding: 1.8rem;
+  background: rgba(255,255,255,0.1);
+  border-radius: 15px;
+  backdrop-filter: blur(15px);
+  border: 1px solid rgba(255,255,255,0.15);
+  box-shadow: 0 8px 32px rgba(0,0,0,0.1);
   transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.timeline-content::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(135deg, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0.05) 100%);
+  border-radius: 15px;
+  z-index: -1;
 }
 
 .timeline-content:hover {
-  transform: translateY(-5px);
-  box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+  transform: translateY(-8px);
+  box-shadow: 0 15px 40px rgba(0,0,0,0.15);
+  background: rgba(255,255,255,0.15);
+  border-color: rgba(255,255,255,0.25);
 }
+
+.timeline-content:hover::before {
+  background: linear-gradient(135deg, rgba(255,255,255,0.15) 0%, rgba(255,255,255,0.1) 100%);
+}
+
 
 .timeline-content h3 {
   margin-top: 0;
   font-size: 1.5rem;
   margin-bottom: 0.8rem;
   color: var(--text-primary);
+  position: relative;
+  z-index: 1;
 }
 
 .timeline-content p {
   opacity: 0.9;
   line-height: 1.6;
+  position: relative;
+  z-index: 1;
+  margin: 0;
+  font-size: 0.95rem;
+  color: var(--text-secondary);
+  transition: color 0.3s ease;
+}
+
+.timeline-content:hover p {
+  color: var(--text-primary);
+  opacity: 1;
+}
+
+/* 时间线子项目样式 */
+.timeline-subitem {
+  margin: 1rem 0;
+  padding-left: 1rem;
+  border-left: 2px solid rgba(255, 255, 255, 0.2);
+}
+
+.timeline-subdate {
+  font-size: 1rem;
+  font-weight: bold;
+  color: var(--text-primary);
+  margin-bottom: 0.5rem;
+  display: inline-block;
+  padding: 0.2rem 0.8rem;
+  background: rgba(76, 161, 175, 0.2);
+  border-radius: 12px;
+  border: 1px solid rgba(76, 161, 175, 0.3);
+}
+
+/* 黑色主题下的时间线子项目样式 */
+[data-theme="black"] .timeline-subitem {
+  border-left: 2px solid rgba(255, 255, 255, 0.3);
+}
+
+[data-theme="black"] .timeline-subdate {
+  color: #ffffff;
+  background: rgba(76, 161, 175, 0.3);
+  border: 1px solid rgba(76, 161, 175, 0.5);
 }
 
 /* 代表作品 */
@@ -2170,6 +2344,7 @@ blockquote footer {
 .concert-row {
   background-color: rgba(255, 255, 255, 0.05);
   transition: background-color 0.3s;
+  color: var(--text-primary);
 }
 
 .concert-row:hover {
@@ -2179,6 +2354,27 @@ blockquote footer {
 .concert-table td {
   padding: 1rem;
   border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  color: var(--text-primary);
+}
+
+/* 黑色主题下的演唱会表格样式 */
+[data-theme="black"] .concert-table th {
+  background-color: rgba(255, 255, 255, 0.05);
+  color: #ffffff;
+}
+
+[data-theme="black"] .concert-row {
+  background-color: rgba(255, 255, 255, 0.02);
+  color: #ffffff;
+}
+
+[data-theme="black"] .concert-row:hover {
+  background-color: rgba(255, 255, 255, 0.05);
+}
+
+[data-theme="black"] .concert-table td {
+  color: #ffffff;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
 }
 
 .expand-btn {
@@ -2204,36 +2400,486 @@ blockquote footer {
 }
 
 .detail-row {
-  background-color: rgba(0, 0, 0, 0.1);
+  background-color: var(--background-secondary, rgba(0, 0, 0, 0.1));
   display: table-row;
   height: auto;
   min-height: 100px;
   overflow: visible;
 }
 
+.detail-row td {
+  border: none !important;
+  padding: 0 !important;
+}
+
 .detail-table {
   width: 100%;
   border-collapse: collapse;
+  border: none;
 }
 
 .detail-table th {
-  background-color: rgba(255, 255, 255, 0.1);
+  background-color: var(--card-bg, rgba(255, 255, 255, 0.1));
   color: var(--text-primary);
   padding: 0.5rem;
+  border: none;
 }
 
 .detail-table td {
   padding: 0.5rem;
+  border: none;
+  border-bottom: 1px solid var(--card-border, rgba(255, 255, 255, 0.05));
+  color: var(--text-primary);
+  background-color: transparent;
+}
+
+.detail-table tr:nth-child(even) td {
+  background-color: rgba(255, 255, 255, 0.03);
+}
+
+.detail-table tr:hover td {
+  background-color: rgba(255, 255, 255, 0.08);
+  transition: background-color 0.3s ease;
+}
+
+/* 主题特定样式 */
+[data-theme="black"] .detail-row {
+  background-color: rgba(0, 0, 0, 0.5);
+}
+
+[data-theme="black"] .detail-row td {
+  border: none !important;
+  padding: 0 !important;
+}
+
+[data-theme="black"] .detail-table {
+  background-color: rgba(0, 0, 0, 0.3);
+}
+
+[data-theme="black"] .detail-table th {
+  background-color: rgba(0, 0, 0, 0.7);
+  color: #ffffff;
+  border: none;
+}
+
+[data-theme="black"] .detail-table td {
+  color: #ffffff;
+  background-color: rgba(0, 0, 0, 0.4);
   border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+[data-theme="black"] .detail-table tr:nth-child(even) td {
+  background-color: rgba(0, 0, 0, 0.6);
+}
+
+[data-theme="black"] .detail-table tr:hover td {
+  background-color: rgba(255, 255, 255, 0.08);
+}
+
+/* 粉色主题 */
+[data-theme="pink"] .detail-row {
+  background-color: rgba(255, 182, 193, 0.3);
+}
+
+[data-theme="pink"] .detail-row td {
+  border: none !important;
+  padding: 0 !important;
+}
+
+[data-theme="pink"] .detail-table {
+  background-color: rgba(255, 182, 193, 0.2);
+}
+
+[data-theme="pink"] .detail-table th {
+  background-color: rgba(255, 182, 193, 0.7);
+  color: #ffffff;
+  border: none;
+}
+
+[data-theme="pink"] .detail-table td {
+  color: var(--text-primary);
+  background-color: rgba(255, 182, 193, 0.3);
+  border-bottom: 1px solid rgba(255, 182, 193, 0.3);
+}
+
+[data-theme="pink"] .detail-table tr:nth-child(even) td {
+  background-color: rgba(255, 182, 193, 0.4);
+}
+
+[data-theme="pink"] .detail-table tr:hover td {
+  background-color: rgba(255, 182, 193, 0.5);
+}
+
+/* 蓝色主题 */
+[data-theme="blue"] .detail-row {
+  background-color: rgba(135, 206, 235, 0.3);
+}
+
+[data-theme="blue"] .detail-row td {
+  border: none !important;
+  padding: 0 !important;
+}
+
+[data-theme="blue"] .detail-table {
+  background-color: rgba(135, 206, 235, 0.2);
+}
+
+[data-theme="blue"] .detail-table th {
+  background-color: rgba(135, 206, 235, 0.7);
+  color: #ffffff;
+  border: none;
+}
+
+[data-theme="blue"] .detail-table td {
+  color: var(--text-primary);
+  background-color: rgba(135, 206, 235, 0.3);
+  border-bottom: 1px solid rgba(135, 206, 235, 0.3);
+}
+
+[data-theme="blue"] .detail-table tr:nth-child(even) td {
+  background-color: rgba(135, 206, 235, 0.4);
+}
+
+[data-theme="blue"] .detail-table tr:hover td {
+  background-color: rgba(135, 206, 235, 0.5);
+}
+
+/* 绿色主题 */
+[data-theme="green"] .detail-row {
+  background-color: rgba(144, 238, 144, 0.3);
+}
+
+[data-theme="green"] .detail-row td {
+  border: none !important;
+  padding: 0 !important;
+}
+
+[data-theme="green"] .detail-table {
+  background-color: rgba(144, 238, 144, 0.2);
+}
+
+[data-theme="green"] .detail-table th {
+  background-color: rgba(144, 238, 144, 0.7);
+  color: #ffffff;
+  border: none;
+}
+
+[data-theme="green"] .detail-table td {
+  color: var(--text-primary);
+  background-color: rgba(144, 238, 144, 0.3);
+  border-bottom: 1px solid rgba(144, 238, 144, 0.3);
+}
+
+[data-theme="green"] .detail-table tr:nth-child(even) td {
+  background-color: rgba(144, 238, 144, 0.4);
+}
+
+[data-theme="green"] .detail-table tr:hover td {
+  background-color: rgba(144, 238, 144, 0.5);
+}
+
+/* 紫色主题 */
+[data-theme="purple"] .detail-row {
+  background-color: rgba(221, 160, 221, 0.3);
+}
+
+[data-theme="purple"] .detail-row td {
+  border: none !important;
+  padding: 0 !important;
+}
+
+[data-theme="purple"] .detail-table {
+  background-color: rgba(221, 160, 221, 0.2);
+}
+
+[data-theme="purple"] .detail-table th {
+  background-color: rgba(221, 160, 221, 0.7);
+  color: #ffffff;
+  border: none;
+}
+
+[data-theme="purple"] .detail-table td {
+  color: var(--text-primary);
+  background-color: rgba(221, 160, 221, 0.3);
+  border-bottom: 1px solid rgba(221, 160, 221, 0.3);
+}
+
+[data-theme="purple"] .detail-table tr:nth-child(even) td {
+  background-color: rgba(221, 160, 221, 0.4);
+}
+
+[data-theme="purple"] .detail-table tr:hover td {
+  background-color: rgba(221, 160, 221, 0.5);
+}
+
+/* 橙色主题 */
+[data-theme="orange"] .detail-row {
+  background-color: rgba(255, 165, 0, 0.3);
+}
+
+[data-theme="orange"] .detail-row td {
+  border: none !important;
+  padding: 0 !important;
+}
+
+[data-theme="orange"] .detail-table {
+  background-color: rgba(255, 165, 0, 0.2);
+}
+
+[data-theme="orange"] .detail-table th {
+  background-color: rgba(255, 165, 0, 0.7);
+  color: #ffffff;
+  border: none;
+}
+
+[data-theme="orange"] .detail-table td {
+  color: var(--text-primary);
+  background-color: rgba(255, 165, 0, 0.3);
+  border-bottom: 1px solid rgba(255, 165, 0, 0.3);
+}
+
+[data-theme="orange"] .detail-table tr:nth-child(even) td {
+  background-color: rgba(255, 165, 0, 0.4);
+}
+
+[data-theme="orange"] .detail-table tr:hover td {
+  background-color: rgba(255, 165, 0, 0.5);
+}
+
+/* 红色主题 */
+[data-theme="red"] .detail-row {
+  background-color: rgba(255, 99, 99, 0.3);
+}
+
+[data-theme="red"] .detail-row td {
+  border: none !important;
+  padding: 0 !important;
+}
+
+[data-theme="red"] .detail-table {
+  background-color: rgba(255, 99, 99, 0.2);
+}
+
+[data-theme="red"] .detail-table th {
+  background-color: rgba(255, 99, 99, 0.7);
+  color: #ffffff;
+  border: none;
+}
+
+[data-theme="red"] .detail-table td {
+  color: var(--text-primary);
+  background-color: rgba(255, 99, 99, 0.3);
+  border-bottom: 1px solid rgba(255, 99, 99, 0.3);
+}
+
+[data-theme="red"] .detail-table tr:nth-child(even) td {
+  background-color: rgba(255, 99, 99, 0.4);
+}
+
+[data-theme="red"] .detail-table tr:hover td {
+  background-color: rgba(255, 99, 99, 0.5);
+}
+
+/* 黄色主题 */
+[data-theme="yellow"] .detail-row {
+  background-color: rgba(255, 223, 0, 0.3);
+}
+
+[data-theme="yellow"] .detail-row td {
+  border: none !important;
+  padding: 0 !important;
+}
+
+[data-theme="yellow"] .detail-table {
+  background-color: rgba(255, 223, 0, 0.2);
+}
+
+[data-theme="yellow"] .detail-table th {
+  background-color: rgba(255, 223, 0, 0.7);
+  color: #000000;
+  border: none;
+}
+
+[data-theme="yellow"] .detail-table td {
+  color: var(--text-primary);
+  background-color: rgba(255, 223, 0, 0.3);
+  border-bottom: 1px solid rgba(255, 223, 0, 0.3);
+}
+
+[data-theme="yellow"] .detail-table tr:nth-child(even) td {
+  background-color: rgba(255, 223, 0, 0.4);
+}
+
+[data-theme="yellow"] .detail-table tr:hover td {
+  background-color: rgba(255, 223, 0, 0.5);
+}
+
+/* 白色主题 */
+[data-theme="white"] .detail-row {
+  background-color: rgba(0, 0, 0, 0.05);
+}
+
+[data-theme="white"] .detail-row td {
+  border: none !important;
+  padding: 0 !important;
+}
+
+[data-theme="white"] .detail-table {
+  background-color: rgba(255, 255, 255, 0.9);
+}
+
+[data-theme="white"] .detail-table th {
+  background-color: rgba(0, 0, 0, 0.1);
+  color: #ffffff;
+  border: none;
+}
+
+[data-theme="white"] .detail-table td {
+  color: #333333;
+  background-color: rgba(255, 255, 255, 0.8);
+  border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+[data-theme="white"] .detail-table tr:nth-child(even) td {
+  background-color: rgba(0, 0, 0, 0.05);
+}
+
+[data-theme="white"] .detail-table tr:hover td {
+  background-color: rgba(0, 0, 0, 0.1);
 }
 
 /* 代表作品样式 */
 .works-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, 200px);
+  grid-template-columns: repeat(5, 1fr);
   justify-content: center;
   gap: 1.5rem;
   margin-top: var(--space-lg);
+  padding: 2rem;
+  max-width: 1200px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+/* 响应式布局 */
+@media (max-width: 1024px) {
+  .works-grid {
+    grid-template-columns: repeat(4, 1fr);
+    gap: 1.2rem;
+  }
+}
+
+@media (max-width: 768px) {
+  .works-grid {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .works-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 0.8rem;
+    padding: 1rem;
+  }
+}
+
+/* FlipCard 前面样式 */
+.work-front {
+  width: 100%;
+  height: 100%;
+  background-size: cover;
+  background-position: center;
+  position: relative;
+  border-radius: 16px;
+  overflow: hidden;
+}
+
+.work-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(to top, rgba(0,0,0,0.8) 0%, rgba(0,0,0,0) 60%);
+}
+
+.work-info {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  padding: 1.5rem;
+  z-index: 10;
+}
+
+.work-info h3 {
+  font-size: 1.25rem;
+  font-weight: 600;
+  margin: 0 0 0.5rem 0;
+  color: white;
+}
+
+.work-info p {
+  font-size: 0.875rem;
+  margin: 0;
+  color: rgba(255, 255, 255, 0.8);
+}
+
+/* FlipCard 背面样式 */
+.work-back {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  color: white;
+}
+
+.work-back h4 {
+  font-size: 1rem;
+  font-weight: 600;
+  margin: 0 0 0.8rem 0;
+  color: #fff;
+  text-align: center;
+}
+
+.work-details {
+  flex: 1;
+  overflow: hidden;
+}
+
+.work-details p {
+  font-size: 0.7rem;
+  margin: 0 0 0.4rem 0;
+  line-height: 1.2;
+}
+
+.work-details strong {
+  color: #fbbf24;
+}
+
+.work-details ul {
+  margin: 0.3rem 0;
+  padding-left: 0.8rem;
+  font-size: 0.65rem;
+}
+
+.work-details li {
+  margin: 0.2rem 0;
+  line-height: 1.2;
+}
+
+.work-description {
+  font-size: 0.65rem !important;
+  line-height: 1.3 !important;
+  margin-top: 0.5rem !important;
+  color: rgba(255, 255, 255, 0.9) !important;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .work-item-container {

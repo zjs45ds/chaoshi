@@ -78,13 +78,6 @@ export const API_ENDPOINTS = {
     URL: '/mv/url'
   },
 
-  // 评论相关
-  COMMENT: {
-    LIST: '/comments',
-    ADD: '/comments',
-    LIKE: '/comments/like',
-    REPLY: '/comments/reply'
-  },
 
   // 上传相关
   UPLOAD: {
@@ -162,23 +155,6 @@ export const PLAY_MODES = {
   SINGLE: 'single'
 }
 
-// 歌单分类
-export const PLAYLIST_CATEGORIES = {
-  LANGUAGE: ['华语', '欧美', '日语', '韩语', '粤语'],
-  STYLE: ['流行', '摇滚', '民谣', '电子', '说唱', '轻音乐', '爵士', '乡村', '蓝调'],
-  SCENE: ['清晨', '夜晚', '学习', '工作', '休闲', '运动', '旅行', '散步'],
-  EMOTION: ['怀旧', '清新', '浪漫', '性感', '伤感', '治愈', '放松', '孤独', '感动'],
-  THEME: ['影视原声', 'ACG', '儿童', '校园', '游戏', '70后', '80后', '90后', '网络歌曲']
-}
-
-// 用户等级
-export const USER_LEVELS = {
-  VISITOR: 0,
-  NORMAL: 1,
-  VIP: 2,
-  SVIP: 3,
-  ADMIN: 99
-}
 
 // 文件大小限制
 export const FILE_SIZE_LIMITS = {

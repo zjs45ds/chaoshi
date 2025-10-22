@@ -1,3 +1,4 @@
+// 播放图标组件
 <template>
   <svg 
     :class="['play-icon-svg', sizeClass, customClass]" 

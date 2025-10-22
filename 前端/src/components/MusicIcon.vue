@@ -1,3 +1,4 @@
+// 音乐图标组件
 <template>
   <span class="music-icon" :class="iconClass">
     <template v-if="iconConfig.type === 'emoji'">{{ iconConfig.content }}</template>

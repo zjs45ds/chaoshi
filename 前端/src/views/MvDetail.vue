@@ -1,3 +1,4 @@
+// MV详情页面
 <template>
   <div class="detail-page">
     <div class="loading" v-if="loading">
@@ -27,7 +28,20 @@
       <!-- MV信息 -->
       <div class="mv-info">
         <div class="mv-header">
-          <div class="mv-title">{{ mv.name }}</div>
+          <div class="mv-title-row">
+            <div class="mv-title">{{ mv.name }}</div>
+            <div class="mv-actions">
+              <button class="action-btn" @click="toggleFavorite" :class="{ 'is-favorited': isFavorited }" :disabled="isToggling">
+                <svg v-if="isFavorited" class="heart-icon-svg filled" viewBox="0 0 24 24" width="16" height="16">
+                  <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" fill="currentColor"/>
+                </svg>
+                <svg v-else class="heart-icon-svg outline" viewBox="0 0 24 24" width="16" height="16">
+                  <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" fill="none" stroke="currentColor" stroke-width="2"/>
+                </svg>
+                {{ isFavorited ? '已收藏' : '' }}
+              </button>
+            </div>
+          </div>
           <div class="mv-meta">
             <span class="mv-artist" v-if="mv.artist">{{ mv.artist }}</span>
             <span class="mv-stats">
@@ -59,14 +73,145 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, onUnmounted } from 'vue'
 import { useRoute } from 'vue-router'
 import { getMVById } from '@/api/mv.js'
+import { favoriteMv, getUserFavoriteMvs } from '@/api/favorite.js'
 import { ElMessage } from 'element-plus'
 
 const route = useRoute()
 const mv = ref(null)
 const loading = ref(true)
+const isFavorited = ref(false)
+const isToggling = ref(false) // 防止重复点击
+
+// 用户管理
+const getCurrentUserId = () => {
+  return localStorage.getItem('userId') || localStorage.getItem('currentUserId') || '1'
+}
+
+// 加载收藏状态
+const loadFavoriteStatus = async () => {
+  try {
+    const userId = getCurrentUserId()
+    const mvId = route.params.id
+    
+    console.log('🔍 开始加载MV收藏状态:', { userId, mvId })
+    
+    // 首先尝试使用收藏状态检查API
+    try {
+      const { getMvFavoriteStatus } = await import('@/api/favorite.js')
+      const response = await getMvFavoriteStatus(mvId, userId)
+      
+      console.log('📡 收藏状态API响应:', response)
+      
+      if (response.code === 200) {
+        const favoriteStatus = response.data?.isFavorited === true || response.data === true
+        isFavorited.value = favoriteStatus
+        console.log('✅ 通过API获取收藏状态:', favoriteStatus)
+        return
+      }
+    } catch (apiError) {
+      console.warn('⚠️ 收藏状态API调用失败，使用备用方法:', apiError)
+    }
+    
+    // 备用方法：通过获取用户收藏列表来检查
+    try {
+      const mvListResponse = await getUserFavoriteMvs(userId)
+      console.log('📡 收藏列表API响应:', mvListResponse)
+      
+      if (mvListResponse.code === 200 && mvListResponse.data) {
+        const favoriteMvIds = mvListResponse.data.map(mv => mv.id)
+        const favoriteStatus = favoriteMvIds.includes(parseInt(mvId))
+        isFavorited.value = favoriteStatus
+        console.log('✅ 通过收藏列表检查状态:', favoriteStatus, 'MV ID:', mvId, '收藏列表:', favoriteMvIds)
+      } else {
+        isFavorited.value = false
+        console.log('❌ 收藏列表为空或获取失败，设为未收藏')
+      }
+    } catch (listError) {
+      console.error('❌ 获取收藏列表失败:', listError)
+      isFavorited.value = false
+    }
+  } catch (error) {
+    console.error('❌ 获取收藏状态失败:', error)
+    isFavorited.value = false
+  }
+}
+
+// 切换收藏状态
+const toggleFavorite = async () => {
+  // 防止重复点击
+  if (isToggling.value) {
+    return
+  }
+  
+  try {
+    isToggling.value = true
+    const userId = getCurrentUserId()
+    const mvId = mv.value.id
+    const originalStatus = isFavorited.value
+    
+    console.log('🎯 开始收藏操作:', {
+      userId,
+      mvId,
+      currentStatus: originalStatus,
+      targetAction: originalStatus ? '取消收藏' : '收藏'
+    })
+    
+    const response = await favoriteMv(mvId, userId, originalStatus)
+    
+    if (response.code === 200) {
+      const newStatus = !originalStatus
+      isFavorited.value = newStatus
+      ElMessage.success(newStatus ? '已收藏MV' : '已取消收藏MV')
+      
+      console.log('✅ 收藏操作成功:', {
+        mvId,
+        originalStatus,
+        newStatus,
+        response: response.data
+      })
+      
+      // 发送收藏状态变化事件，通知我的音乐页面刷新
+      window.dispatchEvent(new CustomEvent('mvFavoriteChanged', {
+        detail: {
+          mvId: mvId,
+          isFavorited: newStatus
+        }
+      }))
+      
+      // 等待一小段时间后重新验证状态，确保持久化成功
+      setTimeout(async () => {
+        await loadFavoriteStatus()
+        console.log('🔄 重新验证收藏状态:', isFavorited.value)
+      }, 500)
+      
+    } else {
+      console.error('❌ 收藏操作失败:', response)
+      ElMessage.error(response.message || '操作失败')
+      
+      // 重新加载状态以确保UI与服务器同步
+      await loadFavoriteStatus()
+    }
+  } catch (error) {
+    console.error('❌ 收藏操作异常:', error)
+    
+    // 如果是重复数据错误或其他数据库错误，重新加载状态
+    if (error.message && (
+      error.message.includes('Duplicate entry') || 
+      error.message.includes('收藏') ||
+      error.response?.status === 500
+    )) {
+      ElMessage.warning('状态可能已变更，正在刷新...')
+      await loadFavoriteStatus()
+    } else {
+      ElMessage.error('操作失败，请稍后重试')
+    }
+  } finally {
+    isToggling.value = false
+  }
+}
 
 // 获取MV详情
 const fetchMvDetail = async () => {
@@ -77,8 +222,9 @@ const fetchMvDetail = async () => {
     
     if (response && response.code === 200) {
       mv.value = response.data
-      
       console.log('🎬 MV详情加载完成:', mv.value)
+      // 加载收藏状态
+      await loadFavoriteStatus()
     } else {
       ElMessage.error('获取MV详情失败')
     }
@@ -114,9 +260,53 @@ const handlePlay = () => {
 }
 
 
+// 页面可见性变化时刷新收藏状态
+const handleVisibilityChange = () => {
+  if (!document.hidden && mv.value) {
+    console.log('🔄 页面重新可见，刷新收藏状态')
+    loadFavoriteStatus()
+  }
+}
+
+// 监听来自其他页面的收藏状态变化事件
+const handleMvFavoriteChanged = (event) => {
+  const { mvId, isFavorited: newStatus } = event.detail
+  if (mv.value && mv.value.id == mvId) {
+    console.log('🔄 收到收藏状态变化事件:', { mvId, newStatus })
+    isFavorited.value = newStatus
+  }
+}
 
 onMounted(() => {
   fetchMvDetail()
+  
+  // 监听页面可见性变化
+  document.addEventListener('visibilitychange', handleVisibilityChange)
+  
+  // 监听收藏状态变化事件
+  window.addEventListener('mvFavoriteChanged', handleMvFavoriteChanged)
+  
+  // 检查是否需要自动播放
+  if (route.query.autoPlay === 'true') {
+    console.log('🎬 检测到自动播放参数，准备自动播放视频')
+    // 延迟一下确保视频元素加载完成
+    setTimeout(() => {
+      const videoElement = document.querySelector('.video-player')
+      if (videoElement && videoElement.src) {
+        console.log('▶️ 自动播放视频:', mv.value?.name)
+        videoElement.play().catch(error => {
+          console.warn('自动播放失败（可能需要用户交互）:', error)
+          ElMessage.info('请点击播放按钮开始播放视频')
+        })
+      }
+    }, 1500)
+  }
+})
+
+// 清理事件监听器
+onUnmounted(() => {
+  document.removeEventListener('visibilitychange', handleVisibilityChange)
+  window.removeEventListener('mvFavoriteChanged', handleMvFavoriteChanged)
 })
 </script>
 
@@ -215,11 +405,176 @@ onMounted(() => {
   margin-bottom: 24px;
 }
 
+.mv-title-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 12px;
+}
+
 .mv-title {
   font-size: 28px;
   font-weight: bold;
   color: var(--text-primary);
-  margin-bottom: 12px;
+  flex: 1;
+}
+
+.mv-actions {
+  display: flex;
+  gap: 8px;
+  margin-left: 16px;
+}
+
+.action-btn {
+  background: var(--background);
+  color: var(--text-primary);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 12px 16px !important;
+  font-size: 14px !important;
+  font-weight: 600;
+  cursor: pointer;
+  transition: color 0.2s ease, background-color 0.2s ease, border-color 0.2s ease !important;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  width: auto !important;
+  height: auto !important;
+  line-height: 1.4 !important;
+  box-sizing: border-box !important;
+  flex-shrink: 0 !important;
+  transform: none !important;
+}
+
+.action-btn:hover {
+  background: var(--background-hover);
+  border-color: var(--primary);
+  color: var(--primary);
+  transform: none !important;
+  padding: 12px 16px !important;
+  width: auto !important;
+  height: auto !important;
+}
+
+.action-btn:focus, .action-btn:active {
+  transform: none !important;
+  padding: 12px 16px !important;
+}
+
+.action-btn.is-favorited {
+  transform: none !important;
+  padding: 12px 16px !important;
+  width: auto !important;
+  height: auto !important;
+}
+
+.action-btn.is-favorited:hover {
+  transform: none !important;
+  padding: 12px 16px !important;
+}
+
+.action-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+.heart-icon-svg {
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0;
+  transition: all 0.2s ease;
+}
+
+.heart-icon-svg.outline {
+  color: #999;
+}
+
+.heart-icon-svg.filled {
+  color: #d33a31;
+}
+
+.action-btn:hover .heart-icon-svg {
+  transform: scale(1.1);
+}
+
+.action-btn:hover .heart-icon-svg.outline {
+  color: var(--accent);
+}
+
+.action-btn:hover .heart-icon-svg.filled {
+  color: var(--accent);
+}
+
+/* 黑色主题下的收藏按钮样式 */
+[data-theme="black"] .action-btn {
+  background: #000000 !important;
+  color: white !important;
+  border: 1px solid white !important;
+}
+
+[data-theme="black"] .action-btn:hover {
+  background: #1a1a1a !important;
+  color: white !important;
+  border-color: white !important;
+  transform: translateY(-1px) !important;
+  box-shadow: 0 4px 12px rgba(255, 255, 255, 0.2) !important;
+}
+
+[data-theme="black"] .heart-icon-svg.filled {
+  color: #dc2626 !important; /* 红色爱心 */
+}
+
+[data-theme="black"] .heart-icon-svg.outline {
+  color: white !important;
+  stroke: white !important;
+}
+
+[data-theme="black"] .action-btn:hover .heart-icon-svg.outline {
+  color: #dc2626 !important;
+  stroke: #dc2626 !important;
+}
+
+/* 黑色主题下的页面样式 */
+[data-theme="black"] .mv-detail {
+  background: var(--background);
+  color: var(--text-primary);
+}
+
+[data-theme="black"] .mv-header {
+  background: var(--background-card);
+}
+
+[data-theme="black"] .mv-title {
+  color: var(--text-primary);
+}
+
+[data-theme="black"] .mv-artist {
+  color: var(--text-secondary);
+}
+
+[data-theme="black"] .mv-meta {
+  color: var(--text-tertiary);
+}
+
+[data-theme="black"] .mv-description {
+  color: var(--text-secondary);
+}
+
+[data-theme="black"] .play-btn {
+  background: #1e40af;
+  color: white;
+  border: none;
+}
+
+[data-theme="black"] .play-btn:hover {
+  background: #1d4ed8;
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+}
+
+[data-theme="black"] .section-title {
+  color: var(--text-primary);
+  border-left-color: var(--accent);
 }
 
 .mv-meta {

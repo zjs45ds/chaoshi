@@ -72,4 +72,12 @@ public interface UserService {
      * @return 用户名是否可用
      */
     boolean isUsernameAvailable(String username, Long currentUserId);
+    
+    /**
+     * 更新用户头像
+     * @param userId 用户ID
+     * @param avatarUrl 头像URL
+     * @return 是否更新成功
+     */
+    boolean updateUserAvatar(Long userId, String avatarUrl);
 }

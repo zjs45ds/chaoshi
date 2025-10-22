@@ -1,3 +1,4 @@
+// 播放列表卡片组件
 <template>
   <div class="playlist-card">
     <img :src="playlist.cover" :alt="playlist.title" class="cover" />

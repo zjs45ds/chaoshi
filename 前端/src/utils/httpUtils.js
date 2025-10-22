@@ -141,16 +141,17 @@ http.interceptors.response.use(
     }
 
     // 统一处理响应数据结构
-    const { code, data, message } = response.data
+    const { code, data, message, success, url } = response.data
     
-    if (code === 200 || code === 0) {
+    // 支持两种响应格式：1. code为200/0  2. success为true
+    if ((code === 200 || code === 0) || success === true) {
       // 成功响应，返回完整的响应数据结构给前端页面使用
       return response.data
     } else {
       // 业务错误，抛出异常让组件层处理
       const error = new Error(message || '请求失败')
       error.code = code
-      error.data = data
+      error.data = data || url // 兼容url字段作为data
       error.response = response // 保留原始响应信息
       return Promise.reject(error)
     }
@@ -175,9 +176,11 @@ http.interceptors.response.use(
         // 只处理系统级错误，不处理业务错误
         switch (status) {
           case 401:
-            // 未授权，清除token并跳转登录
+            // 未授权，清除localStorage和sessionStorage中的token并跳转登录
             localStorage.removeItem('token')
             localStorage.removeItem('isLogin')
+            sessionStorage.removeItem('token')
+            sessionStorage.removeItem('isLogin')
             showErrorMessage('登录已过期，请重新登录')
             setTimeout(() => {
               window.location.href = '/login'
@@ -269,11 +272,10 @@ export const request = {
   /**
    * GET请求
    * @param {string} url - 请求地址
-   * @param {Object} params - 查询参数
-   * @param {Object} options - 配置选项
+   * @param {Object} config - 配置选项（包含params等）
    */
-  get(url, params = {}, options = {}) {
-    return http.get(url, { params, ...options })
+  get(url, config = {}) {
+    return http.get(url, config)
   },
 
   /**

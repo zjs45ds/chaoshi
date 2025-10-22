@@ -1,7 +1,4 @@
-/**
- * 通用轮播组件 - 精简版
- * 整合项目中重复的轮播逻辑
- */
+// 通用轮播组件 
 <template>
   <div class="universal-carousel">
     <!-- 左侧切换按钮 -->

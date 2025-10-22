@@ -1,3 +1,5 @@
+// 用户中心页面
+
 <template>
   <div class="user-page">
     <h2>用户中心</h2>

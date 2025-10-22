@@ -1,7 +1,14 @@
+// 用户音乐页面
 <template>
-  <div class="user-music-page">
+  <div :class="isLoggedIn ? 'user-music-page' : 'user-music-login-page'">
+    <!-- 未登录提示 -->
+    <LoginRequired 
+      v-if="!isLoggedIn" 
+      message="登录后即可查看您的音乐收藏、创建歌单，享受个性化的音乐体验！" 
+    />
+    
     <!-- 主内容区 -->
-    <div class="main-content">
+    <div class="main-content" v-else>
       <!-- 用户信息横幅 -->
       <div class="user-banner">
         <div class="banner-bg" :style="{ 'background-image': `url(${bannerBg})`, 'background-size': 'cover', 'background-position': 'center' }"></div>
@@ -30,9 +37,6 @@
             <div class="tab-item" :class="{ active: currentTab === 'liked' }" @click="switchTab('liked')">
               我喜欢
             </div>
-            <div class="tab-item" :class="{ active: currentTab === 'created' }" @click="switchTab('created')">
-              歌单
-            </div>
             <div class="tab-item" :class="{ active: currentTab === 'albums' }" @click="switchTab('albums')">
               专辑
             </div>
@@ -53,15 +57,27 @@
             <span class="count">({{ currentTabCount }})</span>
           </div>
           <div class="action-buttons">
-            <button v-if="currentTab === 'liked'" class="btn btn-secondary" @click="playAll">
+            <button 
+              v-if="currentTab === 'liked' && currentTabCount > 0" 
+              class="btn btn-secondary" 
+              @click="playAll"
+            >
               <svg class="play-icon-svg" viewBox="0 0 1024 1024" version="1.1" xmlns="http://www.w3.org/2000/svg">
                 <path d="M955.733333 512L68.266667 1024V0z" fill="currentColor"></path>
               </svg>播放全部
             </button>
-            <button v-if="currentTab === 'liked'" class="btn btn-secondary" @click="downloadAll">
+            <button 
+              v-if="currentTab === 'liked' && currentTabCount > 0" 
+              class="btn btn-secondary" 
+              @click="downloadAll"
+            >
               <i class="download-icon"></i>下载
             </button>
-            <button v-if="['liked', 'created', 'albums', 'videos'].includes(currentTab)" class="btn btn-secondary" @click="showBatchOptions">
+            <button 
+              v-if="['liked', 'albums', 'videos'].includes(currentTab) && currentTabCount > 0" 
+              class="btn btn-secondary" 
+              @click="showBatchOptions"
+            >
               <i class="batch-icon"></i>批量操作
             </button>
           </div>
@@ -70,7 +86,7 @@
         <!-- 歌曲列表 -->
                   <div class="song-list-container" v-if="currentTab === 'liked'">
             <div class="song-table-header">
-              <div class="table-col col-index"></div>
+              <div class="table-col col-index">#</div>
               <div class="table-col col-song">歌曲</div>
               <div class="table-col col-artist">歌手</div>
               <div class="table-col col-album">专辑</div>
@@ -91,92 +107,46 @@
               <div class="table-col col-album">{{ song.album }}</div>
               <div class="table-col col-duration">{{ song.duration }}</div>
               <div class="table-col col-actions">
-                <div class="more-options-container">
-                  <button class="action-btn more-btn" @click.stop="toggleMoreOptions(song, index, $event)" title="更多">
-                    <i class="more-icon"></i>
+                <div class="more-dropdown" :class="{ 'dropdown-open': activeDropdown === `song_${index}` }">
+                  <button 
+                    class="more-btn" 
+                    @click.stop="toggleDropdown(`song_${index}`, $event)"
+                    title="更多操作"
+                  >
+                    <svg class="more-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                      <circle cx="12" cy="5" r="2" fill="currentColor"/>
+                      <circle cx="12" cy="12" r="2" fill="currentColor"/>
+                      <circle cx="12" cy="19" r="2" fill="currentColor"/>
+                    </svg>
                   </button>
-                  
-                  <!-- 更多选项下拉菜单 -->
-                  <div v-if="showMoreOptionsIndex === index" class="more-options-dropdown" @click.stop>
-                    <div class="option-item" @click="playNext(song)">
-                      <i class="option-icon play-next-icon">▶</i>
+                  <div class="dropdown-menu" v-if="activeDropdown === `song_${index}`">
+                    <button class="dropdown-item" @click.stop="goToSongDetail(song)">
+                      <i class="item-icon">🎵</i>
+                      <span>歌曲详情</span>
+                    </button>
+                    <button class="dropdown-item" @click.stop="goToArtistDetail(song)">
+                      <i class="item-icon">👤</i>
+                      <span>歌手详情</span>
+                    </button>
+                    <button class="dropdown-item" @click.stop="goToAlbumDetail(song)">
+                      <i class="item-icon">💿</i>
+                      <span>专辑详情</span>
+                    </button>
+                    <button class="dropdown-item" @click.stop="addToPlayNext(song)">
+                      <i class="item-icon">⏭️</i>
                       <span>下一首播放</span>
-                    </div>
-                    <div class="option-item" @click="addToQueue(song)">
-                      <i class="option-icon queue-icon">+</i>
-                      <span>添加到播放列表</span>
-                    </div>
-                    <div class="option-item" @click="downloadSong(song)">
-                      <i class="option-icon download-icon">↓</i>
-                      <span>下载</span>
-                    </div>
-                    <div class="option-item" @click="showAddToPlaylistModal(song)">
-                      <i class="option-icon playlist-icon">♪</i>
-                      <span>收藏到歌单</span>
-                    </div>
-                    <div class="option-item" @click="removeFavorite(song, index)">
-                      <i class="option-icon remove-icon">×</i>
+                    </button>
+                    <button class="dropdown-item" @click.stop="downloadSong(song)">
+                      <i class="item-icon">⬇️</i>
+                      <span>下载歌曲</span>
+                    </button>
+                    <button class="dropdown-item danger" @click.stop="removeFavorite(song, index)">
+                      <i class="item-icon">❌</i>
                       <span>从我喜欢中移除</span>
-                    </div>
+                    </button>
                   </div>
                 </div>
               </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- 歌单列表 -->
-        <div class="playlist-list-container" v-else-if="currentTab === 'created'">
-          <!-- 加载状态 -->
-          <div v-if="loadingPlaylists" class="loading-playlists">
-            <div class="loading-spinner"></div>
-            <span>正在加载歌单...</span>
-          </div>
-          
-          <!-- 歌单网格 -->
-          <div v-else class="playlist-grid">
-            <!-- 新建歌单按钮 -->
-            <div class="playlist-card create-playlist-card" @click="showCreatePlaylistModal">
-              <div class="create-playlist-cover">
-                <div class="create-icon">
-                  <i class="plus-icon">+</i>
-                </div>
-              </div>
-              <div class="playlist-info">
-                <h3 class="playlist-title">新建歌单</h3>
-                <p class="playlist-desc">创建一个新的歌单</p>
-              </div>
-            </div>
-            
-            <!-- 现有歌单 -->
-            <div v-for="(playlist, index) in createdPlaylists" :key="playlist.id" class="playlist-card">
-              <!-- 歌单封面区域 -->
-              <div class="playlist-cover" @click="goToPlaylistDetail(playlist.id)">
-                <img :src="playlist.cover" alt="歌单封面">
-                <div class="play-count-overlay">
-                  <i class="play-icon"></i>{{ playlist.playCount }}
-                </div>
-              </div>
-              
-              <!-- 操作按钮 -->
-              <div class="playlist-actions">
-                <button class="action-btn delete-btn" @click.stop="showDeleteConfirm(playlist)" title="删除歌单">
-                  <i class="delete-icon">×</i>
-                </button>
-              </div>
-              
-              <!-- 歌单信息区域 -->
-              <div class="playlist-info" @click="goToPlaylistDetail(playlist.id)">
-                <h3 class="playlist-title">{{ playlist.title }}</h3>
-                <p class="playlist-desc">{{ playlist.desc }}</p>
-              </div>
-            </div>
-            
-            <!-- 空状态 -->
-            <div v-if="!loadingPlaylists && createdPlaylists.length === 0" class="empty-playlists">
-              <div class="empty-icon">🎵</div>
-              <p>您还没有创建任何歌单</p>
-              <p>点击“新建歌单”开始创建您的第一个歌单吧！</p>
             </div>
           </div>
         </div>
@@ -190,7 +160,7 @@
           </div>
           
           <!-- 专辑网格 -->
-          <div v-else class="albums-grid">
+          <div v-else-if="favoriteAlbums.length > 0" class="albums-grid">
             <div 
               v-for="album in favoriteAlbums" 
               :key="album.id" 
@@ -198,7 +168,7 @@
               @click="goToAlbumDetail(album.id)"
             >
               <div class="album-cover">
-                <img :src="album.cover || '/src/assets/1音乐.png'" :alt="album.name" class="cover-image">
+                <img :src="album.cover || require('@/assets/1音乐.png')" :alt="album.name" class="cover-image">
                 <div class="album-overlay">
                   <button class="play-album-btn" @click.stop="playAlbum(album)" title="播放专辑">
                     <img src="/src/assets/开始.svg" alt="播放" class="play-icon-img" />
@@ -206,17 +176,26 @@
                 </div>
               </div>
               <div class="album-info">
-                <h3 class="album-title">{{ album.name }}</h3>
-                <p class="album-artist">{{ album.artistName }}</p>
-                <p class="album-date">{{ formatDate(album.releaseDate) }}</p>
+                <div class="album-title">{{ album.name }}</div>
+                <div class="album-artist">{{ album.artistName }}</div>
+                <div class="album-date">{{ album.releaseDate ? formatDate(album.releaseDate) : '未知日期' }}</div>
               </div>
             </div>
-            
-            <!-- 空状态 -->
-            <div v-if="!loadingAlbums && favoriteAlbums.length === 0" class="empty-albums">
+          </div>
+          
+          <!-- 空状态 -->
+          <div v-else class="empty-albums">
+            <div class="empty-icon-container">
+              <div class="empty-icon-bg"></div>
               <div class="empty-icon">💿</div>
-              <p>您还没有收藏任何专辑</p>
-              <p>去发现一些好听的专辑吧！</p>
+            </div>
+            <div class="empty-content">
+              <h3 class="empty-title">您还没有收藏任何专辑</h3>
+              <p class="empty-description">去发现一些好听的专辑吧！</p>
+              <button class="discover-btn" @click="goToAlbumPage">
+                <i class="btn-icon">🎵</i>
+                立即发现精彩专辑
+              </button>
             </div>
           </div>
         </div>
@@ -229,8 +208,8 @@
             <span>正在加载视频...</span>
           </div>
           
-          <!-- 视频网格 -->
-          <div v-else class="videos-grid">
+          <!-- 有视频时显示网格 -->
+          <div v-else-if="favoriteVideos.length > 0" class="videos-grid">
             <div 
               v-for="video in favoriteVideos" 
               :key="video.id" 
@@ -249,17 +228,26 @@
                 <div class="video-duration">{{ formatDuration(video.duration) }}</div>
               </div>
               <div class="video-info">
-                <h3 class="video-title">{{ video.title }}</h3>
-                <p class="video-artist">{{ video.artistName }}</p>
-                <p class="video-views">{{ formatViews(video.viewCount) }}次播放</p>
+                <div class="video-title">{{ video.title }}</div>
+                <div class="video-artist">{{ video.artistName }}</div>
+                <div class="video-date">2017/12/25</div>
               </div>
             </div>
-            
-            <!-- 空状态 -->
-            <div v-if="!loadingVideos && favoriteVideos.length === 0" class="empty-videos">
+          </div>
+          
+          <!-- 空状态 -->
+          <div v-else class="empty-videos">
+            <div class="empty-icon-container">
+              <div class="empty-icon-bg"></div>
               <div class="empty-icon">📹</div>
-              <p>您还没有收藏任何视频</p>
-              <p>去发现一些精彩的MV吧！</p>
+            </div>
+            <div class="empty-content">
+              <h3 class="empty-title">您还没有收藏任何视频</h3>
+              <p class="empty-description">去发现一些精彩的MV吧！</p>
+              <button class="discover-btn" @click="goToMVPage">
+                <i class="btn-icon">🎬</i>
+                立即发现精彩MV
+              </button>
             </div>
           </div>
         </div>
@@ -342,178 +330,6 @@
       </div>
     </div>
 
-    <!-- 新建歌单模态框 -->
-    <div v-if="showCreateModal" class="create-playlist-modal" @click="closeCreatePlaylistModal">
-      <div class="create-modal-content" @click.stop>
-        <div class="modal-header">
-          <h3>新建歌单</h3>
-          <button class="close-btn" @click="closeCreatePlaylistModal">×</button>
-        </div>
-        
-        <div class="create-form">
-          <div class="form-group">
-            <label for="playlistName">歌单名称</label>
-            <input 
-              type="text" 
-              id="playlistName"
-              v-model="newPlaylist.name" 
-              placeholder="请输入歌单名称"
-              maxlength="40"
-              @keyup.enter="createNewPlaylist"
-            />
-            <div class="char-count">{{ newPlaylist.name.length }}/40</div>
-          </div>
-          
-          <div class="form-group">
-            <label for="playlistDesc">歌单描述</label>
-            <textarea 
-              id="playlistDesc"
-              v-model="newPlaylist.description" 
-              placeholder="请输入歌单描述（可选）"
-              rows="3"
-              maxlength="100"
-            ></textarea>
-            <div class="char-count">{{ newPlaylist.description.length }}/100</div>
-          </div>
-          
-          <div class="form-group">
-            <label>歌单封面</label>
-            <div class="cover-selector">
-              <div class="current-cover" @click="showCoverSelector = true">
-                <img :src="newPlaylist.cover" alt="歌单封面" v-if="newPlaylist.cover">
-                <div class="placeholder-cover" v-else>
-                  <i class="image-icon">🖼️</i>
-                  <span>点击选择封面</span>
-                </div>
-                <div class="cover-overlay">
-                  <div class="cover-actions">
-                    <button type="button" class="action-btn" @click.stop="triggerCoverUpload" title="上传图片">
-                      📷
-                    </button>
-                    <button type="button" class="action-btn" @click.stop="showCoverSelector = true" title="选择默认封面">
-                      🎨
-                    </button>
-                  </div>
-                </div>
-              </div>
-              
-              <!-- 封面选择器 -->
-              <div v-if="showCoverSelector" class="cover-options">
-                <div class="cover-tabs">
-                  <button 
-                    type="button"
-                    class="tab-btn"
-                    :class="{ active: coverTab === 'default' }"
-                    @click="coverTab = 'default'"
-                  >
-                    默认封面
-                  </button>
-                  <button 
-                    type="button"
-                    class="tab-btn"
-                    :class="{ active: coverTab === 'upload' }"
-                    @click="coverTab = 'upload'"
-                  >
-                    上传图片
-                  </button>
-                </div>
-                
-                <!-- 默认封面选择 -->
-                <div v-if="coverTab === 'default'" class="cover-grid">
-                  <!-- 如果有自定义上传的封面，显示在第一位 -->
-                  <div 
-                    v-if="newPlaylist.cover && !defaultCovers.includes(newPlaylist.cover)"
-                    class="cover-option custom-cover"
-                    :class="{ active: true }"
-                  >
-                    <img :src="newPlaylist.cover" alt="自定义封面">
-                    <div class="custom-badge">自定义</div>
-                  </div>
-                  
-                  <!-- 默认封面选项 -->
-                  <div 
-                    v-for="(cover, index) in defaultCovers" 
-                    :key="index"
-                    class="cover-option"
-                    :class="{ active: newPlaylist.cover === cover }"
-                    @click="selectCover(cover)"
-                  >
-                    <img :src="cover" alt="默认封面">
-                  </div>
-                </div>
-                
-                <!-- 上传图片 -->
-                <div v-if="coverTab === 'upload'" class="upload-area">
-                  <div class="upload-zone" @click="triggerCoverUpload" @drop="handleDrop" @dragover="handleDragOver">
-                    <div v-if="!uploadingCover" class="upload-content">
-                      <div class="upload-icon">📷</div>
-                      <p class="upload-text">点击或拖拽图片到此处</p>
-                      <p class="upload-hint">支持 JPG、PNG、GIF 格式，文件大小不超过5MB</p>
-                    </div>
-                    <div v-else class="upload-progress">
-                      <div class="progress-bar">
-                        <div class="progress-fill" :style="{ width: uploadProgress + '%' }"></div>
-                      </div>
-                      <span class="progress-text">正在上传... {{ uploadProgress }}%</span>
-                    </div>
-                  </div>
-                  
-                  <!-- 隐藏的文件输入 -->
-                  <input 
-                    ref="coverInput" 
-                    type="file" 
-                    accept="image/jpeg,image/png,image/gif" 
-                    @change="handleCoverUpload" 
-                    style="display: none;"
-                  />
-                </div>
-                
-                <button class="cover-done-btn" @click="showCoverSelector = false">确定</button>
-              </div>
-            </div>
-          </div>
-        </div>
-        
-        <div class="modal-footer">
-          <button class="btn btn-secondary" @click="closeCreatePlaylistModal">取消</button>
-          <button 
-            class="btn btn-primary" 
-            @click="createNewPlaylist"
-            :disabled="!newPlaylist.name.trim() || isCreating"
-          >
-            {{ isCreating ? '创建中...' : '创建歌单' }}
-          </button>
-        </div>
-      </div>
-    </div>
-
-    <!-- 删除歌单确认对话框 -->
-    <div v-if="showDeleteModal" class="delete-confirm-modal" @click="closeDeleteConfirm">
-      <div class="delete-modal-content" @click.stop>
-        <div class="modal-header">
-          <h3>删除歌单</h3>
-          <button class="close-btn" @click="closeDeleteConfirm">×</button>
-        </div>
-        
-        <div class="delete-content">
-          <div class="warning-icon">⚠️</div>
-          <p class="warning-text">您确定要删除歌单「{{ playlistToDelete?.title }}」吗？</p>
-          <p class="warning-desc">歌单删除后无法恢复，请谨慎操作。</p>
-        </div>
-        
-        <div class="modal-footer">
-          <button class="btn btn-secondary" @click="closeDeleteConfirm">取消</button>
-          <button 
-            class="btn btn-danger" 
-            @click="confirmDeletePlaylist"
-            :disabled="isDeleting"
-          >
-            {{ isDeleting ? '删除中...' : '确认删除' }}
-          </button>
-        </div>
-      </div>
-    </div>
-
     <!-- 歌曲批量操作模态框 -->
     <div v-if="showBatchModal" class="batch-modal" @click="closeBatchModal">
       <div class="batch-modal-content" @click.stop>
@@ -559,59 +375,6 @@
             :disabled="selectedSongs.length === 0"
           >
             从收藏中移除 ({{ selectedSongs.length }})
-          </button>
-        </div>
-      </div>
-    </div>
-
-    <!-- 歌单批量操作模态框 -->
-    <div v-if="showPlaylistBatchModal" class="batch-modal" @click="closeBatchModal">
-      <div class="batch-modal-content" @click.stop>
-        <div class="modal-header">
-          <h3>批量操作 - 我创建的歌单</h3>
-          <button class="close-btn" @click="closeBatchModal">×</button>
-        </div>
-        
-        <div class="batch-content">
-          <div class="batch-header">
-            <div class="select-info">
-              <span>已选择 {{ selectedPlaylists.length }} / {{ createdPlaylists.length }} 个歌单</span>
-            </div>
-            <div class="batch-actions">
-              <button class="btn btn-secondary" @click="selectAllPlaylists">
-                {{ selectedPlaylists.length === createdPlaylists.length ? '取消全选' : '全选' }}
-              </button>
-            </div>
-          </div>
-          
-          <div class="batch-list">
-            <div v-for="playlist in createdPlaylists" :key="playlist.id" class="batch-item">
-              <label class="checkbox-wrapper">
-                <input 
-                  type="checkbox" 
-                  :checked="selectedPlaylists.some(p => p.id === playlist.id)"
-                  @change="togglePlaylistSelection(playlist)"
-                />
-                <div class="playlist-info">
-                  <img :src="playlist.cover" alt="歌单封面" class="playlist-cover-small">
-                  <div class="playlist-details">
-                    <span class="playlist-name">{{ playlist.title }}</span>
-                    <span class="playlist-desc">{{ playlist.desc }}</span>
-                  </div>
-                </div>
-              </label>
-            </div>
-          </div>
-        </div>
-        
-        <div class="modal-footer">
-          <button class="btn btn-secondary" @click="closeBatchModal">取消</button>
-          <button 
-            class="btn btn-danger" 
-            @click="batchDeletePlaylists"
-            :disabled="selectedPlaylists.length === 0"
-          >
-            删除歌单 ({{ selectedPlaylists.length }})
           </button>
         </div>
       </div>
@@ -804,51 +567,93 @@
 <script>
 import { ref, onMounted, onBeforeUnmount, computed, nextTick } from 'vue'
 import { useRouter } from 'vue-router'
-import { handleAvatarUpload, handleBackgroundUpload, triggerFileSelect, FILE_TYPES } from '@/utils/fileUpload.js'
-import { ElMessage } from 'element-plus'
+// 文件上传功能已移除
+import { ElMessage, ElMessageBox } from 'element-plus'
 import { initFavoriteSongs, getFavoriteSongs, refreshFavoriteSongs, getUserId, favoriteStatus } from '@/utils/favoriteManager.js'
-import { createPlaylist, getUserPlaylists, deletePlaylist } from '@/api/playlist.js'
 import { favoriteSong } from '@/api/song.js'
 import { downloadSongs, getDownloadableSongs, showDownloadSummary, isSongDownloadable } from '@/utils/downloadManager.js'
-import { addToPlaylist, addMultipleToPlaylist } from '@/utils/musicPlayer.js'
+import { addToPlaylist, addMultipleToPlaylist, addToPlayNext, addToPlaylistFirst } from '@/utils/musicPlayer.js'
+import { getCurrentUserInfo, getUsername, getUserAvatar, getUserBio, initUserInfo, updateUserInfo } from '@/utils/userStore.js'
+import { updateUserAvatar, updateUserProfile } from '@/api/user.js'
+import LoginRequired from '@/components/LoginRequired.vue'
+// import { getAllPlaylists, createPlaylist, addToPlaylist as addSongToPlaylist } from '@/utils/playlistManager.js' // 文件不存在，已注释
 
 export default {
   components: {
+    LoginRequired
   },
   setup() {
     const router = useRouter()
-    const avatarImg = ref(localStorage.getItem('userAvatar') || 'https://q1.qlogo.cn/g?b=qq&nk=10000&s=100')
-    const nickname = ref(localStorage.getItem('nickname') || localStorage.getItem('username') || '用户昵称')
-    const userBio = ref(localStorage.getItem('userBio') || '热爱音乐，分享美好。')
-
+    
+    // 登录状态检查
+    const isLoggedIn = ref(false)
+    
+    // 检查用户登录状态
+    const checkLoginStatus = () => {
+      // 同时检查localStorage和sessionStorage，支持记住我功能
+      const loginStatus = localStorage.getItem('isLogin') || sessionStorage.getItem('isLogin')
+      const userId = localStorage.getItem('userId') || localStorage.getItem('currentUserId') || 
+                     sessionStorage.getItem('userId') || sessionStorage.getItem('currentUserId')
+      isLoggedIn.value = loginStatus === '1' && userId
+      console.log('🔍 用户登录状态检查:', { 
+        loginStatus, 
+        userId, 
+        isLoggedIn: isLoggedIn.value 
+      })
+      return isLoggedIn.value
+    }
+    
+    // 使用统一的用户信息管理，确保从数据库获取最新数据
+    const globalUserInfo = getCurrentUserInfo()
+    const avatarImg = computed(() => globalUserInfo.avatar || 'https://q1.qlogo.cn/g?b=qq&nk=10000&s=100')
+    const nickname = computed(() => globalUserInfo.username || '用户昵称')
+    const userBio = computed(() => globalUserInfo.bio || '热爱音乐，分享美好。')
     const bannerBg = ref(localStorage.getItem('userBannerBg') || 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=1920&h=1080&fit=crop&q=80') // 背景图
     const currentTab = ref('liked')
     const avatarInput = ref(null)
-    
-    // 更多选项相关状态
-    const showMoreOptionsIndex = ref(-1)
+    const saving = ref(false)
 
-    // 新建歌单相关状态
-    const showCreateModal = ref(false)
-    const showCoverSelector = ref(false)
-    const isCreating = ref(false)
-    const coverTab = ref('default')
-    const uploadingCover = ref(false)
-    const uploadProgress = ref(0)
-    const coverInput = ref(null)
+    // 查看歌曲详情
+    const viewSongDetail = (song) => {
+      router.push(`/song/${song.id}`)
+    }
+
+    // 查看歌手详情
+    const viewArtistDetail = (song) => {
+      router.push(`/artist/${song.artistId || song.artistId}`)
+    }
+
+    // 查看专辑详情
+    const viewAlbumDetail = (song) => {
+      router.push(`/album/${song.albumId}`)
+    }
     
-    // 删除歌单相关状态
-    const showDeleteModal = ref(false)
-    const isDeleting = ref(false)
-    const playlistToDelete = ref(null)
+    // 导航到专辑详情
+    const navigateToAlbum = (albumId) => {
+      router.push(`/album/${albumId}`)
+    }
+
+
+    // 复制音乐链接
+    const copyMusicLink = (song) => {
+      const musicLink = `${window.location.origin}/song/${song.id}`
+      
+      navigator.clipboard.writeText(musicLink)
+        .then(() => {
+          ElMessage.success('音乐链接已复制到剪贴板')
+        })
+        .catch(() => {
+          ElMessage.warning('复制到剪贴板失败，请手动复制')
+        })
+    }
+    
+   
     
     // 批量操作相关状态
     const showBatchModal = ref(false)
-    const showPlaylistBatchModal = ref(false)
     const showAlbumBatchModal = ref(false)
     const showVideoBatchModal = ref(false)
     const selectedSongs = ref([])
-    const selectedPlaylists = ref([])
     const selectedAlbums = ref([])
     const selectedVideos = ref([])
     const isSelectMode = ref(false)
@@ -866,31 +671,383 @@ export default {
       skipped: 0
     })
     
-    // 新建歌单表单数据
-    const newPlaylist = ref({
-      name: '',
-      description: '',
-      cover: 'https://picsum.photos/300/300?random=100'
-    })
+    // 更多下拉框相关状态
+    const activeDropdown = ref(null)
     
-    // 默认封面选项
-    const defaultCovers = ref([
-      'https://picsum.photos/300/300?random=100',
-      'https://picsum.photos/300/300?random=101',
-      'https://picsum.photos/300/300?random=102',
-      'https://picsum.photos/300/300?random=103',
-      'https://picsum.photos/300/300?random=104',
-      'https://picsum.photos/300/300?random=105',
-      'https://picsum.photos/300/300?random=106',
-      'https://picsum.photos/300/300?random=107'
-    ])
+    // 更多下拉框相关方法
+    const toggleDropdown = (dropdownId, event) => {
+      if (activeDropdown.value === dropdownId) {
+        activeDropdown.value = null
+      } else {
+        activeDropdown.value = dropdownId
+        
+        // 动态计算下拉框位置
+        nextTick(() => {
+          const button = event.target.closest('.more-btn')
+          const dropdown = button.parentElement.querySelector('.dropdown-menu')
+          if (button && dropdown) {
+            const buttonRect = button.getBoundingClientRect()
+            dropdown.style.top = `${buttonRect.bottom + 4}px`
+            dropdown.style.left = `${buttonRect.right - 200}px` // 右对齐
+          }
+        })
+      }
+    }
+    
+    // 关闭下拉框
+    const closeDropdown = (event) => {
+      // 如果点击的是下拉框内部或更多按钮，不关闭下拉框
+      if (event && event.target) {
+        const clickedElement = event.target.closest('.more-dropdown')
+        if (clickedElement) {
+          return // 点击在下拉框内部，不关闭
+        }
+      }
+      
+      activeDropdown.value = null
+    }
+    
+    // 处理ESC键关闭下拉框
+    const handleEscKey = (event) => {
+      if (event.key === 'Escape' && activeDropdown.value) {
+        closeDropdown()
+      }
+    }
+    
+    // 处理滚动关闭下拉框
+    const handleScroll = () => {
+      if (activeDropdown.value) {
+        closeDropdown()
+      }
+    }
+    
+    // 处理窗口大小改变关闭下拉框
+    const handleResize = () => {
+      if (activeDropdown.value) {
+        closeDropdown()
+      }
+    }
+    
+    // 跳转到歌曲详情
+    const goToSongDetail = (song) => {
+      closeDropdown()
+      if (song.id) {
+        router.push(`/song/${song.id}`)
+      } else {
+        ElMessage.warning('歌曲信息不完整')
+      }
+    }
+    
+    // 跳转到歌手详情
+    const goToArtistDetail = (song) => {
+      closeDropdown()
+      if (song.artistId) {
+        router.push(`/artist/${song.artistId}`)
+      } else {
+        ElMessage.warning('歌手信息不完整')
+      }
+    }
+    
+    // 跳转到专辑详情
+    const goToAlbumDetail = (param) => {
+      closeDropdown()
+      // 检查参数类型：如果是对象，则使用albumId；如果是数字或字符串，则直接使用
+      const albumId = typeof param === 'object' ? param.albumId : param
+      if (albumId) {
+        router.push(`/album/${albumId}`)
+      } else {
+        ElMessage.warning('专辑信息不完整')
+      }
+    }
+    
+    // 添加到下一首播放
+    const addToPlayNext = (song) => {
+      closeDropdown()
+      if (song && song.id) {
+        const success = addToPlaylistFirst({
+          id: song.id,
+          name: song.name,
+          artist: song.artist || '未知歌手',
+          album: song.album || '未知专辑',
+          duration: song.duration || 0,
+          cover: song.cover || '/src/assets/1音乐.png',
+          audioUrl: song.audioUrl || song.filePath || ''
+        })
+        
+        if (success) {
+          ElMessage.success(`《${song.name}》已添加到下一首播放`)
+        } else {
+          ElMessage.error('添加失败，请稍后重试')
+        }
+      } else {
+        ElMessage.warning('歌曲信息不完整')
+      }
+    }
+    
+
+    // 批量操作相关方法
+    const toggleSongSelection = (song, index) => {
+      const songId = `${song.name}_${index}`
+      const existingIndex = selectedSongs.value.findIndex(s => s.id === songId)
+      
+      if (existingIndex > -1) {
+        selectedSongs.value.splice(existingIndex, 1)
+      } else {
+        selectedSongs.value.push({ 
+          ...song, 
+          id: songId, 
+          songId: song.id,
+          index 
+        })
+      }
+    }
+
+    const toggleAlbumSelection = (album) => {
+      const existingIndex = selectedAlbums.value.findIndex(a => a.id === album.id)
+      
+      if (existingIndex > -1) {
+        selectedAlbums.value.splice(existingIndex, 1)
+      } else {
+        selectedAlbums.value.push(album)
+      }
+    }
+
+    const toggleVideoSelection = (video) => {
+      const existingIndex = selectedVideos.value.findIndex(v => v.id === video.id)
+      
+      if (existingIndex > -1) {
+        selectedVideos.value.splice(existingIndex, 1)
+      } else {
+        selectedVideos.value.push(video)
+      }
+    }
+
+    const selectAllSongs = () => {
+      if (selectedSongs.value.length === likedSongs.value.length) {
+        selectedSongs.value = []
+      } else {
+        selectedSongs.value = likedSongs.value.map((song, index) => ({
+          ...song,
+          id: `${song.name}_${index}`,
+          songId: song.id,
+          index
+        }))
+      }
+    }
+
+    const selectAllAlbums = () => {
+      if (selectedAlbums.value.length === favoriteAlbums.value.length) {
+        selectedAlbums.value = []
+      } else {
+        selectedAlbums.value = [...favoriteAlbums.value]
+      }
+    }
+
+    const selectAllVideos = () => {
+      if (selectedVideos.value.length === favoriteVideos.value.length) {
+        selectedVideos.value = []
+      } else {
+        selectedVideos.value = [...favoriteVideos.value]
+      }
+    }
+
+    const batchDeleteSongs = async () => {
+      if (selectedSongs.value.length === 0) {
+        ElMessage.warning('请选择要删除的歌曲')
+        return
+      }
+
+      try {
+        const userId = getUserId()
+        if (!userId) {
+          ElMessage.warning('请先登录')
+          return
+        }
+
+        const deletePromises = selectedSongs.value.map(async (selectedSong) => {
+          try {
+            const response = await favoriteSong(userId, selectedSong.songId, 'unlike')
+            if (response && response.code === 200) {
+              return selectedSong.songId
+            } else {
+              return null
+            }
+          } catch (error) {
+            return null
+          }
+        })
+
+        const results = await Promise.all(deletePromises)
+        const successCount = results.filter(result => result !== null).length
+
+        if (successCount > 0) {
+          ElMessage.success(`成功从收藏中移除 ${successCount} 首歌曲`)
+          // 刷新歌曲列表
+          refreshFavoriteSongs()
+        } else {
+          ElMessage.error('批量删除失败，请稍后重试')
+        }
+        
+        selectedSongs.value = []
+        showBatchModal.value = false
+        
+      } catch (error) {
+        console.error('批量删除收藏歌曲失败:', error)
+        ElMessage.error('批量删除失败')
+      }
+    }
+
+    const batchRemoveAlbums = async () => {
+      if (selectedAlbums.value.length === 0) {
+        ElMessage.warning('请选择要取消收藏的专辑')
+        return
+      }
+
+      try {
+        const userId = getUserId()
+        if (!userId) {
+          ElMessage.warning('请先登录')
+          return
+        }
+
+        // 导入API函数
+        const { favoriteAlbum } = await import('@/api/favorite.js')
+
+        const removePromises = selectedAlbums.value.map(async (album) => {
+          try {
+            const response = await favoriteAlbum(userId, album.id, 'unlike')
+            if (response && response.code === 200) {
+              return album.id
+            } else {
+              return null
+            }
+          } catch (error) {
+            console.error('取消收藏专辑失败:', error)
+            return null
+          }
+        })
+
+        const results = await Promise.all(removePromises)
+        const successCount = results.filter(result => result !== null).length
+
+        if (successCount > 0) {
+          ElMessage.success(`成功取消收藏 ${successCount} 个专辑`)
+          // 从界面列表中移除成功的专辑
+          const successIds = results.filter(result => result !== null)
+          favoriteAlbums.value = favoriteAlbums.value.filter(album => !successIds.includes(album.id))
+        } else {
+          ElMessage.error('批量取消收藏失败，请稍后重试')
+        }
+        
+        selectedAlbums.value = []
+        showAlbumBatchModal.value = false
+        
+      } catch (error) {
+        console.error('批量取消收藏专辑失败:', error)
+        ElMessage.error('批量取消收藏失败')
+      }
+    }
+
+    const batchRemoveVideos = async () => {
+      if (selectedVideos.value.length === 0) {
+        ElMessage.warning('请选择要取消收藏的视频')
+        return
+      }
+
+      try {
+        const userId = getUserId()
+        if (!userId) {
+          ElMessage.warning('请先登录')
+          return
+        }
+
+        // 导入API函数
+        const { favoriteMv } = await import('@/api/favorite.js')
+
+        const removePromises = selectedVideos.value.map(async (video) => {
+          try {
+            const response = await favoriteMv(userId, video.id, 'unlike')
+            if (response && response.code === 200) {
+              return video.id
+            } else {
+              return null
+            }
+          } catch (error) {
+            console.error('取消收藏视频失败:', error)
+            return null
+          }
+        })
+
+        const results = await Promise.all(removePromises)
+        const successCount = results.filter(result => result !== null).length
+
+        if (successCount > 0) {
+          ElMessage.success(`成功取消收藏 ${successCount} 个视频`)
+          // 从界面列表中移除成功的视频
+          const successIds = results.filter(result => result !== null)
+          favoriteVideos.value = favoriteVideos.value.filter(video => !successIds.includes(video.id))
+          
+          // 触发全局事件通知其他组件更新
+          window.dispatchEvent(new CustomEvent('mvFavoriteChanged', {
+            detail: { 
+              mvIds: successIds, 
+              isLiked: false
+            }
+          }))
+        } else {
+          ElMessage.error('批量取消收藏失败，请稍后重试')
+        }
+        
+        selectedVideos.value = []
+        showVideoBatchModal.value = false
+        
+      } catch (error) {
+        console.error('批量取消收藏视频失败:', error)
+        ElMessage.error('批量取消收藏失败')
+      }
+    }
+
+    const closeBatchModal = () => {
+      showBatchModal.value = false
+      showAlbumBatchModal.value = false
+      showVideoBatchModal.value = false
+      selectedSongs.value = []
+      selectedAlbums.value = []
+      selectedVideos.value = []
+    }
+
+    // 显示批量操作模态框
+    const showBatchOptions = () => {
+      switch(currentTab.value) {
+        case 'liked':
+          if (likedSongs.value.length === 0) {
+            ElMessage.warning('暂无歌曲可进行批量操作')
+            return
+          }
+          showBatchModal.value = true
+          break
+        case 'albums':
+          if (favoriteAlbums.value.length === 0) {
+            ElMessage.warning('暂无专辑可进行批量操作')
+            return
+          }
+          showAlbumBatchModal.value = true
+          break
+        case 'videos':
+          if (favoriteVideos.value.length === 0) {
+            ElMessage.warning('暂无视频可进行批量操作')
+            return
+          }
+          showVideoBatchModal.value = true
+          break
+        default:
+          ElMessage.warning('当前标签页不支持批量操作')
+      }
+    }
 
     // 用户喜欢的歌曲列表（从 favoriteManager 获取）
     const likedSongs = computed(() => getFavoriteSongs())
 
-    // 用户创建的歌单列表（从API动态获取）
-    const createdPlaylists = ref([])
-    const loadingPlaylists = ref(false)
 
     // 用户收藏的专辑列表
     const favoriteAlbums = ref([])
@@ -904,7 +1061,6 @@ export default {
     const currentTabTitle = computed(() => {
         switch(currentTab.value) {
           case 'liked': return '我喜欢的歌曲'
-          case 'created': return '我创建的歌单'
           case 'albums': return '我收藏的专辑'
           case 'videos': return '我收藏的视频'
           default: return ''
@@ -914,55 +1070,211 @@ export default {
     const currentTabCount = computed(() => {
         switch(currentTab.value) {
           case 'liked': return likedSongs.value.length
-          case 'created': return createdPlaylists.value.length
           case 'albums': return favoriteAlbums.value.length
           case 'videos': return favoriteVideos.value.length
           default: return 0
         }
       })
 
+    // 加载收藏的专辑
+    const loadFavoriteAlbums = async () => {
+      loadingAlbums.value = true
+      try {
+        const userId = getUserId()
+        if (!userId) {
+          favoriteAlbums.value = []
+          return
+        }
+        
+        // 导入API函数
+        const { getUserFavoriteAlbums } = await import('@/api/favorite.js')
+        const { getArtistById } = await import('@/api/artist.js')
+        
+        const response = await getUserFavoriteAlbums(userId)
+        if (response.code === 200 && response.data) {
+          // 为每个专辑获取艺术家信息
+          const albumsWithArtist = await Promise.all(
+            response.data.map(async (album) => {
+              let artistName = '未知歌手'
+              if (album.artistId) {
+                try {
+                  const artistResponse = await getArtistById(album.artistId)
+                  if (artistResponse.code === 200 && artistResponse.data) {
+                    artistName = artistResponse.data.name
+                  }
+                } catch (error) {
+                  console.warn('获取歌手信息失败:', error)
+                }
+              }
+              return {
+                ...album,
+                artistName
+              }
+            })
+          )
+          favoriteAlbums.value = albumsWithArtist
+        } else {
+          favoriteAlbums.value = []
+        }
+      } catch (error) {
+        console.error('加载收藏专辑失败:', error)
+        ElMessage.error('加载收藏专辑失败')
+        favoriteAlbums.value = []
+      } finally {
+        loadingAlbums.value = false
+      }
+    }
+
+    // 加载收藏的视频
+    const loadFavoriteVideos = async () => {
+      loadingVideos.value = true
+      try {
+        const userId = getUserId()
+        if (!userId) {
+          favoriteVideos.value = []
+          return
+        }
+        
+        // 导入API函数
+        const { getUserFavoriteMvs } = await import('@/api/favorite.js')
+        const { getArtistById } = await import('@/api/artist.js')
+        
+        const response = await getUserFavoriteMvs(userId)
+        if (response.code === 200 && response.data) {
+          // 为每个MV获取艺术家信息
+          const videosWithArtist = await Promise.all(
+            response.data.map(async (mv) => {
+              let artistName = '未知歌手'
+              if (mv.artistId) {
+                try {
+                  const artistResponse = await getArtistById(mv.artistId)
+                  if (artistResponse.code === 200 && artistResponse.data) {
+                    artistName = artistResponse.data.name
+                  }
+                } catch (error) {
+                  console.warn('获取歌手信息失败:', error)
+                }
+              }
+              return {
+                id: mv.id,
+                title: mv.title || mv.name,
+                artistName,
+                cover: mv.cover || mv.thumbnail,
+                duration: mv.duration,
+                viewCount: mv.viewCount || mv.playCount || 0
+              }
+            })
+          )
+          favoriteVideos.value = videosWithArtist
+        } else {
+          favoriteVideos.value = []
+        }
+      } catch (error) {
+        console.error('加载收藏视频失败:', error)
+        ElMessage.error('加载收藏视频失败')
+        favoriteVideos.value = []
+      } finally {
+        loadingVideos.value = false
+      }
+    }
+
     // 方法
     const switchTab = (tab) => {
       currentTab.value = tab
       
       // 根据标签页加载对应数据
-      if (tab === 'created' && createdPlaylists.value.length === 0) {
-        loadUserPlaylists()
+      if (tab === 'liked') {
+        // 每次切换到喜欢标签页都重新加载，确保数据是最新的
+        refreshFavoriteSongs()
       } else if (tab === 'albums' && favoriteAlbums.value.length === 0) {
         loadFavoriteAlbums()
-      } else if (tab === 'videos' && favoriteVideos.value.length === 0) {
+      } else if (tab === 'videos') {
+        // 每次切换到视频标签页都重新加载，确保数据是最新的
         loadFavoriteVideos()
       }
     }
 
     const changeAvatar = () => {
-      triggerFileSelect(avatarInput, { accept: FILE_TYPES.AVATAR })
+      // 触发文件选择
+      avatarInput.value.click()
     }
 
     const onAvatarChange = async (e) => {
       const file = e.target.files[0]
       if (!file) return
-
+      
       try {
-        const dataURL = await handleAvatarUpload(file, (url) => {
-          avatarImg.value = url
-          ElMessage.success('头像更新成功！')
-        })
+        // 验证文件类型和大小
+        if (!file.type.startsWith('image/')) {
+          ElMessage.error('请选择图片文件')
+          return
+        }
+        
+        if (file.size > 5 * 1024 * 1024) { // 5MB限制
+          ElMessage.error('文件大小不能超过5MB')
+          return
+        }
+        
+        saving.value = true
+        
+        // 创建FormData
+        const formData = new FormData()
+        formData.append('file', file)
+        formData.append('userId', localStorage.getItem('userId') || localStorage.getItem('currentUserId'))
+        
+        // 上传头像到MinIO
+        const uploadResponse = await updateUserAvatar(formData)
+        
+        // 检查响应是否成功（支持多种格式）
+        if (uploadResponse && (uploadResponse.code === 200 || uploadResponse.code === 0 || uploadResponse.success === true)) {
+          // 获取上传后的头像URL（支持多种字段名）
+          const avatarUrl = uploadResponse.data?.avatar || uploadResponse.data || uploadResponse.url
+          
+          if (!avatarUrl) {
+            throw new Error('无法获取头像URL')
+          }
+          
+          // 更新用户资料中的头像
+          const userId = localStorage.getItem('userId') || localStorage.getItem('currentUserId')
+          const profileData = {
+            avatar: avatarUrl
+          }
+          
+          // 立即保存头像信息
+          await updateUserProfile(userId, profileData)
+          
+          // 更新本地存储和用户信息
+          localStorage.setItem('userAvatar', avatarUrl)
+          updateUserInfo({ avatar: avatarUrl })
+          
+          // 重新初始化用户信息以更新显示
+          await initUserInfo()
+          
+          ElMessage.success('头像上传成功！')
+        } else {
+          throw new Error(uploadResponse?.message || '头像上传失败')
+        }
       } catch (error) {
-        ElMessage.error(error.message || '头像上传失败')
+        console.error('头像上传失败:', error)
+        ElMessage.error(`上传失败: ${error.message || '未知错误'}`)
+      } finally {
+        saving.value = false
+        // 清空文件输入，以便可以重新选择同一文件
+        e.target.value = ''
       }
     }
 
-    const updateAvatar = () => {
-      avatarImg.value = localStorage.getItem('userAvatar') || 'https://q1.qlogo.cn/g?b=qq&nk=10000&s=100'
-    }
-
-    const updateNickname = () => {
-      nickname.value = localStorage.getItem('userNickname') || '用户昵称'
-    }
-
-    const updateBio = () => {
-      userBio.value = localStorage.getItem('userBio') || '热爱音乐，分享美好。'
+    // 用户信息更新处理函数
+    const handleUserInfoUpdate = async () => {
+      console.log('🔔 UserMusic: 接收到用户信息更新事件')
+      // globalUserInfo是响应式的，会自动更新显示
+      // 但我们需要重新初始化用户信息以确保最新数据
+      try {
+        await initUserInfo()
+        console.log('✅ UserMusic: 用户信息已从数据库更新')
+      } catch (error) {
+        console.warn('⚠️ UserMusic: 无法从数据库获取最新用户信息')
+      }
     }
 
     const updateBackground = (event) => {
@@ -970,9 +1282,12 @@ export default {
     }
 
     const playSong = (song, index) => {
+      closeDropdown() // 播放歌曲时关闭下拉框
       if (song && song.id) {
-        // 添加到播放列表并立即播放
-        const success = addToPlaylist({
+        console.log('🎵 准备播放歌曲:', song.name, '来自我的音乐 - 将移动/添加到播放列表第一位')
+        
+        // 添加到播放列表第一位并立即播放
+        const success = addToPlaylistFirst({
           id: song.id,
           name: song.name,
           artist: song.artist || '未知歌手',
@@ -980,18 +1295,28 @@ export default {
           duration: song.duration || 0,
           cover: song.cover || '/src/assets/1音乐.png',
           audioUrl: song.audioUrl || song.filePath || ''
-        }, true) // 立即播放
+        })
         
         if (success) {
+          console.log('✅ 歌曲已添加到播放列表第一位并开始播放:', song.name)
           ElMessage.success(`开始播放：${song.name}`)
+        } else {
+          console.error('❌ 添加歌曲到播放列表失败')
+          ElMessage.error('播放失败，请稍后重试')
         }
       } else {
+        console.warn('⚠️ 歌曲信息不完整:', song)
         ElMessage.warning('歌曲信息不完整')
       }
     }
 
     const playAll = () => {
-      if (currentTab.value === 'liked' && likedSongs.value.length > 0) {
+      if (currentTab.value === 'liked') {
+        if (likedSongs.value.length === 0) {
+          ElMessage.warning('暂无收藏的歌曲')
+          return
+        }
+        
         // 格式化歌曲数据并批量添加到播放列表
         const formattedSongs = likedSongs.value.map(song => ({
           id: song.id,
@@ -1009,106 +1334,29 @@ export default {
         if (success) {
           ElMessage.success(`开始播放我喜欢的音乐，共${likedSongs.value.length}首歌曲`)
         }
-      } else if (currentTab.value === 'created') {
-        ElMessage.info('歌单播放功能开发中，敬请期待')
-      } else {
-        ElMessage.warning('暂无可播放的内容')
-      }
-    }
-
-    // 切换更多选项下拉菜单
-    const toggleMoreOptions = (song, index, event) => {
-      if (showMoreOptionsIndex.value === index) {
-        showMoreOptionsIndex.value = -1
-      } else {
-        showMoreOptionsIndex.value = index
-        
-        // 计算下拉框位置
-        nextTick(() => {
-          const button = event.currentTarget
-          const dropdown = button.parentElement.querySelector('.more-options-dropdown')
-          if (dropdown && button) {
-            const buttonRect = button.getBoundingClientRect()
-            dropdown.style.top = `${buttonRect.bottom + 8}px`
-            dropdown.style.left = `${buttonRect.right - 180}px` // 180是下拉框的宽度
-          }
-        })
-      }
-    }
-
-    // 下一首播放功能
-    const playNext = (song) => {
-      if (song && song.id) {
-        try {
-          // 获取当前播放列表
-          const currentPlaylist = JSON.parse(localStorage.getItem('currentPlaylist') || '[]')
-          const currentIndex = parseInt(localStorage.getItem('currentSongIndex') || '0')
-          
-          // 格式化歌曲数据
-          const formattedSong = {
-            id: song.id,
-            name: song.name,
-            artist: song.artist || '未知歌手',
-            album: song.album || '未知专辑',
-            duration: song.duration || 0,
-            cover: song.cover || '/src/assets/1音乐.png',
-            audioUrl: song.audioUrl || song.filePath || ''
-          }
-          
-          // 将歌曲插入到当前播放位置的下一首
-          const newPlaylist = [...currentPlaylist]
-          newPlaylist.splice(currentIndex + 1, 0, formattedSong)
-          
-          // 更新localStorage
-          localStorage.setItem('currentPlaylist', JSON.stringify(newPlaylist))
-          
-          // 触发播放列表更新事件
-          window.dispatchEvent(new CustomEvent('playlistUpdated', {
-            detail: { playlist: newPlaylist }
-          }))
-          
-          ElMessage.success(`已将《${song.name}》设为下一首播放`)
-        } catch (error) {
-          console.error('设置下一首播放失败:', error)
-          ElMessage.error('设置下一首播放失败')
+      } else if (currentTab.value === 'albums') {
+        if (favoriteAlbums.value.length === 0) {
+          ElMessage.warning('暂无收藏的专辑')
+          return
         }
-      } else {
-        ElMessage.warning('歌曲信息不完整')
-      }
-      showMoreOptionsIndex.value = -1
-    }
-
-    // 添加到播放列表
-    const addToQueue = (song) => {
-      if (song && song.id) {
-        const success = addToPlaylist({
-          id: song.id,
-          name: song.name,
-          artist: song.artist || '未知歌手',
-          album: song.album || '未知专辑',
-          duration: song.duration || 0,
-          cover: song.cover || '/src/assets/1音乐.png',
-          audioUrl: song.audioUrl || song.filePath || ''
-        }, false) // 不立即播放
-        
-        if (success) {
-          ElMessage.success(`已将《${song.name}》添加到播放列表`)
+        ElMessage.info('专辑播放功能正在开发中，敬请期待')
+      } else if (currentTab.value === 'videos') {
+        if (favoriteVideos.value.length === 0) {
+          ElMessage.warning('暂无收藏的视频')
+          return
         }
+        ElMessage.info('视频播放功能正在开发中，敬请期待')
       } else {
-        ElMessage.warning('歌曲信息不完整')
+        ElMessage.warning('当前标签页不支持播放全部功能')
       }
-      showMoreOptionsIndex.value = -1
     }
 
-    // 显示添加到歌单模态框
-    const showAddToPlaylistModal = (song) => {
-      // 这里可以实现添加到歌单的功能
-      ElMessage.info('添加到歌单功能开发中，敬请期待')
-      showMoreOptionsIndex.value = -1
-    }
-
+    // 更多按钮相关方法已移除
+    
+    
     // 从我喜欢中移除
     const removeFavorite = async (song, index) => {
+      closeDropdown()
       try {
         const userId = getUserId()
         if (!userId) {
@@ -1140,15 +1388,10 @@ export default {
         console.error('移除收藏失败:', error)
         ElMessage.error('移除失败，请检查网络连接')
       }
-      showMoreOptionsIndex.value = -1
-    }
-
-    const goToPlaylistDetail = (id) => {
-      router.push({ path: `/playlist/${id}` })
     }
 
     const showAddToModal = () => {
-      // 显示添加到歌单模态框
+
     }
 
     // 真正的下载功能
@@ -1170,18 +1413,12 @@ export default {
         // 显示下载确认模态框
         downloadSongs_list.value = downloadableSongs
         showDownloadModal.value = true
-        
-      } else if (currentTab.value === 'created') {
-        if (createdPlaylists.value.length === 0) {
-          ElMessage.warning('暂无可下载的歌单')
-          return
-        }
-        ElMessage.info('歌单批量下载功能开发中，敬请期待')
       }
     }
     
     // 下载单首歌曲
     const downloadSong = (song) => {
+      closeDropdown()
       if (!isSongDownloadable(song)) {
         ElMessage.warning('该歌曲暂无可下载的音频文件')
         return
@@ -1262,633 +1499,8 @@ export default {
       }
     }
 
-    const showBatchOptions = () => {
-      if (currentTab.value === 'liked') {
-        if (likedSongs.value.length === 0) {
-          ElMessage.warning('暂无歌曲可进行批量操作')
-          return
-        }
-        showBatchModal.value = true
-      } else if (currentTab.value === 'created') {
-        if (createdPlaylists.value.length === 0) {
-          ElMessage.warning('暂无歌单可进行批量操作')
-          return
-        }
-        showPlaylistBatchModal.value = true
-      } else if (currentTab.value === 'albums') {
-        if (favoriteAlbums.value.length === 0) {
-          ElMessage.warning('暂无专辑可进行批量操作')
-          return
-        }
-        showAlbumBatchModal.value = true
-      } else if (currentTab.value === 'videos') {
-        if (favoriteVideos.value.length === 0) {
-          ElMessage.warning('暂无视频可进行批量操作')
-          return
-        }
-        showVideoBatchModal.value = true
-      }
-    }
-
-    // 新建歌单相关方法
-    const showCreatePlaylistModal = () => {
-      showCreateModal.value = true
-      // 重置表单数据
-      newPlaylist.value = {
-        name: '',
-        description: '',
-        cover: 'https://picsum.photos/300/300?random=100'
-      }
-      showCoverSelector.value = false
-      coverTab.value = 'default'
-      uploadingCover.value = false
-      uploadProgress.value = 0
-    }
-
-    const closeCreatePlaylistModal = () => {
-      showCreateModal.value = false
-      showCoverSelector.value = false
-    }
-
-    const selectCover = (cover) => {
-      newPlaylist.value.cover = cover
-    }
-
-    // 触发封面上传
-    const triggerCoverUpload = () => {
-      coverInput.value?.click()
-    }
-
-    // 处理封面文件上传
-    const handleCoverUpload = async (event) => {
-      const file = event.target.files[0]
-      if (!file) return
-
-      // 验证文件类型
-      const validTypes = ['image/jpeg', 'image/png', 'image/gif']
-      if (!validTypes.includes(file.type)) {
-        ElMessage.error('请选择 JPG、PNG 或 GIF 格式的图片')
-        return
-      }
-
-      // 验证文件大小 (5MB)
-      const maxSize = 5 * 1024 * 1024
-      if (file.size > maxSize) {
-        ElMessage.error('图片大小不能超过 5MB')
-        return
-      }
-
-      try {
-        uploadingCover.value = true
-        uploadProgress.value = 0
-
-        // 使用FileReader读取文件为Base64
-        const reader = new FileReader()
-        
-        reader.onload = (e) => {
-          const base64Data = e.target.result
-          newPlaylist.value.cover = base64Data
-          ElMessage.success('封面上传成功')
-          
-          // 切换到默认封面标签页以显示上传的图片
-          coverTab.value = 'default'
-          uploadingCover.value = false
-          uploadProgress.value = 100
-        }
-
-        reader.onerror = () => {
-          throw new Error('文件读取失败')
-        }
-
-        // 模拟上传进度
-        const progressInterval = setInterval(() => {
-          if (uploadProgress.value < 90) {
-            uploadProgress.value += 10
-          }
-        }, 50)
-
-        // 读取文件
-        reader.readAsDataURL(file)
-        
-        // 清除进度定时器
-        setTimeout(() => {
-          clearInterval(progressInterval)
-        }, 500)
-
-      } catch (error) {
-        console.error('封面上传失败:', error)
-        ElMessage.error('封面上传失败: ' + (error.message || '请重试'))
-        uploadingCover.value = false
-        uploadProgress.value = 0
-      } finally {
-        // 重置文件输入框
-        if (coverInput.value) {
-          coverInput.value.value = ''
-        }
-      }
-    }
-
-    // 处理拖拽上传
-    const handleDragOver = (event) => {
-      event.preventDefault()
-    }
-
-    const handleDrop = (event) => {
-      event.preventDefault()
-      const files = event.dataTransfer.files
-      if (files.length > 0) {
-        const file = files[0]
-        // 创建一个模拟的 change 事件
-        const fakeEvent = {
-          target: {
-            files: [file]
-          }
-        }
-        handleCoverUpload(fakeEvent)
-      }
-    }
-
-    // 获取用户创建的歌单列表
-    const fetchUserPlaylists = async () => {
-      try {
-        loadingPlaylists.value = true
-        const userId = parseInt(localStorage.getItem('userId') || '1')
-        
-        const response = await getUserPlaylists(userId)
-        
-        if (response && response.code === 200) {
-          // 按照前后端API交互规范处理数据
-          let playlistsData = []
-          if (response.data && response.data.content && Array.isArray(response.data.content)) {
-            playlistsData = response.data.content
-          } else if (response.data && Array.isArray(response.data)) {
-            playlistsData = response.data
-          }
-          
-          // 转换为前端需要的数据结构
-          createdPlaylists.value = playlistsData.map(playlist => ({
-            id: playlist.id,
-            title: playlist.name,
-            cover: playlist.coverUrl || 'https://picsum.photos/300/300?random=1',
-            desc: playlist.description || '暂无描述',
-            playCount: playlist.playCount || 0
-          }))
-          
-          console.log('🎵 用户歌单加载完成:', createdPlaylists.value.length, '个歌单')
-        } else {
-          console.warn('获取用户歌单失败:', response?.message)
-          createdPlaylists.value = []
-        }
-      } catch (error) {
-        console.error('获取用户歌单失败:', error)
-        // 网络错误已在httpUtils中处理，这里不重复显示
-        createdPlaylists.value = []
-      } finally {
-        loadingPlaylists.value = false
-      }
-    }
-
-    const createNewPlaylist = async () => {
-      if (!newPlaylist.value.name.trim()) {
-        ElMessage.warning('请输入歌单名称')
-        return
-      }
-
-      try {
-        isCreating.value = true
-        
-        // 从 localStorage 获取用户ID，如果没有则使用默认值1
-        const userId = parseInt(localStorage.getItem('userId') || '1')
-        
-        const response = await createPlaylist(
-          newPlaylist.value.name.trim(),
-          newPlaylist.value.cover,
-          newPlaylist.value.description.trim(),
-          userId
-        )
-
-        if (response && response.code === 200) {
-          ElMessage.success('歌单创建成功！')
-          closeCreatePlaylistModal()
-          
-          // 重新获取用户歌单列表，确保数据同步
-          await fetchUserPlaylists()
-        } else {
-          ElMessage.error('创建歌单失败：' + (response?.message || '请重试'))
-        }
-      } catch (error) {
-        console.error('创建歌单失败:', error)
-        if (error.response?.data?.message) {
-          ElMessage.error('创建歌单失败：' + error.response.data.message)
-        } else {
-          ElMessage.error('创建歌单失败，请检查网络连接')
-        }
-      } finally {
-        isCreating.value = false
-      }
-    }
-
-    // 删除歌单相关方法
-    const showDeleteConfirm = (playlist) => {
-      playlistToDelete.value = playlist
-      showDeleteModal.value = true
-    }
-
-    const closeDeleteConfirm = () => {
-      showDeleteModal.value = false
-      playlistToDelete.value = null
-    }
-
-    const confirmDeletePlaylist = async () => {
-      if (!playlistToDelete.value) return
-
-      try {
-        isDeleting.value = true
-        
-        const response = await deletePlaylist(playlistToDelete.value.id)
-        
-        if (response && response.code === 200) {
-          ElMessage.success('歌单删除成功！')
-          closeDeleteConfirm()
-          
-          // 重新获取用户歌单列表，确保数据同步
-          await fetchUserPlaylists()
-        } else {
-          ElMessage.error('删除歌单失败：' + (response?.message || '请重试'))
-        }
-      } catch (error) {
-        console.error('删除歌单失败:', error)
-        if (error.response?.data?.message) {
-          ElMessage.error('删除歌单失败：' + error.response.data.message)
-        } else {
-          ElMessage.error('删除歌单失败，请检查网络连接')
-        }
-      } finally {
-        isDeleting.value = false
-      }
-    }
-
-    // 批量操作相关方法
-    const toggleSelectMode = () => {
-      isSelectMode.value = !isSelectMode.value
-      if (!isSelectMode.value) {
-        selectedSongs.value = []
-        selectedPlaylists.value = []
-      }
-    }
-
-    const toggleSongSelection = (song, index) => {
-      const songId = `${song.name}_${index}`
-      const existingIndex = selectedSongs.value.findIndex(s => s.id === songId)
-      
-      if (existingIndex > -1) {
-        selectedSongs.value.splice(existingIndex, 1)
-      } else {
-        selectedSongs.value.push({ 
-          ...song, 
-          id: songId, 
-          songId: song.id, // 确保有真实的歌曲ID
-          index 
-        })
-      }
-    }
-
-    const togglePlaylistSelection = (playlist) => {
-      const existingIndex = selectedPlaylists.value.findIndex(p => p.id === playlist.id)
-      
-      if (existingIndex > -1) {
-        selectedPlaylists.value.splice(existingIndex, 1)
-      } else {
-        selectedPlaylists.value.push(playlist)
-      }
-    }
-
-    const selectAllSongs = () => {
-      if (selectedSongs.value.length === likedSongs.value.length) {
-        selectedSongs.value = []
-      } else {
-        selectedSongs.value = likedSongs.value.map((song, index) => ({
-          ...song,
-          id: `${song.name}_${index}`,
-          songId: song.id, // 确保有真实的歌曲ID
-          index
-        }))
-      }
-    }
-
-    const selectAllPlaylists = () => {
-      if (selectedPlaylists.value.length === createdPlaylists.value.length) {
-        selectedPlaylists.value = []
-      } else {
-        selectedPlaylists.value = [...createdPlaylists.value]
-      }
-    }
-
-    const batchDeleteSongs = async () => {
-      if (selectedSongs.value.length === 0) {
-        ElMessage.warning('请选择要删除的歌曲')
-        return
-      }
-
-      try {
-        console.log('开始批量删除收藏歌曲:', selectedSongs.value)
-        
-        // 获取用户ID
-        const userId = getUserId()
-        if (!userId) {
-          ElMessage.warning('请先登录')
-          return
-        }
-
-        // 批量调用取消收藏API
-        const deletePromises = selectedSongs.value.map(async (selectedSong) => {
-          try {
-            const response = await favoriteSong(userId, selectedSong.songId, 'unlike')
-            if (response && response.code === 200) {
-              console.log(`成功取消收藏歌曲 ${selectedSong.songId}`)
-              return selectedSong.songId
-            } else {
-              console.error(`取消收藏歌曲 ${selectedSong.songId} 失败:`, response?.message)
-              return null
-            }
-          } catch (error) {
-            console.error(`取消收藏歌曲 ${selectedSong.songId} 失败:`, error)
-            return null
-          }
-        })
-
-        const results = await Promise.all(deletePromises)
-        const successCount = results.filter(result => result !== null).length
-        const failCount = results.filter(result => result === null).length
-
-        if (successCount > 0) {
-          // 从界面列表中移除成功删除的歌曲
-          const successfullyDeletedIds = results.filter(result => result !== null)
-          likedSongs.value = likedSongs.value.filter(song => 
-            !successfullyDeletedIds.includes(song.id)
-          )
-          
-          // 更新收藏状态映射
-          successfullyDeletedIds.forEach(songId => {
-            favoriteStatus.set(songId, false)
-          })
-          
-          // 触发全局事件通知其他组件更新
-          successfullyDeletedIds.forEach(songId => {
-            window.dispatchEvent(new CustomEvent('songLikeChanged', {
-              detail: { 
-                songId: songId, 
-                isLiked: false
-              }
-            }))
-          })
-          
-          ElMessage.success(`成功从收藏中移除 ${successCount} 首歌曲${failCount > 0 ? `，${failCount} 首失败` : ''}`)
-        } else {
-          ElMessage.error('批量删除失败，请稍后重试')
-        }
-        
-        // 清空选中状态
-        selectedSongs.value = []
-        isSelectMode.value = false
-        showBatchModal.value = false
-        
-      } catch (error) {
-        console.error('批量删除收藏歌曲失败:', error)
-        let shouldShowError = true
-        let errorMessage = '批量删除失败'
-        
-        if (error.message === 'Network Error' || error.code === 'ECONNABORTED' || error.code === 'ECONNREFUSED') {
-          shouldShowError = false // 网络错误已在httpUtils.js中处理
-        } else if (error.response?.data?.message) {
-          errorMessage = error.response.data.message
-        } else if (error.message) {
-          errorMessage = error.message
-        }
-        
-        if (shouldShowError) {
-          ElMessage.error(errorMessage)
-        }
-      }
-    }
-
-    const batchDeletePlaylists = async () => {
-      if (selectedPlaylists.value.length === 0) {
-        ElMessage.warning('请选择要删除的歌单')
-        return
-      }
-
-      try {
-        for (const playlist of selectedPlaylists.value) {
-          await deletePlaylist(playlist.id)
-        }
-        ElMessage.success(`成功删除 ${selectedPlaylists.value.length} 个歌单`)
-        selectedPlaylists.value = []
-        showPlaylistBatchModal.value = false
-        await fetchUserPlaylists()
-      } catch (error) {
-        ElMessage.error('批量删除歌单失败')
-      }
-    }
-
-    const closeBatchModal = () => {
-      showBatchModal.value = false
-      showPlaylistBatchModal.value = false
-      showAlbumBatchModal.value = false
-      showVideoBatchModal.value = false
-      selectedSongs.value = []
-      selectedPlaylists.value = []
-      selectedAlbums.value = []
-      selectedVideos.value = []
-      isSelectMode.value = false
-    }
-
-    // 专辑批量操作方法
-    const toggleAlbumSelection = (album) => {
-      const existingIndex = selectedAlbums.value.findIndex(a => a.id === album.id)
-      
-      if (existingIndex > -1) {
-        selectedAlbums.value.splice(existingIndex, 1)
-      } else {
-        selectedAlbums.value.push(album)
-      }
-    }
-
-    const selectAllAlbums = () => {
-      if (selectedAlbums.value.length === favoriteAlbums.value.length) {
-        selectedAlbums.value = []
-      } else {
-        selectedAlbums.value = [...favoriteAlbums.value]
-      }
-    }
-
-    const batchRemoveAlbums = async () => {
-      if (selectedAlbums.value.length === 0) {
-        ElMessage.warning('请选择要取消收藏的专辑')
-        return
-      }
-
-      try {
-        // 这里应该调用取消收藏专辑的API
-        // 暂时模拟操作
-        ElMessage.success(`成功取消收藏 ${selectedAlbums.value.length} 个专辑`)
-        
-        // 从列表中移除
-        selectedAlbums.value.forEach(album => {
-          const index = favoriteAlbums.value.findIndex(a => a.id === album.id)
-          if (index > -1) {
-            favoriteAlbums.value.splice(index, 1)
-          }
-        })
-        
-        selectedAlbums.value = []
-        showAlbumBatchModal.value = false
-      } catch (error) {
-        ElMessage.error('批量取消收藏专辑失败')
-      }
-    }
-
-    // 视频批量操作方法
-    const toggleVideoSelection = (video) => {
-      const existingIndex = selectedVideos.value.findIndex(v => v.id === video.id)
-      
-      if (existingIndex > -1) {
-        selectedVideos.value.splice(existingIndex, 1)
-      } else {
-        selectedVideos.value.push(video)
-      }
-    }
-
-    const selectAllVideos = () => {
-      if (selectedVideos.value.length === favoriteVideos.value.length) {
-        selectedVideos.value = []
-      } else {
-        selectedVideos.value = [...favoriteVideos.value]
-      }
-    }
-
-    const batchRemoveVideos = async () => {
-      if (selectedVideos.value.length === 0) {
-        ElMessage.warning('请选择要取消收藏的视频')
-        return
-      }
-
-      try {
-        // 这里应该调用取消收藏视频的API
-        // 暂时模拟操作
-        ElMessage.success(`成功取消收藏 ${selectedVideos.value.length} 个视频`)
-        
-        // 从列表中移除
-        selectedVideos.value.forEach(video => {
-          const index = favoriteVideos.value.findIndex(v => v.id === video.id)
-          if (index > -1) {
-            favoriteVideos.value.splice(index, 1)
-          }
-        })
-        
-        selectedVideos.value = []
-        showVideoBatchModal.value = false
-      } catch (error) {
-        ElMessage.error('批量取消收藏视频失败')
-      }
-    }
 
 
-
-    // 点击外部关闭下拉菜单
-    const handleClickOutside = (event) => {
-      if (!event.target.closest('.more-options-container')) {
-        showMoreOptionsIndex.value = -1
-      }
-    }
-
-    // 生命周期
-    onMounted(async () => {
-      // 初始化用户喜欢的歌曲
-      await initFavoriteSongs()
-      
-      // 获取用户创建的歌单列表
-      await fetchUserPlaylists()
-      
-      window.addEventListener('user-avatar-changed', updateAvatar)
-      window.addEventListener('user-nickname-changed', updateNickname)
-      window.addEventListener('user-bio-changed', updateBio)
-      window.addEventListener('background-changed', updateBackground)
-      
-      // 监听歌曲喜欢状态变化
-      window.addEventListener('songLikeChanged', refreshFavoriteSongs)
-      
-      // 监听点击外部关闭下拉菜单
-      document.addEventListener('click', handleClickOutside)
-      
-      // 为body添加我的音乐页面样式类
-      document.body.classList.add('my-music-page')
-    })
-
-    // 加载收藏的专辑
-    const loadFavoriteAlbums = async () => {
-      loadingAlbums.value = true
-      try {
-        // 模拟API调用，实际应该从后端获取用户收藏的专辑
-        await new Promise(resolve => setTimeout(resolve, 1000))
-        favoriteAlbums.value = [
-          {
-            id: 1,
-            name: 'U-87',
-            artistName: '陈奕迅',
-            cover: 'https://picsum.photos/300/300?random=201',
-            releaseDate: '2005-06-07'
-          },
-          {
-            id: 2,
-            name: '十二新作',
-            artistName: '周杰伦',
-            cover: 'https://picsum.photos/300/300?random=202',
-            releaseDate: '2012-12-28'
-          }
-        ]
-      } catch (error) {
-        console.error('加载收藏专辑失败:', error)
-      } finally {
-        loadingAlbums.value = false
-      }
-    }
-
-    // 加载收藏的视频
-    const loadFavoriteVideos = async () => {
-      loadingVideos.value = true
-      try {
-        // 模拟API调用，实际应该从后端获取用户收藏的视频
-        await new Promise(resolve => setTimeout(resolve, 1000))
-        favoriteVideos.value = [
-          {
-            id: 1,
-            title: '浮夸',
-            artistName: '陈奕迅',
-            cover: 'https://picsum.photos/300/200?random=301',
-            duration: 268,
-            viewCount: 1234567
-          },
-          {
-            id: 2,
-            title: '青花瓷',
-            artistName: '周杰伦',
-            cover: 'https://picsum.photos/300/200?random=302',
-            duration: 235,
-            viewCount: 9876543
-          }
-        ]
-      } catch (error) {
-        console.error('加载收藏视频失败:', error)
-      } finally {
-        loadingVideos.value = false
-      }
-    }
-
-    // 跳转到专辑详情
-    const goToAlbumDetail = (albumId) => {
-      router.push(`/album/${albumId}`)
-    }
 
     // 跳转到视频详情
     const goToVideoDetail = (videoId) => {
@@ -1898,9 +1510,15 @@ export default {
     // 播放专辑
     const playAlbum = async (album) => {
       try {
-        // 这里应该获取专辑的所有歌曲并添加到播放列表
-        console.log('播放专辑:', album.name)
-        ElMessage.success(`开始播放专辑《${album.name}》`)
+        console.log('🎵 准备播放专辑:', album.name, '专辑ID:', album.id)
+        
+        // 跳转到专辑详情页，并传递自动播放参数
+        router.push({
+          path: `/album/${album.id}`,
+          query: { autoPlay: 'true' }
+        })
+        
+        ElMessage.success(`正在跳转到专辑《${album.name}》`)
       } catch (error) {
         console.error('播放专辑失败:', error)
         ElMessage.error('播放失败')
@@ -1910,12 +1528,37 @@ export default {
     // 播放视频
     const playVideo = async (video) => {
       try {
-        console.log('播放视频:', video.title)
-        ElMessage.success(`开始播放视频《${video.title}》`)
+        console.log('🎬 准备播放视频:', video.title, '视频ID:', video.id)
+        
+        // 跳转到视频详情页，并传递自动播放参数
+        router.push({
+          path: `/mv/${video.id}`,
+          query: { autoPlay: 'true' }
+        })
+        
+        ElMessage.success(`正在跳转到视频《${video.title}》`)
       } catch (error) {
         console.error('播放视频失败:', error)
         ElMessage.error('播放失败')
       }
+    }
+
+
+    // 刷新收藏的视频列表
+    const refreshFavoriteVideos = async () => {
+      // 无论当前在哪个标签页，都刷新视频列表数据
+      // 这样当用户切换到视频标签页时就能看到最新的收藏状态
+      await loadFavoriteVideos()
+    }
+
+    // 跳转到MV页面
+    const goToMVPage = () => {
+      router.push('/mv')
+    }
+
+    // 跳转到专辑页面
+    const goToAlbumPage = () => {
+      router.push('/album')
     }
 
     // 格式化日期
@@ -1941,21 +1584,160 @@ export default {
       return `${minutes.toString().padStart(2, '0')}:${remainingSeconds.toString().padStart(2, '0')}`
     }
 
+    // 新增功能方法已移除
+
     onBeforeUnmount(() => {
-      window.removeEventListener('user-avatar-changed', updateAvatar)
-      window.removeEventListener('user-nickname-changed', updateNickname)
-      window.removeEventListener('user-bio-changed', updateBio)
+      window.removeEventListener('user-info-updated', handleUserInfoUpdate)
       window.removeEventListener('background-changed', updateBackground)
       window.removeEventListener('songLikeChanged', refreshFavoriteSongs)
+      window.removeEventListener('mvFavoriteChanged', refreshFavoriteVideos)
+      document.removeEventListener('click', closeDropdown)
+      document.removeEventListener('keydown', handleEscKey)
+      window.removeEventListener('scroll', handleScroll)
+      window.removeEventListener('resize', handleResize)
       
-      // 移除点击外部关闭下拉菜单的监听器
-      document.removeEventListener('click', handleClickOutside)
+      // 清理滚动阻止事件监听器
+      if (window.scrollPreventListeners) {
+        window.scrollPreventListeners.forEach(cleanup => cleanup())
+        delete window.scrollPreventListeners
+      }
+      
+      // 恢复 body 和 html 样式
+      document.body.style.overflow = ''
+      document.body.style.position = ''
+      document.body.style.width = ''
+      document.body.style.height = ''
+      document.body.style.top = ''
+      document.body.style.left = ''
+      document.body.style.margin = ''
+      document.body.style.padding = ''
+      
+      document.documentElement.style.overflow = ''
+      document.documentElement.style.height = ''
+      document.documentElement.style.margin = ''
+      document.documentElement.style.padding = ''
       
       // 移除我的音乐页面样式类
       document.body.classList.remove('my-music-page')
     })
 
+    // 组件挂载时初始化数据
+    onMounted(async () => {
+      // 首先检查登录状态
+      const loginStatus = checkLoginStatus()
+      
+      if (!loginStatus) {
+        console.log('👤 用户未登录，显示登录提示页面')
+        
+        // 强制禁用页面滚动 - 多重保险
+        document.body.style.overflow = 'hidden !important'
+        document.body.style.position = 'fixed !important'
+        document.body.style.width = '100vw !important'
+        document.body.style.height = '100vh !important'
+        document.body.style.top = '0 !important'
+        document.body.style.left = '0 !important'
+        document.body.style.margin = '0 !important'
+        document.body.style.padding = '0 !important'
+        
+        // 同时禁用html元素滚动
+        document.documentElement.style.overflow = 'hidden !important'
+        document.documentElement.style.height = '100vh !important'
+        document.documentElement.style.margin = '0 !important'
+        document.documentElement.style.padding = '0 !important'
+        
+        // 阻止滚动事件 - 加强版
+        const preventScroll = (e) => {
+          e.preventDefault()
+          e.stopPropagation()
+          e.stopImmediatePropagation()
+          return false
+        }
+        
+        // 阻止键盘滚动
+        const preventKeyboardScroll = (e) => {
+          const scrollKeys = [32, 33, 34, 35, 36, 37, 38, 39, 40]
+          if (scrollKeys.includes(e.keyCode)) {
+            e.preventDefault()
+            e.stopPropagation()
+            return false
+          }
+        }
+        
+        // 添加所有可能的滚动事件监听器
+        const events = ['scroll', 'wheel', 'mousewheel', 'DOMMouseScroll', 'touchstart', 'touchmove', 'touchend']
+        events.forEach(event => {
+          window.addEventListener(event, preventScroll, { passive: false, capture: true })
+          document.addEventListener(event, preventScroll, { passive: false, capture: true })
+          document.body.addEventListener(event, preventScroll, { passive: false, capture: true })
+        })
+        
+        // 阻止键盘滚动
+        document.addEventListener('keydown', preventKeyboardScroll, { passive: false, capture: true })
+        
+        // 强制滚动位置为0
+        const forceScrollTop = () => {
+          window.scrollTo(0, 0)
+          document.body.scrollTop = 0
+          document.documentElement.scrollTop = 0
+        }
+        
+        // 立即设置滚动位置为0
+        forceScrollTop()
+        
+        // 定期检查并重置滚动位置
+        const scrollResetInterval = setInterval(forceScrollTop, 16)
+        
+        // 存储事件监听器以便清理
+        window.scrollPreventListeners = [
+          () => {
+            events.forEach(event => {
+              window.removeEventListener(event, preventScroll, { capture: true })
+              document.removeEventListener(event, preventScroll, { capture: true })
+              document.body.removeEventListener(event, preventScroll, { capture: true })
+            })
+            document.removeEventListener('keydown', preventKeyboardScroll, { capture: true })
+            clearInterval(scrollResetInterval)
+          }
+        ]
+        
+        return // 未登录则不继续初始化其他数据
+      }
+      
+      console.log('✅ 用户已登录，初始化我的音乐数据')
+      
+      // 初始化用户喜欢的歌曲
+      await initFavoriteSongs()
+      
+      // 预加载专辑和视频数据（如果当前就在这些标签页）
+      if (currentTab.value === 'albums') {
+        await loadFavoriteAlbums()
+      } else if (currentTab.value === 'videos') {
+        await loadFavoriteVideos()
+      }
+      
+      // 初始化用户信息
+      await initUserInfo()
+      
+      // 监听全局事件
+      window.addEventListener('user-info-updated', handleUserInfoUpdate)
+      window.addEventListener('background-changed', updateBackground)
+      window.addEventListener('songLikeChanged', refreshFavoriteSongs)
+      
+      // 点击外部关闭下拉框
+      document.addEventListener('click', closeDropdown)
+      
+      // 按ESC键关闭下拉框
+      document.addEventListener('keydown', handleEscKey)
+      
+      // 滚动时关闭下拉框
+      window.addEventListener('scroll', handleScroll)
+      
+      // 窗口大小改变时关闭下拉框
+      window.addEventListener('resize', handleResize)
+    })
+
     return {
+      isLoggedIn,
       avatarImg,
       nickname,
       userBio,
@@ -1963,8 +1745,12 @@ export default {
       currentTab,
       avatarInput,
       likedSongs,
-      createdPlaylists,
-      loadingPlaylists,
+      nickname,
+      userBio,
+      bannerBg,
+      currentTab,
+      avatarInput,
+      likedSongs,
       favoriteAlbums,
       loadingAlbums,
       favoriteVideos,
@@ -1976,63 +1762,23 @@ export default {
       onAvatarChange,
       playSong,
       playAll,
-      showMoreOptionsIndex,
-      toggleMoreOptions,
-      playNext,
-      addToQueue,
-      showAddToPlaylistModal,
       removeFavorite,
-      goToPlaylistDetail,
-      downloadAll,
-      showBatchOptions,
-      // 新建歌单相关
-      showCreateModal,
-      showCoverSelector,
-      isCreating,
-      newPlaylist,
-      defaultCovers,
-      showCreatePlaylistModal,
-      closeCreatePlaylistModal,
-      selectCover,
-      triggerCoverUpload,
-      handleCoverUpload,
-      handleDragOver,
-      handleDrop,
-      createNewPlaylist,
-      fetchUserPlaylists,
-      // 封面上传相关
-      coverTab,
-      uploadingCover,
-      uploadProgress,
-      coverInput,
-      // 删除歌单相关
-      showDeleteModal,
-      isDeleting,
-      playlistToDelete,
-      showDeleteConfirm,
-      closeDeleteConfirm,
-      confirmDeletePlaylist,
       // 批量操作相关
       showBatchModal,
-      showPlaylistBatchModal,
       showAlbumBatchModal,
       showVideoBatchModal,
+      showBatchOptions,
       selectedSongs,
-      selectedPlaylists,
       selectedAlbums,
       selectedVideos,
       isSelectMode,
-      toggleSelectMode,
       toggleSongSelection,
-      togglePlaylistSelection,
       toggleAlbumSelection,
       toggleVideoSelection,
       selectAllSongs,
-      selectAllPlaylists,
       selectAllAlbums,
       selectAllVideos,
       batchDeleteSongs,
-      batchDeletePlaylists,
       batchRemoveAlbums,
       batchRemoveVideos,
       closeBatchModal,
@@ -2044,6 +1790,7 @@ export default {
       currentDownloadIndex,
       downloadResults,
       downloadSong,
+      downloadAll,
       showDownloadConfirm,
       closeDownloadModal,
       confirmDownloadSongs,
@@ -2055,9 +1802,19 @@ export default {
       goToVideoDetail,
       playAlbum,
       playVideo,
+      goToMVPage,
+      goToAlbumPage,
       formatDate,
       formatViews,
-      formatDuration
+      formatDuration,
+      // 更多下拉框相关
+      activeDropdown,
+      toggleDropdown,
+      closeDropdown,
+      goToSongDetail,
+      goToArtistDetail,
+      goToAlbumDetail,
+      addToPlayNext,
     }
   }
 }
@@ -2126,12 +1883,13 @@ export default {
 
 .user-avatar-container {
   position: relative;
-  margin-bottom: 15px;
+  margin-bottom: 0;
+  transform: translateY(-20px); /* 向上移动头像 */
 }
 
 .user-avatar {
-  width: 120px;
-  height: 120px;
+  width: 300px;
+  height: 300px;
   border-radius: 50%;
   border: 4px solid white;
   cursor: pointer;
@@ -2150,7 +1908,7 @@ export default {
 .user-name {
   font-size: 28px;
   font-weight: bold;
-  margin: 0;
+  margin: -5px 0 0;
   color: white;
 }
 
@@ -2190,7 +1948,7 @@ export default {
   gap: 40px;
   justify-content: center;
   position: absolute;
-  bottom: 30px;
+  bottom: 10px;
   left: 50%;
   transform: translateX(-50%);
   width: auto;
@@ -2202,7 +1960,7 @@ export default {
   cursor: pointer;
   position: relative;
   color: rgba(255, 255, 255, 0.7);
-  transition: all 0.3s ease;
+  transition: color 0.3s ease;
   border-bottom: 2px solid transparent;
 }
 
@@ -2334,7 +2092,7 @@ export default {
 
 .song-table-header {
   display: flex;
-  padding: 10px 0;
+  padding: 12px 16px;
   border-bottom: 1px solid var(--border-color-light);
   color: var(--text-color-light);
   font-size: 14px;
@@ -2353,10 +2111,12 @@ export default {
 .song-row {
   display: flex;
   align-items: center;
-  padding: 12px 0;
+  padding: 12px 16px;
   border-bottom: 1px solid var(--border-color-light);
-  transition: background-color 0.2s;
+  transition: background-color 0.2s ease;
   position: relative;
+  border-radius: 8px;
+  margin: 2px 0;
 }
 
 .song-row:hover {
@@ -2381,48 +2141,51 @@ export default {
   justify-content: center;
   font-weight: 500;
   position: relative;
+  padding: 0 8px;
+  transition: color 0.2s ease;
 }
 
-.col-index::before {
-  content: '';
-  position: absolute;
-  left: 50%;
-  top: 50%;
-  transform: translate(-50%, -50%);
-  width: 24px;
-  height: 24px;
-  border-radius: 50%;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  opacity: 0;
-  transition: opacity 0.3s ease;
-  z-index: -1;
-}
-
-.song-row:hover .col-index::before {
-  opacity: 0.1;
-}
 
 .song-row:hover .col-index {
   color: var(--primary);
-  font-weight: 600;
+}
+
+.song-row:hover .song-name {
+  color: var(--primary);
+}
+
+.song-row:hover .col-artist {
+  color: var(--primary);
+}
+
+.song-row:hover .col-album {
+  color: var(--primary);
+}
+
+.song-row:hover .col-duration {
+  color: var(--primary);
 }
 
 .col-song {
-  flex: 2;
-  min-width: 250px;
-  padding-left: 0;
+  flex: 2.5;
+  min-width: 280px;
+  padding: 0 8px;
 }
 
 .col-artist {
-  flex: 1;
-  min-width: 150px;
-  color: var(--text-color-lighter);
+  flex: 1.2;
+  min-width: 160px;
+  color: var(--text-primary);
+  padding: 0 8px;
+  transition: color 0.2s ease;
 }
 
 .col-album {
-  flex: 1;
-  min-width: 150px;
-  color: var(--text-color-lighter);
+  flex: 1.2;
+  min-width: 160px;
+  color: var(--text-primary);
+  padding: 0 8px;
+  transition: color 0.2s ease;
 }
 
 .col-duration {
@@ -2430,6 +2193,8 @@ export default {
   text-align: right;
   color: var(--text-color-light);
   justify-content: flex-end;
+  padding: 0 8px;
+  transition: color 0.2s ease;
 }
 
 .col-actions {
@@ -2437,6 +2202,91 @@ export default {
   display: flex;
   justify-content: flex-end;
   gap: 10px;
+  padding: 0 8px;
+  overflow: visible;
+}
+
+/* 更多下拉框样式 */
+.more-dropdown {
+  position: relative;
+  display: inline-block;
+}
+
+.more-btn {
+  width: 32px;
+  height: 32px;
+  border: none;
+  background: transparent;
+  border-radius: 50%;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: color 0.2s ease, opacity 0.2s ease;
+  color: var(--text-secondary);
+  opacity: 0.7;
+}
+
+.more-btn:hover {
+  color: var(--primary, #FF6B9B);
+  opacity: 1;
+}
+
+.more-icon {
+  width: 16px;
+  height: 16px;
+  transition: transform 0.2s ease;
+}
+
+
+.dropdown-menu {
+  position: fixed;
+  min-width: 200px;
+  max-width: 250px;
+  width: max-content;
+  background: var(--background-card, white);
+  border: 1px solid var(--border, rgba(0, 0, 0, 0.1));
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  z-index: 99999;
+  padding: 8px 0;
+  max-height: none;
+  overflow: hidden;
+  backdrop-filter: blur(10px);
+}
+
+.dropdown-item {
+  width: 100%;
+  padding: 12px 16px;
+  border: none;
+  background: transparent;
+  text-align: left;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 14px;
+  color: var(--text-primary, #374151);
+  transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+.dropdown-item:hover {
+  background-color: var(--background-hover, rgba(255, 107, 155, 0.1));
+  color: var(--primary, #FF6B9B);
+}
+
+.dropdown-item.danger {
+  color: var(--error, #ef4444);
+}
+
+.dropdown-item.danger:hover {
+  background-color: rgba(239, 68, 68, 0.1);
+  color: var(--error, #ef4444);
+}
+
+.item-icon {
+  font-size: 16px;
+  flex-shrink: 0;
 }
 
 .song-info {
@@ -2449,13 +2299,16 @@ export default {
 .song-name {
   font-size: 14px;
   font-weight: 400;
-  color: var(--text-color);
+  color: var(--text-primary);
   text-align: left;
   width: 100%;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
   line-height: 1.4;
+  transition: color 0.2s ease;
+  text-shadow: none;
+  background: transparent;
 }
 
 .tag {
@@ -2515,441 +2368,54 @@ export default {
   color: white;
 }
 
-.more-icon::before {
-  content: '⋯';
-  font-size: 18px;
+
+
+.playlist-icon::before {
+  content: '\1F3B5'; /* 乐谱符号 */
 }
 
-/* 更多选项下拉菜单 */
-.more-options-container {
-  position: relative;
+.detail-icon::before {
+  content: '\1F4D6'; /* 笔记本符号 */
 }
 
-.more-options-dropdown {
-  position: fixed;
-  background: white;
-  border: 2px solid var(--primary);
-  border-radius: 12px;
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(255, 255, 255, 0.1);
-  z-index: 99999;
-  min-width: 180px;
-  padding: 12px 0;
-  animation: dropdownSlideIn 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  backdrop-filter: blur(20px);
+.artist-icon::before {
+  content: '\1F9D1'; /* 人物符号 */
 }
 
-@keyframes dropdownSlideIn {
-  from {
-    opacity: 0;
-    transform: translateY(-8px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+.album-icon::before {
+  content: '\1F3B6'; /* 唱片符号 */
 }
 
-.option-item {
-  display: flex;
-  align-items: center;
-  padding: 12px 20px;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  font-size: 14px;
-  font-weight: 500;
-  color: #333;
-  border-radius: 8px;
-  margin: 2px 8px;
+.share-icon::before {
+  content: '\1F385'; /* 礼物分享符号 */
 }
 
-.option-item:hover {
-  background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%);
-  color: white;
-  transform: translateX(4px);
+.link-icon::before {
+  content: '\1F517'; /* 链接符号 */
 }
 
-.option-icon {
-  margin-right: 12px;
-  font-size: 16px;
-  width: 20px;
-  text-align: center;
-  transition: all 0.3s ease;
-  font-weight: bold;
+.play-icon::before {
+  content: '\25B6'; /* 播放符号 */
 }
 
-.play-next-icon {
-  color: #4f46e5;
+.add-icon::before {
+  content: '\002B'; /* 加号 */
 }
 
-.queue-icon {
-  color: #059669;
+.download-icon::before {
+  content: '\2193'; /* 下箭头 */
 }
 
-.download-icon {
-  color: #0891b2;
+.remove-icon::before {
+  content: '\00D7'; /* 乘号 */
 }
 
-.playlist-icon {
-  color: #d97706;
-}
-
-.remove-icon {
-  color: #dc2626;
-}
-
-.option-item:hover .option-icon {
-  color: white;
-  transform: scale(1.1);
-}
-
-/* 歌单列表 */
-.playlist-list-container {
-  width: 100%;
-}
-
-.playlist-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
-  gap: 20px;
-}
-
-/* 新建歌单按钮样式 */
-.create-playlist-card {
-  cursor: pointer;
-  transition: transform 0.3s ease, box-shadow 0.3s ease;
-  border: 2px dashed var(--border);
-  background-color: var(--background-card);
-}
-
-.create-playlist-card:hover {
-  transform: translateY(-5px);
-  box-shadow: var(--card-hover-shadow);
-  border-color: var(--primary);
-}
-
-.create-playlist-cover {
-  position: relative;
-  width: 100%;
-  aspect-ratio: 1;
-  border-radius: 0px;
-  overflow: hidden;
-  margin-bottom: 10px;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.create-icon {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.plus-icon {
-  font-size: 48px;
-  color: white;
-  font-weight: 300;
-}
-
-.playlist-card {
-  transition: transform 0.3s ease, box-shadow 0.3s ease;
-  position: relative;
-}
-
-.playlist-card:hover {
-  transform: translateY(-5px);
-  box-shadow: var(--card-hover-shadow);
-}
-
-/* 歌单可点击区域 */
-.playlist-cover,
-.playlist-info {
-  cursor: pointer;
-}
-
-/* 歌单操作按钮 */
-.playlist-actions {
-  position: absolute;
-  top: 8px;
-  right: 8px;
-  opacity: 0;
-  transition: opacity 0.3s ease;
-  z-index: 10;
-}
-
-.playlist-card:hover .playlist-actions {
-  opacity: 1;
-}
-
-.action-btn {
-  width: 32px;
-  height: 32px;
-  border-radius: 50%;
-  border: none;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: all 0.2s;
-  font-size: 18px;
-  font-weight: bold;
-}
-
-.delete-btn {
-  background: rgba(239, 68, 68, 0.9);
-  color: white;
-  backdrop-filter: blur(8px);
-}
-
-.delete-btn:hover {
-  background: rgba(220, 38, 38, 1);
-  transform: scale(1.1);
-}
-
-.delete-icon {
-  font-size: 20px;
-  line-height: 1;
-}
-
-.playlist-cover {
-  position: relative;
-  width: 100%;
-  aspect-ratio: 1;
-  border-radius: 0px;
-  overflow: hidden;
-  margin-bottom: 10px;
-}
-
-.playlist-cover img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  transition: transform 0.5s ease;
-}
-
-.playlist-card:hover .playlist-cover img {
-  transform: scale(1.05);
-}
-
-.play-count-overlay {
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  width: 100%;
-  padding: 10px;
-  background: var(--overlay-gradient);
-  color: white;
-  font-size: 12px;
-  display: flex;
-  align-items: center;
-  box-sizing: border-box;
-  opacity: 0;
-  transition: opacity 0.3s ease;
-}
-
-.playlist-card:hover .play-count-overlay {
-  opacity: 1;
-}
-
-.playlist-info {
-  padding: 0 5px;
-}
-
-.playlist-title {
-  font-size: 14px;
-  font-weight: 500;
-  margin-bottom: 5px;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  color: var(--text-color);
-}
-
-.playlist-desc {
-  font-size: 12px;
-  color: var(--text-color-light);
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  line-clamp: 2;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
-}
-
-/* 空状态 */
-.empty-state {
-  padding: 60px 0;
-  text-align: center;
-  color: var(--text-color-light);
-}
-
-/* 加载状态 */
-.loading-playlists {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  padding: 60px;
-  color: var(--text-secondary);
-  font-size: 16px;
-  gap: 16px;
-}
-
-.loading-spinner {
-  width: 40px;
-  height: 40px;
-  border: 4px solid var(--border);
-  border-top: 4px solid var(--primary);
-  border-radius: 50%;
-  animation: spin 1s linear infinite;
-}
-
-@keyframes spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
-}
-
-/* 空歌单状态 */
-.empty-playlists {
-  grid-column: 1 / -1;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  padding: 60px;
-  color: var(--text-secondary);
-  text-align: center;
-}
-
-.empty-icon {
-  font-size: 48px;
-  margin-bottom: 16px;
-  opacity: 0.6;
-}
-
-.empty-playlists p {
-  margin: 8px 0;
-  line-height: 1.5;
-}
-
-.empty-playlists p:first-of-type {
-  font-size: 18px;
-  font-weight: 500;
-  color: var(--text-primary);
-}
-
-.empty-playlists p:last-of-type {
-  font-size: 14px;
-  color: var(--text-secondary);
-}
-
-
-
-/* 响应式设计 */
-@media (max-width: 1200px) {
-  .main-content {
-    padding: 0 20px 80px;
-  }
-}
-
-@media (max-width: 992px) {
-  .col-index {
-    flex: 0 0 50px;
-  }
-  .col-song {
-    flex: 2;
-    min-width: 180px;
-  }
-  .col-artist {
-    flex: 1;
-    min-width: 120px;
-  }
-  .col-album {
-    flex: 1;
-    min-width: 120px;
-  }
-  .col-duration {
-    flex: 0 0 80px;
-  }
-  .col-actions {
-    flex: 0 0 60px;
-  }
-}
-
-  @media (max-width: 768px) {
-  .content-tabs {
-    bottom: 20px;
-    gap: 25px;
-    overflow-x: auto;
-    padding: 0 20px;
-  }
-  .tab-item {
-    padding: 8px 0;
-    white-space: nowrap;
-    font-size: 14px;
-  }
-  .user-banner {
-    height: 350px;
-  }
-  .user-main-info {
-    margin-bottom: 0;
-  }
-  .user-avatar-section {
-    align-items: center;
-  }
-  .user-avatar {
-    width: 100px;
-    height: 100px;
-  }
-  .user-name {
-    font-size: 22px;
-  }
-  .content-header {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 15px;
-  }
-  .action-buttons {
-    flex-wrap: wrap;
-    width: 100%;
-  }
-  .btn {
-    flex: 1;
-    min-width: 120px;
-  }
-}
-
-@media (max-width: 576px) {
-  .col-index {
-    flex: 0 0 40px;
-    font-size: 12px;
-  }
-  .col-song {
-    flex: 2;
-    min-width: 120px;
-  }
-  .col-artist {
-    display: none;
-  }
-  .col-album {
-    flex: 1;
-    min-width: 100px;
-    font-size: 12px;
-  }
-  .col-duration {
-    flex: 0 0 60px;
-    font-size: 12px;
-  }
-  .col-actions {
-    flex: 0 0 50px;
-  }
-  
   .user-banner {
     height: 300px;
   }
   .user-avatar {
-    width: 80px;
-    height: 80px;
+    width: 130px;
+    height: 130px;
   }
   .user-name {
     font-size: 18px;
@@ -2958,11 +2424,8 @@ export default {
     flex-direction: row;
     gap: 15px;
   }
-}
+
   
-
-
-
 /* 黑色主题特殊调整 */
 [data-theme="black"] .content-area {
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
@@ -2972,382 +2435,6 @@ export default {
   background-color: var(--row-hover-bg);
 }
 
-/* 新建歌单模态框样式 */
-.create-playlist-modal {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background-color: rgba(0, 0, 0, 0.6);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 2000;
-  backdrop-filter: blur(4px);
-}
-
-/* 封面选择标签页 */
-.cover-tabs {
-  display: flex;
-  margin-bottom: 16px;
-  border-bottom: 1px solid var(--border);
-}
-
-.tab-btn {
-  flex: 1;
-  padding: 8px 16px;
-  border: none;
-  background: transparent;
-  color: var(--text-secondary);
-  cursor: pointer;
-  transition: all 0.2s;
-  border-bottom: 2px solid transparent;
-}
-
-.tab-btn:hover {
-  color: var(--text-primary);
-}
-
-.tab-btn.active {
-  color: var(--primary);
-  border-bottom-color: var(--primary);
-}
-
-/* 上传区域样式 */
-.upload-area {
-  padding: 16px 0;
-}
-
-.upload-zone {
-  border: 2px dashed var(--border);
-  border-radius: 8px;
-  padding: 32px;
-  text-align: center;
-  cursor: pointer;
-  transition: all 0.2s;
-  background: var(--background-light);
-}
-
-.upload-zone:hover {
-  border-color: var(--primary);
-  background: var(--background-card);
-}
-
-.upload-content {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 8px;
-}
-
-.upload-icon {
-  font-size: 48px;
-  opacity: 0.6;
-}
-
-.upload-text {
-  font-size: 16px;
-  font-weight: 600;
-  color: var(--text-primary);
-  margin: 0;
-}
-
-.upload-hint {
-  font-size: 14px;
-  color: var(--text-secondary);
-  margin: 0;
-}
-
-/* 上传进度样式 */
-.upload-progress {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 8px;
-}
-
-.progress-bar {
-  width: 100%;
-  max-width: 200px;
-  height: 4px;
-  background: var(--background-card);
-  border-radius: 2px;
-  overflow: hidden;
-}
-
-.progress-fill {
-  height: 100%;
-  background: linear-gradient(90deg, var(--primary), var(--primary-light));
-  border-radius: 2px;
-  transition: width 0.3s ease;
-}
-
-.progress-text {
-  font-size: 14px;
-  color: var(--text-secondary);
-}
-
-/* 封面操作按钮 */
-.current-cover {
-  position: relative;
-  overflow: hidden;
-}
-
-.cover-overlay {
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: rgba(0, 0, 0, 0.5);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  opacity: 0;
-  transition: opacity 0.2s;
-}
-
-.current-cover:hover .cover-overlay {
-  opacity: 1;
-}
-
-.cover-actions {
-  display: flex;
-  gap: 8px;
-}
-
-.action-btn {
-  background: rgba(255, 255, 255, 0.9);
-  border: none;
-  border-radius: 50%;
-  width: 40px;
-  height: 40px;
-  font-size: 18px;
-  cursor: pointer;
-  transition: all 0.2s;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.action-btn:hover {
-  background: white;
-  transform: scale(1.1);
-}
-
-/* 自定义封面样式 */
-.custom-cover {
-  position: relative;
-}
-
-.custom-badge {
-  position: absolute;
-  top: 4px;
-  right: 4px;
-  background: var(--primary);
-  color: white;
-  font-size: 10px;
-  padding: 2px 6px;
-  border-radius: 10px;
-  font-weight: 600;
-}
-
-.create-modal-content {
-  background-color: var(--background-card);
-  border-radius: 12px;
-  width: 90%;
-  max-width: 500px;
-  max-height: 90vh;
-  overflow-y: auto;
-  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
-  color: var(--text-primary);
-}
-
-.modal-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 20px 24px;
-  border-bottom: 1px solid var(--border);
-}
-
-.modal-header h3 {
-  font-size: 18px;
-  font-weight: 600;
-  margin: 0;
-  color: var(--text-primary);
-}
-
-.close-btn {
-  background: none;
-  border: none;
-  font-size: 24px;
-  cursor: pointer;
-  color: var(--text-secondary);
-  padding: 0;
-  width: 30px;
-  height: 30px;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: all 0.2s;
-}
-
-.close-btn:hover {
-  background-color: var(--background);
-  color: var(--text-primary);
-}
-
-.create-form {
-  padding: 24px;
-}
-
-.form-group {
-  margin-bottom: 20px;
-}
-
-.form-group label {
-  display: block;
-  margin-bottom: 8px;
-  font-weight: 500;
-  color: var(--text-primary);
-  font-size: 14px;
-}
-
-.form-group input,
-.form-group textarea {
-  width: 100%;
-  padding: 12px;
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  font-size: 14px;
-  background-color: var(--background);
-  color: var(--text-primary);
-  transition: border-color 0.2s;
-  box-sizing: border-box;
-}
-
-.form-group input:focus,
-.form-group textarea:focus {
-  outline: none;
-  border-color: var(--primary);
-  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
-}
-
-.char-count {
-  text-align: right;
-  font-size: 12px;
-  color: var(--text-secondary);
-  margin-top: 4px;
-}
-
-.cover-selector {
-  position: relative;
-}
-
-.current-cover {
-  width: 120px;
-  height: 120px;
-  border-radius: 8px;
-  overflow: hidden;
-  cursor: pointer;
-  border: 2px solid var(--border);
-  transition: border-color 0.2s;
-}
-
-.current-cover:hover {
-  border-color: var(--primary);
-}
-
-.current-cover img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-}
-
-.placeholder-cover {
-  width: 100%;
-  height: 100%;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  background: linear-gradient(135deg, #f3f4f6 0%, #e5e7eb 100%);
-  color: var(--text-secondary);
-}
-
-.image-icon {
-  font-size: 32px;
-  margin-bottom: 8px;
-}
-
-.placeholder-cover span {
-  font-size: 12px;
-}
-
-.cover-options {
-  position: absolute;
-  top: 130px;
-  left: 0;
-  background-color: var(--background-card);
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  padding: 16px;
-  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
-  z-index: 10;
-  min-width: 300px;
-}
-
-.cover-grid {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 8px;
-  margin-bottom: 12px;
-}
-
-.cover-option {
-  width: 60px;
-  height: 60px;
-  border-radius: 6px;
-  overflow: hidden;
-  cursor: pointer;
-  border: 2px solid transparent;
-  transition: all 0.2s;
-}
-
-.cover-option:hover {
-  border-color: var(--primary);
-  transform: scale(1.05);
-}
-
-.cover-option.active {
-  border-color: var(--primary);
-  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
-}
-
-.cover-option img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-}
-
-.cover-done-btn {
-  width: 100%;
-  padding: 8px;
-  background-color: var(--primary);
-  color: white;
-  border: none;
-  border-radius: 6px;
-  font-size: 14px;
-  cursor: pointer;
-  transition: background-color 0.2s;
-}
-
-.cover-done-btn:hover {
-  background-color: var(--primary-dark);
-}
 
 .modal-footer {
   display: flex;
@@ -3372,76 +2459,7 @@ export default {
   border-color: initial;
 }
 
-/* 删除确认对话框样式 */
-.delete-confirm-modal {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background-color: rgba(0, 0, 0, 0.6);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 2001;
-  backdrop-filter: blur(4px);
-}
 
-.delete-modal-content {
-  background-color: var(--background-card);
-  border-radius: 12px;
-  width: 90%;
-  max-width: 400px;
-  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
-  color: var(--text-primary);
-}
-
-.delete-content {
-  padding: 24px;
-  text-align: center;
-}
-
-.warning-icon {
-  font-size: 48px;
-  margin-bottom: 16px;
-  color: #f59e0b;
-}
-
-.warning-text {
-  font-size: 16px;
-  font-weight: 600;
-  color: var(--text-primary);
-  margin-bottom: 8px;
-  line-height: 1.5;
-}
-
-.warning-desc {
-  font-size: 14px;
-  color: var(--text-secondary);
-  margin: 0;
-  line-height: 1.5;
-}
-
-.btn-danger {
-  background-color: #ef4444;
-  color: white;
-  border: 1px solid #ef4444;
-}
-
-.btn-danger:hover {
-  background-color: #dc2626;
-  border-color: #dc2626;
-}
-
-.btn-danger:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
-}
-
-.btn-danger:disabled:hover {
-  background-color: #ef4444;
-  border-color: #ef4444;
-}
 
 /* 批量操作模态框样式 */
 .batch-modal {
@@ -3524,16 +2542,7 @@ export default {
   accent-color: var(--primary);
 }
 
-.song-info {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
 
-.song-name {
-  font-weight: 500;
-  color: var(--text-primary);
-}
 
 .song-artist {
   font-size: 12px;
@@ -3844,8 +2853,6 @@ export default {
   border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
-/* 隐藏滚动条样式 */
-/* 隐藏所有滚动条但保持滚动功能 */
 ::-webkit-scrollbar {
   width: 0px;
   height: 0px;
@@ -3866,12 +2873,10 @@ export default {
   -ms-overflow-style: none;
 }
 
-/* 为IE浏览器隐藏滚动条 */
 * {
   -ms-overflow-style: none;
 }
 
-/* 确保页面和容器的滚动条都被隐藏 */
 body, html {
   overflow-x: hidden;
 }
@@ -3880,42 +2885,61 @@ body, html {
   overflow-x: hidden;
 }
 
-.song-table-body {
-  /* 不需要隐藏滚动条，因为已经禁用了滚动 */
-  overflow: visible;
+.user-music-login-page {
+  height: 100vh !important;
+  max-height: 100vh !important;
+  width: 100vw !important;
+  background-color: var(--background);
+  overflow: hidden !important;
+  position: fixed !important;
+  top: 0 !important;
+  left: 0 !important;
+  right: 0 !important;
+  bottom: 0 !important;
+  z-index: 1 !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  box-sizing: border-box !important;
 }
+
+/* 当显示未登录页面时，禁用 body 滚动 */
+body:has(.user-music-login-page),
+html:has(.user-music-login-page) {
+  overflow: hidden !important;
+  height: 100vh !important;
+  position: fixed !important;
+  width: 100vw !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  top: 0 !important;
+  left: 0 !important;
+}
+
+/* 强制禁用页面滚动，但不影响导航栏显示 */
+body:has(.user-music-login-page) {
+  overflow-x: hidden !important;
+  overflow-y: hidden !important;
+}
+
+/* 确保登录页面容器无法滚动 */
+.user-music-login-page {
+  overflow: hidden !important;
+  overscroll-behavior: none !important;
+  touch-action: none !important;
+  -webkit-overflow-scrolling: auto !important;
+}
+
 
 .batch-list {
   overflow-y: auto;
-  scrollbar-width: none;
-  -ms-overflow-style: none;
-}
-
-.batch-list::-webkit-scrollbar {
-  width: 0px;
-  background: transparent;
 }
 
 .download-content {
   overflow-y: auto;
-  scrollbar-width: none;
-  -ms-overflow-style: none;
-}
-
-.download-content::-webkit-scrollbar {
-  width: 0px;
-  background: transparent;
 }
 
 .song-list {
   overflow-y: auto;
-  scrollbar-width: none;
-  -ms-overflow-style: none;
-}
-
-.song-list::-webkit-scrollbar {
-  width: 0px;
-  background: transparent;
 }
 
 /* 标签页数量样式 */
@@ -3933,6 +2957,10 @@ body, html {
 /* 专辑列表样式 */
 .album-list-container {
   width: 100%;
+  min-height: 500px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
 }
 
 .loading-albums {
@@ -3950,25 +2978,32 @@ body, html {
   grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
   gap: 20px;
   padding: 20px 0;
+  flex: 1;
 }
 
 .album-card {
-  background: var(--background-card);
-  border-radius: 0px;
-  overflow: hidden;
-  transition: box-shadow 0.3s ease;
+  background: transparent;
+  border-radius: 0;
+  overflow: visible;
+  transition: all 0.3s ease;
   cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
 }
 
-.album-card:hover {
-  box-shadow: var(--card-hover-shadow);
+.album-card:hover .album-cover {
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+  transform: translateY(-2px);
 }
 
 .album-cover {
   position: relative;
-  width: 100%;
-  height: 200px;
+  width: 220px;
+  height: 220px;
   overflow: hidden;
+  border-radius: 0;
+  transition: all 0.3s ease;
 }
 
 .album-cover .cover-image {
@@ -4024,53 +3059,71 @@ body, html {
 }
 
 .album-info {
-  padding: 16px;
+  padding: 12px 0 0 0;
+  text-align: center;
+  width: 220px;
 }
 
 .album-title {
-  font-size: 16px;
-  font-weight: 600;
+  font-size: 14px;
+  font-weight: 500;
   color: var(--text-primary);
-  margin: 0 0 8px 0;
+  margin: 0 0 6px 0;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  line-height: 1.2;
 }
 
 .album-artist {
-  font-size: 14px;
+  font-size: 12px;
   color: var(--text-secondary);
   margin: 0 0 4px 0;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  line-height: 1.2;
 }
 
 .album-date {
-  font-size: 12px;
+  font-size: 11px;
   color: var(--text-tertiary);
   margin: 0;
+  line-height: 1.2;
 }
 
 .empty-albums {
   text-align: center;
-  padding: 60px 20px;
+  padding: 80px 20px;
   color: var(--text-secondary);
+  background: linear-gradient(135deg, rgba(102, 126, 234, 0.05) 0%, rgba(118, 75, 162, 0.05) 100%);
+  border-radius: 20px;
+  border: 2px dashed rgba(102, 126, 234, 0.2);
+  margin: 40px auto;
+  transition: all 0.3s ease;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  min-height: 400px;
+  max-width: 600px;
+  width: 100%;
 }
 
-.empty-albums .empty-icon {
-  font-size: 48px;
-  margin-bottom: 16px;
-}
-
-.empty-albums p {
-  margin: 8px 0;
-  font-size: 14px;
+.empty-albums:hover {
+  border-color: rgba(102, 126, 234, 0.4);
+  background: linear-gradient(135deg, rgba(102, 126, 234, 0.08) 0%, rgba(118, 75, 162, 0.08) 100%);
+  transform: translateY(-2px);
+  box-shadow: 0 10px 30px rgba(102, 126, 234, 0.1);
 }
 
 /* 视频列表样式 */
 .video-list-container {
   width: 100%;
+  min-height: 500px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
 }
 
 .loading-videos {
@@ -4085,28 +3138,35 @@ body, html {
 
 .videos-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-  gap: 20px;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 24px;
   padding: 20px 0;
+  flex: 1;
 }
 
 .video-card {
-  background: var(--background-card);
-  border-radius: 0px;
-  overflow: hidden;
-  transition: box-shadow 0.3s ease;
+  background: transparent;
+  border-radius: 0;
+  overflow: visible;
+  transition: all 0.3s ease;
   cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
 }
 
-.video-card:hover {
-  box-shadow: var(--card-hover-shadow);
+.video-card:hover .video-cover {
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+  transform: translateY(-2px);
 }
 
 .video-cover {
   position: relative;
-  width: 100%;
-  height: 160px;
+  width: 320px;
+  height: 180px;
   overflow: hidden;
+  border-radius: 0;
+  transition: all 0.3s ease;
 }
 
 .video-cover .cover-image {
@@ -4114,6 +3174,7 @@ body, html {
   height: 100%;
   object-fit: cover;
   transition: transform 0.3s ease;
+  border-radius: 0;
 }
 
 .video-card:hover .cover-image {
@@ -4161,6 +3222,7 @@ body, html {
   fill: white;
 }
 
+
 .video-duration {
   position: absolute;
   bottom: 8px;
@@ -4173,47 +3235,607 @@ body, html {
 }
 
 .video-info {
-  padding: 16px;
+  padding: 12px 0 0 0;
+  text-align: center;
+  width: 320px;
 }
 
 .video-title {
-  font-size: 16px;
-  font-weight: 600;
+  font-size: 14px;
+  font-weight: 500;
   color: var(--text-primary);
-  margin: 0 0 8px 0;
+  margin: 0 0 6px 0;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  line-height: 1.2;
 }
 
 .video-artist {
-  font-size: 14px;
+  font-size: 12px;
   color: var(--text-secondary);
   margin: 0 0 4px 0;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  line-height: 1.2;
 }
 
-.video-views {
-  font-size: 12px;
+.video-date {
+  font-size: 11px;
   color: var(--text-tertiary);
   margin: 0;
+  line-height: 1.2;
 }
 
 .empty-videos {
   text-align: center;
-  padding: 60px 20px;
+  padding: 80px 20px;
+  color: var(--text-secondary);
+  background: linear-gradient(135deg, rgba(79, 172, 254, 0.05) 0%, rgba(0, 242, 254, 0.05) 100%);
+  border-radius: 20px;
+  border: 2px dashed rgba(79, 172, 254, 0.2);
+  margin: 40px auto;
+  transition: all 0.3s ease;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  min-height: 400px;
+  max-width: 600px;
+  width: 100%;
+}
+
+.empty-videos:hover {
+  border-color: rgba(79, 172, 254, 0.4);
+  background: linear-gradient(135deg, rgba(79, 172, 254, 0.08) 0%, rgba(0, 242, 254, 0.08) 100%);
+  transform: translateY(-2px);
+  box-shadow: 0 10px 30px rgba(79, 172, 254, 0.1);
+}
+
+.empty-icon-container {
+  position: relative;
+  display: inline-block;
+  margin-bottom: 24px;
+}
+
+.empty-icon-bg {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 100px;
+  height: 100px;
+  background: linear-gradient(135deg, rgba(79, 172, 254, 0.2) 0%, rgba(0, 242, 254, 0.2) 100%);
+  border-radius: 50%;
+  animation: iconPulse 2s ease-in-out infinite;
+}
+
+.empty-icon {
+  position: relative;
+  z-index: 2;
+  font-size: 56px;
+  display: block;
+  padding: 20px;
+  animation: iconFloat 3s ease-in-out infinite;
+  filter: drop-shadow(0 4px 8px rgba(79, 172, 254, 0.3));
+}
+
+.empty-content {
+  max-width: 400px;
+  margin: 0 auto;
+}
+
+.empty-title {
+  font-size: 22px;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin: 0 0 12px 0;
+  background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.empty-description {
+  font-size: 16px;
+  color: var(--text-secondary);
+  margin: 0 0 24px 0;
+  line-height: 1.5;
+}
+
+.discover-btn {
+  background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+  color: white;
+  border: none;
+  padding: 14px 28px;
+  border-radius: 25px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  transition: all 0.3s ease;
+  box-shadow: 0 6px 20px rgba(79, 172, 254, 0.3);
+  position: relative;
+  overflow: hidden;
+}
+
+.discover-btn::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+  transition: left 0.6s ease;
+}
+
+.discover-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(79, 172, 254, 0.4);
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+
+.discover-btn:hover::before {
+  left: 100%;
+}
+
+.discover-btn:active {
+  transform: translateY(0);
+  box-shadow: 0 4px 15px rgba(79, 172, 254, 0.3);
+}
+
+.btn-icon {
+  font-size: 18px;
+  animation: iconBounce 1.5s ease-in-out infinite;
+}
+
+@keyframes iconPulse {
+  0%, 100% {
+    transform: translate(-50%, -50%) scale(1);
+    opacity: 0.5;
+  }
+  50% {
+    transform: translate(-50%, -50%) scale(1.1);
+    opacity: 0.8;
+  }
+}
+
+@keyframes iconFloat {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-5px);
+  }
+}
+
+@keyframes iconBounce {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-2px);
+  }
+}
+
+/* 深色主题适配 */
+[data-theme="black"] .empty-videos {
+  background: linear-gradient(135deg, rgba(79, 172, 254, 0.08) 0%, rgba(0, 242, 254, 0.08) 100%);
+  border-color: rgba(79, 172, 254, 0.3);
+}
+
+[data-theme="black"] .empty-videos:hover {
+  border-color: rgba(79, 172, 254, 0.5);
+  background: linear-gradient(135deg, rgba(79, 172, 254, 0.12) 0%, rgba(0, 242, 254, 0.12) 100%);
+  box-shadow: 0 10px 30px rgba(79, 172, 254, 0.2);
+}
+
+[data-theme="black"] .empty-icon-bg {
+  background: linear-gradient(135deg, rgba(79, 172, 254, 0.3) 0%, rgba(0, 242, 254, 0.3) 100%);
+}
+
+[data-theme="black"] .empty-title {
+  color: #ffffff;
+}
+
+[data-theme="black"] .empty-description {
+  color: rgba(255, 255, 255, 0.7);
+}
+
+/* 黑色主题下的专辑播放按钮样式 */
+[data-theme="black"] .play-album-btn {
+  background: #ffffff !important;
+  border: 1px solid #cccccc !important;
+}
+
+[data-theme="black"] .play-album-btn:hover {
+  background: #f0f0f0 !important;
+  border-color: #aaaaaa !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1) !important;
+}
+
+[data-theme="black"] .play-album-btn .play-icon-img {
+  filter: brightness(0) !important; /* 黑色三角形 */
+}
+
+[data-theme="black"] .play-video-btn {
+  background: #ffffff !important;
+  border: 1px solid #cccccc !important;
+}
+
+[data-theme="black"] .play-video-btn:hover {
+  background: #f0f0f0 !important;
+  border-color: #aaaaaa !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1) !important;
+}
+
+[data-theme="black"] .play-video-btn .play-icon-svg {
+  fill: #000000 !important; /* 黑色三角形 */
+}
+
+/* 背景选择器模态框样式 */
+.background-modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 2000;
+  backdrop-filter: blur(4px);
+}
+
+.background-modal-content {
+  background: var(--background-card);
+  border-radius: var(--border-radius-lg);
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+  max-width: 800px;
+  width: 90%;
+  max-height: 80vh;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px 24px;
+  border-bottom: 1px solid var(--border);
+  background: var(--background);
+}
+
+.modal-header h3 {
+  margin: 0;
+  color: var(--text-primary);
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.close-btn {
+  background: none;
+  border: none;
+  font-size: 24px;
+  color: var(--text-secondary);
+  cursor: pointer;
+  padding: 0;
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  transition: all 0.2s ease;
+}
+
+.close-btn:hover {
+  background: var(--background-hover);
+  color: var(--text-primary);
+}
+
+.background-options {
+  padding: 20px 24px;
+  overflow-y: auto;
+  flex: 1;
+}
+
+.option-section {
+  margin-bottom: 30px;
+}
+
+.option-section h4 {
+  margin: 0 0 16px 0;
+  color: var(--text-primary);
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.background-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 16px;
+}
+
+.background-option {
+  position: relative;
+  border-radius: 8px;
+  overflow: hidden;
+  border: 2px solid transparent;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.background-option:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+}
+
+.background-option.active {
+  border-color: var(--primary);
+}
+
+.background-option img {
+  width: 100%;
+  height: 100px;
+  object-fit: cover;
+  display: block;
+}
+
+.bg-overlay {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: linear-gradient(transparent, rgba(0, 0, 0, 0.7));
+  padding: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.bg-name {
+  color: white;
+  font-size: 12px;
+  font-weight: 500;
+  text-align: center;
+}
+
+.custom-upload {
+  text-align: center;
+  padding: 20px;
+  border: 2px dashed var(--border);
+  border-radius: 8px;
+  transition: all 0.3s ease;
+}
+
+.custom-upload:hover {
+  border-color: var(--primary);
+  background: var(--background-hover);
+}
+
+.upload-btn {
+  background: var(--primary);
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 6px;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.upload-btn:hover {
+  background: var(--primary-dark);
+}
+
+.upload-icon {
+  font-size: 16px;
+}
+
+.upload-tip {
+  margin-top: 12px;
+  font-size: 12px;
   color: var(--text-secondary);
 }
 
-.empty-videos .empty-icon {
-  font-size: 48px;
-  margin-bottom: 16px;
+/* 黑色主题下的背景选择器样式 */
+[data-theme="black"] .background-modal-content {
+  background: #000000 !important;
+  border: 1px solid #333333 !important;
 }
 
-.empty-videos p {
-  margin: 8px 0;
-  font-size: 14px;
+[data-theme="black"] .modal-header {
+  background: #000000 !important;
+  border-bottom: 1px solid #333333 !important;
 }
+
+[data-theme="black"] .modal-header h3 {
+  color: #ffffff !important;
+}
+
+[data-theme="black"] .close-btn {
+  color: #cccccc !important;
+}
+
+[data-theme="black"] .close-btn:hover {
+  background: #1a1a1a !important;
+  color: #ffffff !important;
+}
+
+[data-theme="black"] .background-options {
+  background: #000000 !important;
+}
+
+[data-theme="black"] .option-section {
+  background: #000000 !important;
+}
+
+[data-theme="black"] .option-section h4 {
+  color: #ffffff !important;
+}
+
+[data-theme="black"] .background-grid {
+  background: #000000 !important;
+}
+
+[data-theme="black"] .background-option {
+  border-color: #333333 !important;
+}
+
+[data-theme="black"] .background-option.active {
+  border-color: #ffffff !important;
+}
+
+[data-theme="black"] .custom-upload {
+  background: #000000 !important;
+  border-color: #333333 !important;
+}
+
+[data-theme="black"] .custom-upload:hover {
+  background: #1a1a1a !important;
+  border-color: #ffffff !important;
+}
+
+[data-theme="black"] .upload-btn {
+  background: #000000 !important;
+  color: #ffffff !important;
+  border: 1px solid #ffffff !important;
+}
+
+[data-theme="black"] .upload-btn:hover {
+  background: #1a1a1a !important;
+  border-color: #ffffff !important;
+}
+
+[data-theme="black"] .upload-tip {
+  color: #cccccc !important;
+}
+
+[data-theme="black"] .bg-overlay {
+  background: rgba(0, 0, 0, 0.8) !important;
+}
+
+[data-theme="black"] .bg-name {
+  color: #ffffff !important;
+}
+
+/* 专辑空状态深色主题适配 */
+[data-theme="black"] .empty-albums {
+  background: linear-gradient(135deg, rgba(102, 126, 234, 0.08) 0%, rgba(118, 75, 162, 0.08) 100%);
+  border-color: rgba(102, 126, 234, 0.3);
+}
+
+[data-theme="black"] .empty-albums:hover {
+  border-color: rgba(102, 126, 234, 0.5);
+  background: linear-gradient(135deg, rgba(102, 126, 234, 0.12) 0%, rgba(118, 75, 162, 0.12) 100%);
+  box-shadow: 0 10px 30px rgba(102, 126, 234, 0.2);
+}
+
+/* 全新的未登录页面设计 */
+.user-music-login-page {
+  min-height: calc(100vh - 152px); /* 减去导航栏72px + 播放器80px */
+  width: 100%;
+  background: linear-gradient(135deg, var(--primary-light) 0%, var(--background) 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem 0;
+  box-sizing: border-box;
+  position: relative;
+  margin-top: 0;
+}
+
+/* 背景装饰元素 */
+.user-music-login-page::before {
+  content: '';
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: radial-gradient(circle at 30% 70%, rgba(255, 255, 255, 0.1) 0%, transparent 50%),
+              radial-gradient(circle at 70% 30%, rgba(255, 255, 255, 0.08) 0%, transparent 50%);
+  animation: float 20s ease-in-out infinite;
+  z-index: 1;
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0px) rotate(0deg); }
+  50% { transform: translateY(-20px) rotate(180deg); }
+}
+
+/* 主题特定背景 */
+[data-theme="pink"] .user-music-login-page {
+  background: linear-gradient(135deg, #fce7f3 0%, #fdf2f8 50%, #fef7f0 100%);
+}
+
+[data-theme="lightPink"] .user-music-login-page {
+  background: linear-gradient(135deg, #fce7ed 0%, #fef9fa 50%, #fff5f7 100%);
+}
+
+[data-theme="blue"] .user-music-login-page {
+  background: linear-gradient(135deg, #dbeafe 0%, #eff6ff 50%, #f0f9ff 100%);
+}
+
+[data-theme="green"] .user-music-login-page {
+  background: linear-gradient(135deg, #dcfce7 0%, #f0fdf4 50%, #f7fee7 100%);
+}
+
+[data-theme="purple"] .user-music-login-page {
+  background: linear-gradient(135deg, #f3e8ff 0%, #faf5ff 50%, #fefbff 100%);
+}
+
+[data-theme="orange"] .user-music-login-page {
+  background: linear-gradient(135deg, #fed7aa 0%, #fff7ed 50%, #fffbeb 100%);
+}
+
+[data-theme="red"] .user-music-login-page {
+  background: linear-gradient(135deg, #fecaca 0%, #fef2f2 50%, #fffbfb 100%);
+}
+
+[data-theme="yellow"] .user-music-login-page {
+  background: linear-gradient(135deg, #fef3c7 0%, #fefce8 50%, #fefdf0 100%);
+}
+
+[data-theme="white"] .user-music-login-page {
+  background: linear-gradient(135deg, #f9fafb 0%, #ffffff 50%, #f3f4f6 100%);
+}
+
+[data-theme="black"] .user-music-login-page {
+  background: linear-gradient(135deg, #1f2937 0%, #111827 50%, #000000 100%);
+}
+
+/* 响应式优化 */
+@media (max-height: 800px) {
+  .user-music-login-page {
+    min-height: auto;
+    padding: 1rem 0;
+  }
+}
+
+@media (max-width: 1024px) {
+  .user-music-login-page {
+    padding: 1.5rem 0;
+  }
+}
+
+@media (max-width: 768px) {
+  .user-music-login-page {
+    padding: 1rem 0;
+    min-height: calc(100vh - 152px);
+  }
+}
+
+
 </style>

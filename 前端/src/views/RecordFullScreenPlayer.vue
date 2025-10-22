@@ -1,3 +1,4 @@
+// 全屏播放页面
 <template>
   <div class="modern-player">
     <!-- 动态背景 -->
@@ -29,7 +30,7 @@
           <!-- 专辑封面 -->
           <div class="album-wrapper" :class="{ 'playing': isPlaying }">
             <img 
-              :src="currentDisplaySong.cover || '/src/assets/1音乐.png'" 
+              :src="currentDisplaySong.cover || require('@/assets/1音乐.png')" 
               :alt="currentDisplaySong.name" 
               class="album-cover"
               @click="goHome"

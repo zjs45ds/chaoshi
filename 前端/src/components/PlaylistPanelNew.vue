@@ -1,5 +1,6 @@
+// 播放列表面板 
 <template>
-  <div class="playlist-panel" :class="{ 'is-open': isOpen }">
+  <div class="playlist-panel" :class="{ 'is-open': isOpen, 'fullscreen-mode': fullscreenMode }">
     <!-- 面板背景 -->
     <div class="panel-overlay" @click="closePanel"></div>
     
@@ -104,7 +105,8 @@ import {
 import { isSongLiked, toggleSongLike } from '@/utils/favoriteManager.js'
 
 const props = defineProps({
-  isOpen: { type: Boolean, default: false }
+  isOpen: { type: Boolean, default: false },
+  fullscreenMode: { type: Boolean, default: false }
 })
 
 const emit = defineEmits(['close', 'play-song'])
@@ -369,7 +371,7 @@ const formatDuration = (seconds) => formatTime(seconds)
   left: 0;
   right: 0;
   bottom: 0;
-  z-index: 1500;
+  z-index: 100000;
   visibility: hidden;
   opacity: 0;
   transition: all 0.3s ease;
@@ -396,7 +398,7 @@ const formatDuration = (seconds) => formatTime(seconds)
   position: absolute;
   top: 0;
   right: 0;
-  bottom: 60px; /* 留出播放器的高度空间 */
+  bottom: 80px; /* 紧挨着播放器（播放器高度为80px） */
   width: 400px;
   background: #fff;
   display: flex;
@@ -404,6 +406,11 @@ const formatDuration = (seconds) => formatTime(seconds)
   transform: translateX(100%);
   transition: transform 0.3s ease;
   box-shadow: -4px 0 20px rgba(0, 0, 0, 0.15);
+}
+
+/* 全屏模式下调整播放列表位置，与控制区域紧密相接 */
+.playlist-panel.fullscreen-mode .panel-content {
+  bottom: 100px; /* 与全屏播放器控制区域紧密相接 */
 }
 
 .playlist-panel.is-open .panel-content {
@@ -834,5 +841,109 @@ const formatDuration = (seconds) => formatTime(seconds)
   .playlist-panel.is-open .panel-content {
     transform: translateX(0);
   }
+  
+  /* 移动端全屏模式下也调整播放列表位置 */
+  .playlist-panel.fullscreen-mode .panel-content {
+    bottom: 90px; /* 移动端与控制区域紧密相接 */
+  }
+  
+  /* 移动端普通模式下也要紧挨着播放器 */
+  .panel-content {
+    bottom: 80px; /* 移动端也紧挨着播放器 */
+  }
+}
+
+/* 黑色主题下的播放列表样式 */
+[data-theme="black"] .panel-content {
+  background: #000000 !important;
+  border-left: 1px solid #333333 !important;
+  box-shadow: -4px 0 20px rgba(0, 0, 0, 0.5) !important;
+}
+
+[data-theme="black"] .panel-title {
+  color: white !important;
+}
+
+[data-theme="black"] .playlist-count {
+  color: #cccccc !important;
+}
+
+[data-theme="black"] .header-btn {
+  color: #cccccc !important;
+  border: 1px solid #333333 !important;
+}
+
+[data-theme="black"] .header-btn:hover:not(:disabled) {
+  color: white !important;
+  background: #1a1a1a !important;
+  border-color: #555555 !important;
+}
+
+[data-theme="black"] .header-btn.all-favorited {
+  color: #dc2626 !important;
+}
+
+[data-theme="black"] .empty-state {
+  color: #cccccc !important;
+}
+
+[data-theme="black"] .empty-text {
+  color: white !important;
+}
+
+[data-theme="black"] .empty-hint {
+  color: #888888 !important;
+}
+
+[data-theme="black"] .song-item {
+  border-bottom: 1px solid #222222 !important;
+}
+
+[data-theme="black"] .song-item:hover {
+  background: #1a1a1a !important;
+}
+
+[data-theme="black"] .song-item.is-current {
+  background: #2a2a2a !important;
+}
+
+[data-theme="black"] .song-item.is-playing {
+  background: #1a1a1a !important;
+}
+
+[data-theme="black"] .track-number {
+  color: #888888 !important;
+}
+
+[data-theme="black"] .song-name {
+  color: white !important;
+}
+
+[data-theme="black"] .song-artist {
+  color: #cccccc !important;
+}
+
+[data-theme="black"] .song-duration {
+  color: #888888 !important;
+}
+
+[data-theme="black"] .action-btn {
+  background: transparent !important;
+  color: #cccccc !important;
+  border: 1px solid #333333 !important;
+}
+
+[data-theme="black"] .action-btn:hover {
+  color: white !important;
+  background: #1a1a1a !important;
+  border-color: #555555 !important;
+}
+
+[data-theme="black"] .action-btn.is-loved {
+  color: #dc2626 !important;
+}
+
+[data-theme="black"] .wave-bar {
+  background: #dc2626 !important;
 }
 </style>

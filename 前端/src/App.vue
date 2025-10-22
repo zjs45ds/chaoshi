@@ -1,10 +1,11 @@
+// 应用主页面
 <template>
   <div class="app-container">
-    <HeaderNav v-if="$route.path !== '/open-platform'" />
-    <SubNav v-if="$route.path !== '/my-music' && !$route.path.startsWith('/album/') && !$route.path.startsWith('/toplist/') && $route.path !== '/game' && $route.path !== '/0717' && $route.path !== '/open-platform'" />
+    <HeaderNav v-if="$route.path !== '/open-platform' && !$route.query.popup" />
+    <SubNav v-if="$route.path !== '/my-music' && !$route.path.startsWith('/album/') && !$route.path.startsWith('/toplist/') && $route.path !== '/game' && $route.path !== '/0717' && $route.path !== '/open-platform' && !$route.query.popup" />
     <router-view />
     <!-- 音乐播放器 -->
-    <MusicPlayer v-if="$route.path !== '/game' && $route.path !== '/open-platform'" />
+    <MusicPlayer v-if="$route.path !== '/game' && $route.path !== '/open-platform' && !$route.query.popup" />
     <FullscreenPlayer 
       :visible="showFullscreenPlayer" 
       @close="showFullscreenPlayer = false"
@@ -12,6 +13,7 @@
     />
     <PlaylistPanelNew 
       :is-open="showPlaylist" 
+      :fullscreen-mode="showFullscreenPlayer"
       @close="closePlaylist"
       @play-song="playByIndex"
     />
@@ -145,8 +147,6 @@ body {
   --animation-float: float 3s ease-in-out infinite;
   --animation-gradient: gradient 8s ease infinite;
   
-  /* 修复黑色主题变量冲突 - 删除重复的dark主题定义 */
-
   /* 排版系统 */
   --font-sans: 'Inter', system-ui, sans-serif;
   --font-display: 'Montserrat', sans-serif;
@@ -194,6 +194,44 @@ body {
   --transition-normal: 0.3s ease;
   --transition-slow: 0.5s ease;
   --transition-transform: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+/* 粉色主题变量 */
+[data-theme="pink"] {
+  --primary: #ec4899; /* 主色调：粉色 */
+  --primary-light: #f472b6; /* 主色调浅色 */
+  --primary-dark: #be185d; /* 主色调深色 */
+  --secondary: #f9a8d4; /* 辅助色：浅粉色 */
+  --accent: #db2777; /* 强调色：深粉色 */
+  --background: #fdf2f8; /* 背景色：浅粉色系 */
+  --background-light: #fcf7ff; /* 背景亮色 */
+  --background-card: rgba(253, 242, 248, 0.95); /* 卡片背景 */
+  --text-primary: #831843; /* 主要文本：深粉色 */
+  --text-secondary: #be185d; /* 次要文本：粉色 */
+  --text-tertiary: #ec4899; /* tertiary文本：浅粉色 */
+  --border: rgba(236, 72, 153, 0.3); /* 边框色：粉色半透明 */
+  --success: #10b981; /* 成功色：保持绿色 */
+  --warning: #f59e0b; /* 警告色：保持琥珀黄 */
+  --error: #ef4444; /* 错误色：保持红色 */
+}
+
+/* 浅粉色主题变量 */
+[data-theme="lightPink"] {
+  --primary: #f7b9c8; /* 主色调：浅粉色 */
+  --primary-light: #fce7ed; /* 主色调浅色 */
+  --primary-dark: #db7093; /* 主色调深色 */
+  --secondary: #fce7ed; /* 辅助色：浅粉色 */
+  --accent: #f7b9c8; /* 强调色：浅粉色 */
+  --background: #fef9fa; /* 背景色：极浅粉色系 */
+  --background-light: #ffffff; /* 背景亮色 */
+  --background-card: rgba(252, 231, 237, 0.95); /* 卡片背景 */
+  --text-primary: #4a1e2b; /* 主要文本：深粉色 */
+  --text-secondary: #7d4a5a; /* 次要文本：中粉色 */
+  --text-tertiary: #a66b7a; /* tertiary文本：浅粉色 */
+  --border: rgba(247, 185, 200, 0.3); /* 边框色：浅粉色半透明 */
+  --success: #10b981; /* 成功色：保持绿色 */
+  --warning: #f59e0b; /* 警告色：保持琥珀黄 */
+  --error: #ef4444; /* 错误色：保持红色 */
 }
 
 /* 蓝色主题变量 */
@@ -247,6 +285,10 @@ body {
   --text-primary: #4c1d95; /* 主要文本：深紫色 */
   --text-secondary: #7c3aed; /* 次要文本：紫色 */
   --text-tertiary: #8b5cf6; /* tertiary文本：浅紫色 */
+  --border: rgba(139, 92, 246, 0.3); /* 边框色：紫色半透明 */
+  --success: #10b981; /* 成功色：保持绿色 */
+  --warning: #f59e0b; /* 警告色：保持琥珀黄 */
+  --error: #ef4444; /* 错误色：保持红色 */
 }
 
 /* 橙色主题变量 */
@@ -339,24 +381,7 @@ body {
   --error: #ef4444; /* 错误色：保持红色 */
 }
 
-/* 黑色主题变量 */
-[data-theme="dark"] {
-  --primary: #ffffff; /* 主色调：白色 - 用于文本 */
-  --primary-light: #e5e5e5; /* 主色调浅色 */
-  --primary-dark: #cccccc; /* 主色调深色 */
-  --secondary: #f3f4f6; /* 辅助色：浅灰 */
-  --accent: #3b82f6; /* 强调色：蓝色 */
-  --background: #000000; /* 背景色：纯黑 */
-  --background-light: #111111; /* 背景亮色 */
-  --background-card: rgba(0, 0, 0, 0.95); /* 卡片背景：纯黑半透明 */
-  --text-primary: #ffffff; /* 主要文本：白色 */
-  --text-secondary: #e5e5e5; /* 次要文本：浅灰 */
-  --text-tertiary: #cccccc; /* tertiary文本：中灰白 */
-  --border: rgba(255, 255, 255, 0.2); /* 边框色：白色半透明 */
-  --success: #10b981; /* 成功色：保持绿色 */
-  --warning: #f59e0b; /* 警告色：保持琥珀黄 */
-  --error: #ef4444; /* 错误色：保持红色 */
-}
+/* 所有主题变量已定义完成 */
 
 
 /* 基础样式重置与设置 */
@@ -375,6 +400,12 @@ body {
     radial-gradient(circle at 25% 25%, rgba(236, 72, 153, 0.05) 0%, transparent 50%),
     radial-gradient(circle at 75% 75%, rgba(244, 114, 182, 0.05) 0%, transparent 50%);
   min-height: 100vh;
+  transition: background-color var(--transition-normal), background-image var(--transition-normal);
+}
+
+/* 为所有元素添加颜色过渡效果 */
+* {
+  transition: color var(--transition-normal), background-color var(--transition-normal), border-color var(--transition-normal);
 }
 
 .app-container {
@@ -390,4 +421,28 @@ body {
 body.open-platform-page .app-container {
   padding-bottom: 0;
 }
+
+/* 应用全局滚动条样式 */
+/* 具体样式定义在main.css中的全局滚动条美化部分 */
+
+::-webkit-scrollbar-corner {
+  background: transparent !important;
+}
+
+/* Firefox浏览器 */
+* {
+  scrollbar-width: none !important;
+  scrollbar-color: transparent transparent !important;
+}
+
+/* IE和Edge Legacy浏览器 */
+* {
+  -ms-overflow-style: none !important;
+}
+
+/* 确保页面没有水平滚动条 */
+html, body {
+  overflow-x: hidden;
+}
+
 </style>

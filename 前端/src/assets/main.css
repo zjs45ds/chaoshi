@@ -79,6 +79,14 @@ body.page-0717 #app {
   padding-bottom: var(--player-height);
 }
 
+/* 未登录页面移除底部播放器间距 */
+.user-music-login-page #app {
+  padding-bottom: 0 !important;
+  height: 100vh !important;
+  max-height: 100vh !important;
+  overflow: hidden !important;
+}
+
 /* ==================== 排版样式 ==================== */
 h1, h2, h3, h4, h5, h6 {
   font-weight: 800;
@@ -323,4 +331,239 @@ a:hover {
   color: var(--primary);
   margin-bottom: 5px;
   font-size: 0.9rem;
+}
+
+/* 🔒 最强力的全局规则：彻底锁定所有收藏按钮的框框尺寸 🔒 */
+
+/* 1. 禁止所有可能的缩放变换 */
+*[class*="favorite"], *[class*="action-btn"], *[class*="love"],
+.favorite-btn, .action-btn, .control-btn, .tool-btn, .love-btn,
+.favorite-all-btn, .header-btn, .text-btn {
+  transform: none !important;
+  transition: color 0.2s ease, background-color 0.2s ease, border-color 0.2s ease !important;
+}
+
+*[class*="favorite"]:hover, *[class*="action-btn"]:hover, *[class*="love"]:hover,
+.favorite-btn:hover, .action-btn:hover, .control-btn:hover, .tool-btn:hover, .love-btn:hover,
+.favorite-all-btn:hover, .header-btn:hover, .text-btn:hover {
+  transform: none !important;
+}
+
+/* 2. 强制统一尺寸 - 普通收藏按钮 */
+.action-btn {
+  width: auto !important;
+  height: auto !important;
+  padding: 12px 16px !important;
+  font-size: 14px !important;
+  line-height: 1.4 !important;
+  border-width: 1px !important;
+  box-sizing: border-box !important;
+  flex-shrink: 0 !important;
+}
+
+.action-btn:hover, .action-btn:focus, .action-btn:active,
+.action-btn.is-favorited, .action-btn.is-favorited:hover {
+  width: auto !important;
+  height: auto !important;
+  padding: 12px 16px !important;
+  font-size: 14px !important;
+  line-height: 1.4 !important;
+  transform: none !important;
+}
+
+/* 3. 强制圆形按钮尺寸 */
+.favorite-btn, .control-btn.love, .tool-btn.love,
+*[class*="favorite"].el-button.is-circle {
+  width: 40px !important;
+  height: 40px !important;
+  min-width: 40px !important;
+  min-height: 40px !important;
+  max-width: 40px !important;
+  max-height: 40px !important;
+  padding: 0 !important;
+  border-width: 1px !important;
+  box-sizing: border-box !important;
+}
+
+/* 4. 只允许图标内部的缩放效果 */
+.favorite-btn:hover .heart-icon,
+.favorite-btn:hover .favorite-icon-img,
+.favorite-btn:hover .heart-icon-svg,
+.action-btn:hover .heart-icon,
+.action-btn:hover .favorite-icon-img,
+.action-btn:hover .heart-icon-svg,
+.control-btn:hover .heart-icon,
+.tool-btn:hover .heart-icon {
+  transform: scale(1.1) !important;
+}
+
+/* 5. 深度选择器 - 覆盖所有可能的第三方组件样式 */
+:deep(.favorite-btn), :deep(.action-btn), :deep(.control-btn), :deep(.tool-btn) {
+  transform: none !important;
+}
+
+:deep(.favorite-btn):hover, :deep(.action-btn):hover, :deep(.control-btn):hover, :deep(.tool-btn):hover {
+  transform: none !important;
+}
+
+/* 6. Element Plus 专用覆盖 */
+.el-button.favorite-btn, .el-button.action-btn, .el-button.control-btn, .el-button.tool-btn {
+  transform: none !important;
+}
+
+.el-button.favorite-btn:hover, .el-button.action-btn:hover, .el-button.control-btn:hover, .el-button.tool-btn:hover {
+  transform: none !important;
+}
+
+/* 7. 媒体查询覆盖 - 移动端也保持一致 */
+@media (max-width: 768px) {
+  .action-btn {
+    padding: 10px 14px !important;
+    font-size: 13px !important;
+  }
+  
+  .favorite-btn, .control-btn.love, .tool-btn.love {
+    width: 36px !important;
+    height: 36px !important;
+    min-width: 36px !important;
+    min-height: 36px !important;
+    max-width: 36px !important;
+    max-height: 36px !important;
+  }
+}
+
+/* ==================== 全局滚动条美化 ==================== */
+/* 为所有浏览器提供美观的滚动条样式 */
+
+/* Webkit浏览器 (Chrome, Safari, Edge) */
+::-webkit-scrollbar {
+  width: 8px !important;
+  height: 8px !important;
+  background: rgba(0, 0, 0, 0.05) !important;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--primary-light) !important;
+  border-radius: 4px !important;
+  transition: background 0.3s ease !important;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--primary) !important;
+}
+
+::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0.05) !important;
+  border-radius: 4px !important;
+}
+
+::-webkit-scrollbar-corner {
+  background: rgba(0, 0, 0, 0.05) !important;
+}
+
+/* Firefox浏览器 */
+* {
+  scrollbar-width: thin !important;
+  scrollbar-color: var(--primary-light) rgba(0, 0, 0, 0.05) !important;
+}
+
+/* IE和Edge Legacy浏览器 */
+* {
+  -ms-overflow-style: auto !important;
+}
+
+/* 确保所有元素都应用滚动条样式 */
+html, body, div, section, article, main, aside, nav, header, footer {
+  scrollbar-width: thin !important;
+  scrollbar-color: var(--primary-light) rgba(0, 0, 0, 0.05) !important;
+  -ms-overflow-style: auto !important;
+}
+
+/* 为特定容器添加滚动条样式 */
+.song-list,
+.download-content,
+.batch-list {
+  scrollbar-width: thin !important;
+  scrollbar-color: var(--primary-light) rgba(0, 0, 0, 0.05) !important;
+}
+
+.song-list::-webkit-scrollbar,
+.download-content::-webkit-scrollbar,
+.batch-list::-webkit-scrollbar {
+  width: 8px !important;
+  background: rgba(0, 0, 0, 0.05) !important;
+}
+
+.song-list::-webkit-scrollbar-thumb,
+.download-content::-webkit-scrollbar-thumb,
+.batch-list::-webkit-scrollbar-thumb {
+  background: var(--primary-light) !important;
+  border-radius: 4px !important;
+}
+
+.song-list::-webkit-scrollbar-thumb:hover,
+.download-content::-webkit-scrollbar-thumb:hover,
+.batch-list::-webkit-scrollbar-thumb:hover {
+  background: var(--primary) !important;
+}
+
+/* 黑色主题下的滚动条适配 */
+[data-theme="black"] ::-webkit-scrollbar {
+  background: rgba(255, 255, 255, 0.1) !important;
+}
+
+[data-theme="black"] ::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.1) !important;
+}
+
+[data-theme="black"] ::-webkit-scrollbar-corner {
+  background: rgba(255, 255, 255, 0.1) !important;
+}
+
+[data-theme="black"] * {
+  scrollbar-color: var(--primary-light) rgba(255, 255, 255, 0.1) !important;
+}
+
+/* 首页排行榜滚动条特殊处理 - 确保完全隐藏 */
+.toplist-songs {
+  scrollbar-width: none !important;
+  -ms-overflow-style: none !important;
+}
+
+.toplist-songs::-webkit-scrollbar {
+  display: none !important;
+  width: 0 !important;
+  height: 0 !important;
+}
+
+.toplist-songs::-webkit-scrollbar-thumb {
+  display: none !important;
+  background: transparent !important;
+}
+
+.toplist-songs::-webkit-scrollbar-track {
+  display: none !important;
+  background: transparent !important;
+}
+
+/* 黑色主题下的排行榜滚动条确保隐藏 */
+[data-theme="black"] .toplist-songs {
+  scrollbar-width: none !important;
+  -ms-overflow-style: none !important;
+}
+
+[data-theme="black"] .toplist-songs::-webkit-scrollbar {
+  display: none !important;
+  width: 0 !important;
+  height: 0 !important;
+}
+
+[data-theme="black"] .toplist-songs::-webkit-scrollbar-thumb {
+  display: none !important;
+  background: transparent !important;
+}
+
+[data-theme="black"] .toplist-songs::-webkit-scrollbar-track {
+  display: none !important;
+  background: transparent !important;
 }

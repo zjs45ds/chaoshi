@@ -17,26 +17,26 @@ export const getRecommendPlaylists = (limit = 10) =>
 
 /**
  * 获取热门歌手
- * @param {number} limit - 限制数量，默认为10
+ * @param {number} limit - 限制数量，默认为30
  * @returns {Promise<Array>} 热门歌手列表
  */
-export const getHotArtists = (limit = 10) => 
+export const getHotArtists = (limit = 30) => 
   request.get('/api/home/hot/artists', { limit })
 
 /**
  * 获取热门专辑
- * @param {number} limit - 限制数量，默认为10
+ * @param {number} limit - 限制数量，默认为30
  * @returns {Promise<Array>} 热门专辑列表
  */
-export const getHotAlbums = (limit = 10) => 
+export const getHotAlbums = (limit = 30) => 
   request.get('/api/home/hot/albums', { limit })
 
 /**
  * 获取热门歌曲
- * @param {number} limit - 限制数量，默认为10
+ * @param {number} limit - 限制数量，默认为30
  * @returns {Promise<Array>} 热门歌曲列表
  */
-export const getHotSongs = (limit = 10) => 
+export const getHotSongs = (limit = 30) => 
   request.get('/api/home/hot/songs', { limit })
 
 /**
@@ -61,3 +61,12 @@ export const getHotMvs = (limit = 10) =>
  */
 export const getHomeRecommends = () => 
   request.get('/api/home/recommends')
+
+/**
+ * 获取排行榜歌曲列表
+ * @param {number} toplistId - 排行榜ID
+ * @param {number} limit - 限制数量，默认为10
+ * @returns {Promise<Array>} 排行榜歌曲列表
+ */
+export const getToplistSongs = (toplistId, limit = 10) => 
+  request.get(`/api/home/toplist/${toplistId}/songs`, { limit })

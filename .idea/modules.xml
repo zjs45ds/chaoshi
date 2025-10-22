@@ -2,6 +2,7 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
+      <module fileurl="file://$PROJECT_DIR$/chaoshi/chaoshi.iml" filepath="$PROJECT_DIR$/chaoshi/chaoshi.iml" />
       <module fileurl="file://$PROJECT_DIR$/.idea/cursor.iml" filepath="$PROJECT_DIR$/.idea/cursor.iml" />
     </modules>
   </component>

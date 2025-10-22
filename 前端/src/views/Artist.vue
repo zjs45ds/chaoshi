@@ -1,3 +1,4 @@
+// 歌手列表页面
 <template>
   <div class="artist-page">
     <div v-if="loading" class="loading-container">
@@ -33,7 +34,7 @@ const artists = ref([])
 const loading = ref(true)
 const error = ref(null)
 
-// 获取歌手列表
+// 获取歌手列表 - 保持原始数据库顺序
 const fetchArtists = async () => {
   try {
     loading.value = true
@@ -55,7 +56,7 @@ const fetchArtists = async () => {
       error.value = response?.message || '获取歌手数据失败'
     }
     
-    console.log('🎤 歌手数据加载完成:', artists.value.length, artists.value)
+    console.log('🎤 歌手数据加载完成 (保持原始数据库顺序):', artists.value.length, artists.value)
     
   } catch (err) {
     error.value = '获取歌手列表失败，请重试'

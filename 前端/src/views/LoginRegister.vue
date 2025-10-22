@@ -29,15 +29,7 @@
         📁
       </button>
     </div>
-    
-    <!-- 处理提示 -->
-    <div v-if="isProcessing" class="processing-overlay">
-      <div class="processing-content">
-        <div class="spinner"></div>
-        <p>正在进行优化处理...</p>
-      </div>
-    </div>
-    
+  
     <!-- SVG滤镜库 -->
     <svg style="display: none">
       <filter id="glass-distortion" x="0%" y="0%" width="100%" height="100%" filterUnits="objectBoundingBox">
@@ -84,17 +76,26 @@
               >
               <div v-if="loginErrors.username" class="error-message">{{ loginErrors.username }}</div>
             </div>
-            <div class="form-group">
+            <div class="form-group password-group">
               <input 
-                type="password" 
+                :type="showLoginPassword ? 'text' : 'password'" 
                 placeholder="密码" 
-                class="glass-input"
+                class="glass-input password-input"
                 :class="{ 'error': loginErrors.password }"
                 v-model="loginForm.password"
                 @blur="validateLoginField('password')"
                 @input="clearLoginError('password')"
                 required
               >
+              <button 
+                type="button" 
+                class="password-toggle" 
+                @click="toggleLoginPasswordVisibility"
+                title="显示/隐藏密码"
+              >
+                <img v-if="showLoginPassword" src="@/assets/密码可见.png" alt="密码可见" width="20" height="20">
+                <img v-else src="@/assets/密码不可见.png" alt="密码不可见" width="20" height="20">
+              </button>
               <div v-if="loginErrors.password" class="error-message">{{ loginErrors.password }}</div>
             </div>
             <div class="form-group remember-group">
@@ -107,7 +108,6 @@
           </form>
           <div class="form-footer">
             <p class="switch-form" @click="toggleMode">没有账号？立即注册</p>
-            <p class="forgot-password">忘记密码？</p>
           </div>
         </div>
 
@@ -141,30 +141,48 @@
               >
               <div v-if="registerErrors.email" class="error-message">{{ registerErrors.email }}</div>
             </div>
-            <div class="form-group">
+            <div class="form-group password-group">
               <input 
-                type="password" 
+                :type="showRegisterPassword ? 'text' : 'password'" 
                 placeholder="密码" 
-                class="glass-input"
+                class="glass-input password-input"
                 :class="{ 'error': registerErrors.password }"
                 v-model="registerForm.password"
                 @blur="validateRegisterField('password')"
                 @input="clearRegisterError('password')"
                 required
               >
+              <button 
+                type="button" 
+                class="password-toggle" 
+                @click="toggleRegisterPasswordVisibility"
+                title="显示/隐藏密码"
+              >
+                <img v-if="showRegisterPassword" src="@/assets/密码可见.png" alt="密码可见" width="20" height="20">
+                <img v-else src="@/assets/密码不可见.png" alt="密码不可见" width="20" height="20">
+              </button>
               <div v-if="registerErrors.password" class="error-message">{{ registerErrors.password }}</div>
             </div>
-            <div class="form-group">
+            <div class="form-group password-group">
               <input 
-                type="password" 
+                :type="showRegisterConfirmPassword ? 'text' : 'password'" 
                 placeholder="确认密码" 
-                class="glass-input"
+                class="glass-input password-input"
                 :class="{ 'error': registerErrors.confirmPassword }"
                 v-model="registerForm.confirmPassword"
                 @blur="validateRegisterField('confirmPassword')"
                 @input="clearRegisterError('confirmPassword')"
                 required
               >
+              <button 
+                type="button" 
+                class="password-toggle" 
+                @click="toggleRegisterConfirmPasswordVisibility"
+                title="显示/隐藏密码"
+              >
+                <img v-if="showRegisterConfirmPassword" src="@/assets/密码可见.png" alt="密码可见" width="20" height="20">
+                <img v-else src="@/assets/密码不可见.png" alt="密码不可见" width="20" height="20">
+              </button>
               <div v-if="registerErrors.confirmPassword" class="error-message">{{ registerErrors.confirmPassword }}</div>
             </div>
             <div class="form-group">
@@ -207,6 +225,9 @@ export default {
     const customBackground = ref('')
     const isProcessing = ref(false)
     const fileInput = ref(null)
+    const showLoginPassword = ref(false)
+    const showRegisterPassword = ref(false)
+    const showRegisterConfirmPassword = ref(false)
     const loginForm = ref({ 
       username: '', 
       password: '',
@@ -233,11 +254,26 @@ export default {
 
     const toggleMode = () => {
       isRegisterMode.value = !isRegisterMode.value
-      // 清空表单和错误提示
       loginForm.value = { username: '', password: '', remember: false }
       registerForm.value = { username: '', email: '', password: '', confirmPassword: '', phone: '' }
       loginErrors.value = { username: '', password: '' }
       registerErrors.value = { username: '', email: '', password: '', confirmPassword: '', phone: '' }
+      showLoginPassword.value = false
+      showRegisterPassword.value = false
+      showRegisterConfirmPassword.value = false
+    }
+
+    // 切换密码可见性
+    const toggleLoginPasswordVisibility = () => {
+      showLoginPassword.value = !showLoginPassword.value
+    }
+
+    const toggleRegisterPasswordVisibility = () => {
+      showRegisterPassword.value = !showRegisterPassword.value
+    }
+
+    const toggleRegisterConfirmPasswordVisibility = () => {
+      showRegisterConfirmPassword.value = !showRegisterConfirmPassword.value
     }
 
     const validateLoginField = (field) => {
@@ -345,23 +381,11 @@ export default {
         return
       }
       
-      // 显示加载状态
-      const loadingMessage = ElMessage({
-        message: '🔍 正在登录...',
-        type: 'info',
-        duration: 0, // 不自动消失
-        showClose: false
-      })
-      
       try {
-        // 调用后端API进行登录
         const response = await login({
           username: loginForm.value.username,
           password: loginForm.value.password
         })
-        
-        // 关闭加载提示
-        loadingMessage.close()
         
         if (!response) {
           throw new Error('登录响应为空')
@@ -384,14 +408,22 @@ export default {
           dangerouslyUseHTMLString: false
         })
         
-        // 存储用户信息和token
-        localStorage.setItem('isLogin', '1')
-        localStorage.setItem('token', userData.token)
-        localStorage.setItem('userId', userData.id)
-        localStorage.setItem('username', userData.username)
-        localStorage.setItem('nickname', userData.nickname || userData.username)
+        const storage = loginForm.value.remember ? localStorage : sessionStorage
+      
+        storage.setItem('isLogin', '1')
+        storage.setItem('token', userData.token)
+        storage.setItem('userId', userData.id)
+        storage.setItem('username', userData.username)
+        storage.setItem('nickname', userData.nickname || userData.username)
         if (userData.avatar) {
-          localStorage.setItem('avatar', userData.avatar)
+          storage.setItem('avatar', userData.avatar)
+        }
+        
+        if (loginForm.value.remember) {
+          localStorage.setItem('rememberedUsername', userData.username)
+        } else {
+          // 如果未选中记住我，清除可能存在的记住的用户名
+          localStorage.removeItem('rememberedUsername')
         }
         
         // 清空表单
@@ -403,11 +435,7 @@ export default {
         }, 1500)
         
       } catch (error) {
-        // 关闭加载提示
-        loadingMessage.close()
-        
-        // 获取错误消息（优先使用后端返回的友好提示）
-        let errorMessage = '❌ 登录失败'
+        let errorMessage = '登录失败'
         let shouldShowError = true
         
         if (error.response?.data?.message) {
@@ -419,18 +447,18 @@ export default {
           // 根据状态码提供具体错误信息
           const status = error.response.status
           if (status === 401) {
-            errorMessage = '❌ 用户名或密码错误，请重新输入'
+            errorMessage = '用户名或密码错误，请重新输入'
           } else if (status === 404) {
-            errorMessage = '❌ API接口不存在，请检查后端配置'
+            errorMessage = 'API接口不存在，请检查后端配置'
           } else if (status === 500) {
-            errorMessage = '❌ 服务器内部错误，请稍后重试'
+            errorMessage = '服务器内部错误，请稍后重试'
           } else if (status >= 500) {
-            errorMessage = '❌ 服务器暂时不可用，请稍后重试'
+            errorMessage = '服务器暂时不可用，请稍后重试'
           } else {
-            errorMessage = `❌ 请求失败 (${status})，请稍后重试`
+            errorMessage = `请求失败 (${status})，请稍后重试`
           }
         } else if (error.message) {
-          errorMessage = '❌ ' + error.message
+          errorMessage = '登录失败 ' + error.message
         }
         
         // 只在需要时显示错误消息
@@ -450,14 +478,6 @@ export default {
         return
       }
       
-      // 显示加载状态
-      const loadingMessage = ElMessage({
-        message: '📝 正在注册...',
-        type: 'info',
-        duration: 0,
-        showClose: false
-      })
-      
       try {
         // 调用后端API进行注册
         const response = await register({
@@ -467,11 +487,8 @@ export default {
           phone: registerForm.value.phone
         })
         
-        // 关闭加载提示
-        loadingMessage.close()
-        
         // 注册成功 - 显示后端返回的成功消息（如果有的话）
-        const successMessage = response.message || '🎉 注册成功！请使用您的账户登录'
+        const successMessage = response.message || '注册成功！请使用您的账户登录'
         
         ElMessage({
           message: successMessage,
@@ -492,11 +509,9 @@ export default {
         registerForm.value = { username: '', email: '', password: '', confirmPassword: '', phone: '' }
         
       } catch (error) {
-        // 关闭加载提示
-        loadingMessage.close()
         
         // 获取错误消息（优先使用后端返回的友好提示）
-        let errorMessage = '❌ 注册失败'
+        let errorMessage = '注册失败'
         let shouldShowError = true
         
         if (error.response?.data?.message) {
@@ -507,18 +522,18 @@ export default {
         } else if (error.response) {
           const status = error.response.status
           if (status === 400) {
-            errorMessage = '❌ 输入信息有误，请检查后重试'
+            errorMessage = '输入信息有误，请检查后重试'
           } else if (status === 409) {
-            errorMessage = '❌ 用户名或邮箱已存在，请更换后重试'
+            errorMessage = '用户名或邮箱已存在，请更换后重试'
           } else if (status === 500) {
-            errorMessage = '❌ 服务器内部错误，请稍后重试'
+            errorMessage = '服务器内部错误，请稍后重试'
           } else if (status >= 500) {
-            errorMessage = '❌ 服务器暂时不可用，请稍后重试'
+            errorMessage = '服务器暂时不可用，请稍后重试'
           } else {
-            errorMessage = `❌ 注册失败 (${status})，请稍后重试`
+            errorMessage = `注册失败 (${status})，请稍后重试`
           }
         } else if (error.message) {
-          errorMessage = '❌ ' + error.message
+          errorMessage = '注册失败 ' + error.message
         }
         
         if (shouldShowError) {
@@ -531,8 +546,6 @@ export default {
         }
       }
     }
-
-    // 后台请求相关功能
 
     // 背景相关功能
     const backgroundTypes = ['gradient', 'particles', 'custom']
@@ -625,9 +638,10 @@ export default {
       }
     }
 
-    // 初始化时加载保存的自定义背景
+    // 初始化时加载保存的自定义背景和记住的用户名
     onMounted(() => {
       try {
+        // 加载保存的自定义背景
         const savedBackground = localStorage.getItem('customLoginBackground')
         if (savedBackground) {
           const backgroundData = JSON.parse(savedBackground)
@@ -637,8 +651,15 @@ export default {
             backgroundType.value = 'custom'
           }
         }
+        
+        // 加载记住的用户名
+        const rememberedUsername = localStorage.getItem('rememberedUsername')
+        if (rememberedUsername) {
+          loginForm.value.username = rememberedUsername
+          loginForm.value.remember = true
+        }
       } catch (error) {
-        // 无法加载自定义背景
+        console.error('初始化失败:', error)
       }
     })
 
@@ -652,7 +673,13 @@ export default {
       customBackground,
       isProcessing,
       fileInput,
+      showLoginPassword,
+      showRegisterPassword,
+      showRegisterConfirmPassword,
       toggleMode,
+      toggleLoginPasswordVisibility,
+      toggleRegisterPasswordVisibility,
+      toggleRegisterConfirmPasswordVisibility,
       handleLogin,
       handleRegister,
       validateLoginField,
@@ -1035,17 +1062,7 @@ export default {
   }
 }
 
-.forgot-password {
-  color: rgba(255, 255, 255, 0.6);
-  cursor: pointer;
-  margin: 0;
-  font-size: 0.9rem;
-  transition: color 0.3s ease;
 
-  &:hover {
-    color: rgba(255, 255, 255, 0.8);
-  }
-}
 
 .form-container {
   transition: all 0.3s ease;
@@ -1136,16 +1153,7 @@ export default {
     }
   }
   
-  .forgot-password {
-    color: rgba(255, 255, 255, 0.6);
-    font-size: 0.9rem;
-    cursor: pointer;
-    transition: color 0.3s ease;
-    
-    &:hover {
-      color: rgba(255, 255, 255, 0.8);
-    }
-  }
+
 }
 
 // 添加点击波纹效果
@@ -1193,5 +1201,76 @@ export default {
   .login-title {
     font-size: 1.5rem;
   }
+}
+
+/* 密码输入框组样式 - 完全重构 */
+.password-group {
+  position: relative;
+  display: block;
+  height: auto;
+  margin-bottom: 1.5rem;
+}
+
+.password-input {
+  padding-right: 40px !important; 
+  box-sizing: border-box;
+  position: relative;
+  z-index: 0;
+  height: 44px; /* 固定高度确保一致的布局 */
+}
+
+/* 完全重写的密码切换按钮样式 */
+.password-toggle {
+  position: absolute;
+  right: 8px;
+  top: 0;
+  bottom: 0;
+  width: 24px;
+  display: block;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  margin: 0;
+  text-align: center;
+  z-index: 10;
+  box-sizing: border-box;
+}
+
+.password-toggle:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+  border-radius: 4px;
+}
+
+.password-toggle:active {
+  transform: scale(0.9);
+}
+
+/* 密码图标样式 - 使用表格布局技术确保垂直居中 */
+.password-toggle img {
+  display: inline-block;
+  width: 18px;
+  height: 18px;
+  margin: 0;
+  padding: 0;
+  vertical-align: middle;
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  object-fit: contain;
+}
+
+/* 添加伪元素确保按钮高度与输入框一致 */
+.password-toggle::before {
+  content: '';
+  display: inline-block;
+  height: 100%;
+  vertical-align: middle;
+}
+
+/* 确保输入框和按钮在各种状态下保持一致 */
+.password-group:focus-within .password-toggle img {
+  transform: translate(-50%, -50%);
 }
 </style>

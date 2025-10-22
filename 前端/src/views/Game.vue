@@ -1,3 +1,4 @@
+// 游戏页面
 <template>
   <div class="game-container">
     <h1 class="game-title">谦谦消消乐</h1>

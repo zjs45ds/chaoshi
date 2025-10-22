@@ -1,3 +1,4 @@
+// 头部导航组件
 <template>
   <header class="header-nav">
     <div class="header-content">
@@ -28,10 +29,20 @@
               @input="handleSearchInput"
               @focus="handleSearchFocus"
             />
-            <svg class="search-icon" viewBox="0 0 1024 1024" version="1.1" xmlns="http://www.w3.org/2000/svg" width="16" height="16">
-              <path d="M351.1808 59.2896A435.2 435.2 0 0 1 805.376 715.264 460.8 460.8 0 0 1 351.1808 59.3408z" fill="#20C997"></path>
-              <path d="M754.3808 722.2272a358.4 358.4 0 1 0-267.8272 120.2176 51.2 51.2 0 0 1 0 102.4 460.8 460.8 0 1 1 365.1584-179.712l118.8864 121.2416c23.7568 24.2176 23.552 63.0272-0.4096 87.04l-0.4096 0.4096a61.184 61.184 0 0 1-86.9888-0.4608l-148.0192-150.9376a61.7984 61.7984 0 0 1 0.4096-86.9888l0.4096-0.4096c5.632-5.5808 11.9808-9.8304 18.7904-12.8z m-467.968-364.5952h409.6a51.2 51.2 0 1 1 0 102.4h-409.6a51.2 51.2 0 1 1 0-102.4z m0 204.8h256a51.2 51.2 0 0 1 0 102.4h-256a51.2 51.2 0 1 1 0-102.4z" fill="#2C6DD2"></path>
-            </svg>
+            <button 
+              v-if="searchQuery" 
+              class="clear-search-btn" 
+              @click="clearSearch"
+              title="清除搜索内容"
+            >
+              ✕
+            </button>
+            <button class="search-icon-button" @click="handleSearch" title="搜索">
+              <svg class="search-icon" viewBox="0 0 1024 1024" version="1.1" xmlns="http://www.w3.org/2000/svg" width="16" height="16">
+                <path d="M351.1808 59.2896A435.2 435.2 0 0 1 805.376 715.264 460.8 460.8 0 0 1 351.1808 59.3408z" fill="#20C997"></path>
+                <path d="M754.3808 722.2272a358.4 358.4 0 1 0-267.8272 120.2176 51.2 51.2 0 0 1 0 102.4 460.8 460.8 0 1 1 365.1584-179.712l118.8864 121.2416c23.7568 24.2176 23.552 63.0272-0.4096 87.04l-0.4096 0.4096a61.184 61.184 0 0 1-86.9888-0.4608l-148.0192-150.9376a61.7984 61.7984 0 0 1 0.4096-86.9888l0.4096-0.4096c5.632-5.5808 11.9808-9.8304 18.7904-12.8z m-467.968-364.5952h409.6a51.2 51.2 0 1 1 0 102.4h-409.6a51.2 51.2 0 1 1 0-102.4z m0 204.8h256a51.2 51.2 0 0 1 0 102.4h-256a51.2 51.2 0 1 1 0-102.4z" fill="#2C6DD2"></path>
+              </svg>
+            </button>
           </div>
           <div v-if="showSearchResults" class="search-results" @click.stop>
             <!-- 搜索中状态 -->
@@ -60,7 +71,7 @@
               <div class="no-results-tip">请尝试其他关键词</div>
             </div>
             
-            <!-- 空搜索时显示历史和热门 -->
+            
             <div v-else>
               <!-- 搜索历史 -->
               <div v-if="searchHistory.length > 0" class="search-section">
@@ -70,35 +81,22 @@
                 </div>
                 <div class="history-list">
                   <div 
-                    v-for="(item, index) in searchHistory.slice(0, 8)" 
+                    v-for="(item, index) in searchHistory.slice(0, 10)" 
                     :key="index" 
                     class="history-item"
-                    @click="selectHistoryItem(item)"
                   >
-                    <span class="history-icon">🕐</span>
-                    <span class="history-text">{{ item }}</span>
+                    <span class="history-text" @click="selectHistoryItem(item)">{{ item }}</span>
+                    <button 
+                      class="history-delete-btn" 
+                      @click.stop="deleteHistoryItem(item)"
+                      title="删除此搜索历史"
+                    >
+                      ✕
+                    </button>
                   </div>
                 </div>
               </div>
               
-              <!-- 热门搜索 -->
-              <div v-if="hotSearches.length > 0" class="search-section">
-                <div class="search-section-title">热门搜索</div>
-                <div class="hot-search-list">
-                  <div 
-                    v-for="(item, index) in hotSearches.slice(0, 10)" 
-                    :key="index" 
-                    class="hot-search-item"
-                    :class="{ 'hot-top': index < 3 }"
-                    @click="selectHotSearch(item)"
-                  >
-                    <span class="hot-rank">{{ index + 1 }}</span>
-                    <span class="hot-text">{{ item.keyword || item }}</span>
-                    <span v-if="item.type" class="hot-type">{{ getHotSearchTypeText(item.type) }}</span>
-                    <span v-if="item.hot" class="hot-badge">🔥</span>
-                  </div>
-                </div>
-              </div>
             </div>
           </div>
         </div>
@@ -173,35 +171,31 @@
   </el-dialog>
   
   <!-- 颜色选择器对话框 -->
-  <el-dialog v-model="showColorPicker" title="选择主题颜色" width="400px" center>
+  <el-dialog v-model="showColorPicker" title="选择主题颜色" width="500px" center>
     <div class="color-picker-container">
       <div class="preset-colors">
-        <h4>预设主题</h4>
         <div class="color-grid">
           <div 
             v-for="(color, name) in presetColors" 
             :key="name"
             class="color-item"
             :class="{ active: currentTheme === name }"
-            :style="{ backgroundColor: color.primary }"
+            :style="{ 
+              background: `linear-gradient(135deg, ${color.primary} 0%, ${adjustBrightness(color.primary, 20)} 100%)`,
+              border: `2px solid ${color.primary}`
+            }"
             @click="selectPresetTheme(name)"
           >
+            <div class="color-preview" :style="{ backgroundColor: color.background }">
+              <div class="color-text" :style="{ color: color.textPrimary }">Aa</div>
+            </div>
             <span class="color-name">{{ color.name }}</span>
           </div>
         </div>
       </div>
       
-      <div class="custom-color">
-        <h4>自定义颜色</h4>
-        <div class="custom-color-input">
-          <input 
-            type="color" 
-            v-model="customColor" 
-            @change="applyCustomColor"
-            class="color-input"
-          />
-          <button @click="applyCustomColor" class="apply-btn">应用</button>
-        </div>
+      <div class="theme-tip">
+        <p>✨ 选择您喜欢的主题颜色，系统会自动应用相应的配色方案</p>
       </div>
     </div>
   </el-dialog>
@@ -271,7 +265,8 @@ import { ref, computed, onMounted, watch, onUnmounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { validateImageFile, compressImage } from '@/utils/imageUtils.js'
 import { ElMessage } from 'element-plus'
-import { searchAll, searchSuggest, getHotSearch, getSearchHistory, saveSearchHistory, clearSearchHistory, fuzzySearch, smartSuggest, getHotArtists, getHotSongs } from '@/api/search.js'
+import { searchAll, searchSuggest, getSearchHistory, saveSearchHistory, deleteSearchHistoryItem, clearSearchHistory, fuzzySearch, smartSuggest } from '@/api/search.js'
+import { getCurrentUserInfo, getUsername, getUserAvatar, initUserInfo, getCurrentUserId } from '@/utils/userStore.js'
 
 const router = useRouter()
 const route = useRoute()
@@ -282,13 +277,15 @@ const registerForm = ref({ username: '', password: '', confirmPassword: '' })
 
 const isLogin = ref(false)
 const defaultAvatar = 'https://q1.qlogo.cn/g?b=qq&nk=10000&s=100'
-const avatarImg = ref(localStorage.getItem('userAvatar') || defaultAvatar)
 const showDropdown = ref(false)
 const showTooltip = ref(false)
-const nickname = ref(localStorage.getItem('userNickname') || '苏黎世的从前')
+
+// 使用统一的用户信息管理，确保从数据库获取最新数据
+const userInfo = getCurrentUserInfo()
+const avatarImg = computed(() => userInfo.avatar || defaultAvatar)
+const nickname = computed(() => userInfo.username || '用户')
 const currentTheme = ref(localStorage.getItem('theme') || 'pink')
 const showColorPicker = ref(false)
-const customColor = ref(localStorage.getItem('customColor') || '#ec4899')
 const showBackgroundModal = ref(false)
 const currentBackground = ref(localStorage.getItem('userBannerBg') || '')
 const recentBackgrounds = ref(JSON.parse(localStorage.getItem('recentBackgrounds') || '[]'))
@@ -299,19 +296,82 @@ const searchQuery = ref('')
 const showSearchResults = ref(false)
 const searchResults = ref([])
 const searchHistory = ref([])
-const hotSearches = ref([])
 const isSearching = ref(false)
 const searchTimer = ref(null)
 
 const presetColors = {
-  pink: { name: '粉色', primary: '#ec4899' },
-  blue: { name: '蓝色', primary: '#3b82f6' },
-  green: { name: '绿色', primary: '#10b981' },
-  purple: { name: '紫色', primary: '#8b5cf6' },
-  orange: { name: '橙色', primary: '#f97316' },
-  red: { name: '红色', primary: '#ef4444' },
-  black: { name: '黑色', primary: '#000000' },
-  white: { name: '白色', primary: '#ffffff' }
+  pink: { 
+    name: '粉色', 
+    primary: '#ec4899',
+    background: '#fdf2f8',
+    backgroundCard: 'rgba(253, 242, 248, 0.95)',
+    textPrimary: '#831843',
+    textSecondary: '#be185d'
+  },
+  lightPink: { 
+    name: '浅粉色', 
+    primary: '#f7b9c8',
+    background: '#fef9fa',
+    backgroundCard: 'rgba(252, 231, 237, 0.95)',
+    textPrimary: '#4a1e2b',
+    textSecondary: '#7d4a5a'
+  },
+  blue: { 
+    name: '蓝色', 
+    primary: '#3b82f6',
+    background: '#eff6ff',
+    backgroundCard: 'rgba(239, 246, 255, 0.95)',
+    textPrimary: '#1e3a8a',
+    textSecondary: '#2563eb'
+  },
+  green: { 
+    name: '绿色', 
+    primary: '#10b981',
+    background: '#f0fdf4',
+    backgroundCard: 'rgba(240, 253, 244, 0.95)',
+    textPrimary: '#064e3b',
+    textSecondary: '#059669'
+  },
+  purple: { 
+    name: '紫色', 
+    primary: '#8b5cf6',
+    background: '#faf5ff',
+    backgroundCard: 'rgba(250, 245, 255, 0.95)',
+    textPrimary: '#4c1d95',
+    textSecondary: '#7c3aed'
+  },
+  orange: { 
+    name: '橙色', 
+    primary: '#f97316',
+    background: '#fff7ed',
+    backgroundCard: 'rgba(255, 247, 237, 0.95)',
+    textPrimary: '#7c2d12',
+    textSecondary: '#ea580c'
+  },
+  red: { 
+    name: '红色', 
+    primary: '#ef4444',
+    background: '#fef2f2',
+    backgroundCard: 'rgba(254, 242, 242, 0.95)',
+    textPrimary: '#7f1d1d',
+    textSecondary: '#dc2626'
+  },
+  black: { 
+    name: '黑色', 
+    primary: '#ffffff',
+    background: '#000000',
+    backgroundCard: 'rgba(0, 0, 0, 0.95)',
+    textPrimary: '#ffffff',
+    textSecondary: '#e5e5e5'
+  },
+  white: { 
+    name: '白色', 
+    primary: '#696969',
+    background: '#ffffff',
+    backgroundCard: 'rgba(255, 255, 255, 0.95)',
+    textPrimary: '#000000',
+    textSecondary: '#333333'
+  }
 }
 
 const presetBackgrounds = [
@@ -323,21 +383,61 @@ const presetBackgrounds = [
   { name: '日落', url: 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=1920&h=1080&fit=crop&q=80' }
 ]
 
-function checkLogin() {
+async function checkLogin() {
   isLogin.value = localStorage.getItem('isLogin') === '1'
-  avatarImg.value = localStorage.getItem('userAvatar') || defaultAvatar
-  nickname.value = localStorage.getItem('userNickname') || '苏黎世的从前'
+  
+  // 如果已登录，从数据库获取最新用户信息
+  if (isLogin.value) {
+    try {
+      await initUserInfo()
+      console.log('✅ HeaderNav: 用户信息已从数据库更新')
+    } catch (error) {
+      console.warn('⚠️ HeaderNav: 无法从数据库获取用户信息，使用本地缓存')
+    }
+  }
 }
+
+// 用户信息更新处理函数
+function handleUserInfoUpdate() {
+  console.log('🔔 HeaderNav: 接收到用户信息更新事件')
+  // userInfo是响应式的，会自动更新，这里不需要手动操作
+  // 重新加载搜索历史，因为用户登录状态可能已改变
+  loadSearchHistory()
+}
+// 初始化主题
+function initTheme() {
+  const savedTheme = localStorage.getItem('theme') || 'pink'
+  if (presetColors[savedTheme]) {
+    selectPresetTheme(savedTheme, false) // 初始化时不显示消息
+  } else {
+    // 如果保存的主题不存在，使用默认粉色主题
+    selectPresetTheme('pink', false) // 初始化时不显示消息
+  }
+}
+
+// 滚动事件处理函数
+function handleScroll() {
+  // 如果搜索历史框正在显示，则在滚动时自动隐藏
+  if (showSearchResults.value) {
+    showSearchResults.value = false
+  }
+}
+
 onMounted(() => {
   checkLogin()
   loadSearchHistory()
-  loadHotSearches()
-  window.addEventListener('user-avatar-changed', checkLogin)
+  initTheme() // 初始化主题
+  // 监听用户信息更新事件
+  window.addEventListener('user-info-updated', handleUserInfoUpdate)
   document.addEventListener('click', handleClickOutside)
+  // 添加滚动事件监听器
+  window.addEventListener('scroll', handleScroll)
 })
 onUnmounted(() => {
-  window.removeEventListener('user-avatar-changed', checkLogin)
+  window.removeEventListener('user-info-updated', handleUserInfoUpdate)
   document.removeEventListener('click', handleClickOutside)
+  // 移除滚动事件监听器
+  window.removeEventListener('scroll', handleScroll)
 })
 watch(() => route.fullPath, checkLogin)
 
@@ -373,9 +473,9 @@ function goHome() {
 
 
 function goOpenPlatform() {
-  if (route.path !== '/open-platform') {
-    router.push('/open-platform')
-  }
+  // 在新窗口中打开开放平台页面
+  const url = router.resolve({ path: '/open-platform', query: { popup: 'true' } }).href
+  window.open(url, '_blank', 'noopener,noreferrer')
 }
 function goMyMusic() {
   if (route.path !== '/my-music') {
@@ -388,16 +488,40 @@ function goProfile() {
   }
   showDropdown.value = false
 }
-function selectPresetTheme(themeName) {
+function selectPresetTheme(themeName, showMessage = true) {
   currentTheme.value = themeName
   localStorage.setItem('theme', themeName)
-  document.documentElement.setAttribute('data-theme', themeName)
+  
+  // 获取主题信息
+  const theme = presetColors[themeName]
+  const root = document.documentElement
+  
+  // 重要：只设置data-theme属性，让App.vue中定义的CSS变量通过data-theme选择器生效
+  // 这样可以确保所有主题变量的一致性
+  root.setAttribute('data-theme', themeName)
+  
+  // 清除可能存在的内联CSS变量，避免覆盖App.vue中的主题定义
+  root.style.removeProperty('--primary')
+  root.style.removeProperty('--background')
+  root.style.removeProperty('--background-card')
+  root.style.removeProperty('--text-primary')
+  root.style.removeProperty('--text-secondary')
+  root.style.removeProperty('--primary-light')
+  root.style.removeProperty('--primary-dark')
+  root.style.removeProperty('--background-light')
+  root.style.removeProperty('--border')
+  
+  // 清除body上可能存在的内联背景色，让CSS变量生效
+  document.body.style.removeProperty('background-color')
   
   // 触发主题变化事件，通知其他组件
-  window.dispatchEvent(new CustomEvent('theme-changed', { detail: { theme: themeName } }))
+  window.dispatchEvent(new CustomEvent('theme-changed', { detail: { theme: themeName, colors: theme } }))
   
-  ElMessage.success(`已切换到${presetColors[themeName].name}主题`)
-  showColorPicker.value = false
+  // 只有在用户主动切换时才显示消息
+  if (showMessage) {
+    ElMessage.success(`已切换到${theme.name}主题`)
+    showColorPicker.value = false
+  }
 }
 
 function showBackgroundSelector() {
@@ -520,10 +644,12 @@ async function onBackgroundUpload(e) {
 
 // 搜索相关方法
 function handleSearchFocus() {
-  // 聚焦时显示搜索下拉框
-  showSearchResults.value = true
+  // 聚焦时，只有当搜索历史不为空时才显示搜索下拉框
+  if (searchHistory.value.length > 0) {
+    showSearchResults.value = true
+  }
   if (searchQuery.value.trim() === '') {
-    // 空搜索时显示历史和热门搜索
+    // 空搜索时显示历史
     searchResults.value = []
   }
 }
@@ -534,17 +660,38 @@ async function handleSearchInput() {
   // 清除之前的搜索定时器
   if (searchTimer.value) {
     clearTimeout(searchTimer.value)
+    searchTimer.value = null
   }
   
   if (keyword === '') {
-    showSearchResults.value = true // 显示历史和热门搜索
+    // 空搜索时，只有当搜索历史不为空时才显示搜索下拉框
+    showSearchResults.value = searchHistory.value.length > 0
     searchResults.value = []
     return
   }
   
-  // 防抖搜索
+  // 使用防抖技术进行实时搜索
+  showSearchResults.value = true
+  isSearching.value = true
+  
+  // 设置新的搜索定时器，延迟300ms执行搜索建议
   searchTimer.value = setTimeout(async () => {
-    await performSearch(keyword)
+    try {
+      // 调用搜索建议API获取实时搜索数据
+      const response = await smartSuggest(keyword)
+      
+      if (response && response.code === 200) {
+        searchResults.value = response.data || []
+      } else {
+        console.warn('搜索建议API返回异常状态:', response?.code, response?.message)
+        searchResults.value = []
+      }
+    } catch (error) {
+      console.error('获取搜索建议失败:', error)
+      searchResults.value = []
+    } finally {
+      isSearching.value = false
+    }
   }, 300)
 }
 
@@ -555,12 +702,15 @@ async function performSearch(keyword) {
     isSearching.value = true
     showSearchResults.value = true
     
+    const userId = getCurrentUserId()
+    
     // 调用真实搜索API
-    const response = await searchAll(keyword, 0, 20)
+    const response = await searchAll(keyword, 0, 20, userId)
+    
+    // 处理搜索结果数据
+    const results = []
     
     if (response && response.code === 200) {
-      // 处理搜索结果数据
-      const results = []
       const data = response.data || {}
       
       // 合并不同类型的搜索结果
@@ -598,51 +748,47 @@ async function performSearch(keyword) {
           type: 'mv'
         })))
       }
-      
-      searchResults.value = results
     } else {
-      // API调用失败，使用模拟数据
-      searchResults.value = getMockSearchResults(keyword)
+      console.warn('搜索API返回异常状态:', response?.code, response?.message)
     }
+    
+    searchResults.value = results
   } catch (error) {
     console.error('搜索失败:', error)
-    // 搜索失败时使用模拟数据
-    searchResults.value = getMockSearchResults(keyword)
+    searchResults.value = []
   } finally {
     isSearching.value = false
   }
 }
 
-function getMockSearchResults(keyword) {
-  const mockResults = [
-    { id: 1, type: 'song', name: '演员', artistName: '薛之谦' },
-    { id: 2, type: 'artist', name: '薛之谦', description: '华语流行歌手' },
-    { id: 3, type: 'album', name: '天外来物', artistName: '薛之谦' },
-    { id: 4, type: 'playlist', name: '流行热歌', description: '1000万播放' },
-    { id: 5, type: 'mv', name: '演员MV', artistName: '薛之谦' }
-  ]
-  
-  return mockResults.filter(result => 
-    result.name.toLowerCase().includes(keyword.toLowerCase()) ||
-    (result.artistName && result.artistName.toLowerCase().includes(keyword.toLowerCase())) ||
-    (result.description && result.description.toLowerCase().includes(keyword.toLowerCase()))
-  )
-}
+
 
 async function handleSearch() {
   const keyword = searchQuery.value.trim()
   if (!keyword) return
   
-  // 保存搜索历史
-  await saveToSearchHistory(keyword)
-  
-  // 执行搜索并显示结果
-  await performSearch(keyword)
-  
-  ElMessage.success(`搜索"${keyword}"完成`)
+  try {
+    // 保存搜索历史
+    await saveToSearchHistory(keyword)
+    
+    // 执行搜索并显示结果
+    await performSearch(keyword)
+    
+    ElMessage.success(`搜索"${keyword}"完成`)
+  } catch (error) {
+    console.error('搜索过程中发生错误:', error)
+    ElMessage.error('搜索失败，请重试')
+  }
 }
 
-function selectSearchResult(result) {
+async function selectSearchResult(result) {
+  // 如果是搜索建议，需要先将建议内容设置为搜索关键词，然后执行搜索
+  if (result.type === 'suggestion') {
+    searchQuery.value = result.name
+    await handleSearch()
+    return
+  }
+  
   // 保存搜索历史
   saveToSearchHistory(searchQuery.value)
   
@@ -683,59 +829,62 @@ function selectHistoryItem(keyword) {
   handleSearch()
 }
 
-function selectHotSearch(item) {
-  const keyword = item.keyword || item
-  
-  // 如果热门搜索项有类型和ID信息，直接跳转到对应页面
-  if (item.type && item.id) {
-    // 保存搜索历史
-    saveToSearchHistory(keyword)
+
+function clearSearch() {
+  searchQuery.value = ''
+  searchResults.value = []
+  showSearchResults.value = false
+}
+
+async function deleteHistoryItem(keyword) {
+  try {
+    const userId = getCurrentUserId()
+    console.log('准备删除搜索历史:', { keyword, userId })
     
-    // 清空搜索框和结果
-    searchQuery.value = ''
-    showSearchResults.value = false
-    searchResults.value = []
-    
-    // 根据类型跳转到对应页面
-    switch (item.type) {
-      case 'artist':
-        router.push(`/artist/${item.id}`)
-        break
-      case 'song':
-        router.push(`/song/${item.id}`)
-        break
-      case 'album':
-        router.push(`/album/${item.id}`)
-        break
-      case 'playlist':
-        router.push(`/playlist/${item.id}`)
-        break
-      case 'mv':
-        router.push(`/mv/${item.id}`)
-        break
-      default:
-        // 没有明确类型时，进行搜索
-        searchQuery.value = keyword
-        handleSearch()
+    if (!userId) {
+      ElMessage.error('请先登录')
+      return
     }
-  } else {
-    // 没有类型信息时，进行搜索
-    searchQuery.value = keyword
-    handleSearch()
+    
+    const response = await deleteSearchHistoryItem(keyword, userId)
+    console.log('删除搜索历史API响应:', response)
+    
+    if (response && response.code === 200) {
+      // API调用成功后，重新从数据库加载搜索历史
+      await loadSearchHistory()
+      ElMessage.success('搜索历史项已删除')
+    } else {
+      ElMessage.error(response?.message || '删除失败')
+    }
+  } catch (error) {
+    console.error('删除搜索历史项失败:', error)
+    ElMessage.error('删除失败，请重试')
   }
 }
 
 async function handleClearHistory() {
   try {
-    await clearSearchHistory()
-    searchHistory.value = []
-    ElMessage.success('搜索历史已清空')
+    const userId = getCurrentUserId()
+    console.log('准备清空搜索历史:', { userId })
+    
+    if (!userId) {
+      ElMessage.error('请先登录')
+      return
+    }
+    
+    const response = await clearSearchHistory(userId)
+    console.log('清空搜索历史API响应:', response)
+    
+    if (response && response.code === 200) {
+      // API调用成功后，重新从数据库加载搜索历史（应该是空的）
+      await loadSearchHistory()
+      ElMessage.success('搜索历史已清空')
+    } else {
+      ElMessage.error(response?.message || '清空失败')
+    }
   } catch (error) {
     console.error('清空搜索历史失败:', error)
-    // 本地清空
-    searchHistory.value = []
-    localStorage.removeItem('searchHistory')
-    ElMessage.success('搜索历史已清空')
+    ElMessage.error('清空失败，请重试')
   }
 }
 
@@ -743,20 +892,37 @@ async function saveToSearchHistory(keyword) {
   if (!keyword || !keyword.trim()) return
   
   try {
-    await saveSearchHistory(keyword)
-    // 更新本地搜索历史
-    loadSearchHistory()
+    const userId = getCurrentUserId()
+    console.log('保存搜索历史 - 用户ID:', userId)
+    
+    if (!userId) {
+      console.log('用户未登录，跳过搜索历史保存')
+      return
+    }
+    
+    console.log('保存搜索历史到数据库:', { keyword, userId })
+    const response = await saveSearchHistory(keyword, userId)
+    console.log('保存搜索历史API响应:', response)
+    
+    if (response && response.code === 200) {
+      console.log('搜索历史保存成功，重新加载搜索历史')
+      // 保存成功后重新从数据库加载搜索历史
+      await loadSearchHistory()
+    } else {
+      console.warn('保存搜索历史API返回异常状态:', response?.code, response?.message)
+      // 即使API返回异常，仍尝试重新加载搜索历史
+      await loadSearchHistory()
+    }
   } catch (error) {
     console.error('保存搜索历史失败:', error)
-    // 本地保存
-    const history = JSON.parse(localStorage.getItem('searchHistory') || '[]')
-    if (!history.includes(keyword)) {
-      history.unshift(keyword)
-      if (history.length > 20) {
-        history.pop()
-      }
-      localStorage.setItem('searchHistory', JSON.stringify(history))
-      searchHistory.value = history
+    console.error('错误详情:', error.message)
+    console.error('错误堆栈:', error.stack)
+    
+    // 保存失败时仍尝试重新加载搜索历史，确保显示最新数据
+    try {
+      await loadSearchHistory()
+    } catch (reloadError) {
+      console.error('重新加载搜索历史也失败:', reloadError)
     }
   }
 }
@@ -764,113 +930,54 @@ async function saveToSearchHistory(keyword) {
 // 加载搜索历史
 async function loadSearchHistory() {
   try {
-    const response = await getSearchHistory()
+    const userId = getCurrentUserId()
+    console.log('加载搜索历史 - 用户ID:', userId)
+    
+    if (!userId) {
+      // 未登录用户，清空搜索历史
+      searchHistory.value = []
+      console.log('用户未登录，清空搜索历史')
+      return
+    }
+    
+    console.log('从数据库加载搜索历史，userId:', userId)
+    const response = await getSearchHistory(userId)
+    console.log('搜索历史API响应完整数据:', response)
+    
     if (response && response.code === 200) {
-      searchHistory.value = response.data || []
+      console.log('API调用成功，原始数据:', response.data)
+      
+      // 增强数据处理逻辑，适配多种可能的数据格式
+      if (Array.isArray(response.data)) {
+        // 处理数组类型数据
+        searchHistory.value = response.data.map(item => {
+          // 处理不同格式的item
+          if (typeof item === 'string') {
+            return item
+          } else if (typeof item === 'object' && item) {
+            return item.keyword || item.content || item.name || JSON.stringify(item)
+          }
+          return ''
+        }).filter(keyword => keyword && keyword.trim()) // 过滤空值和空格
+        
+        console.log('处理后的搜索历史:', searchHistory.value)
+      } else {
+        // 如果不是数组，尝试转换为数组或使用空数组
+        console.warn('搜索历史数据不是数组，类型为:', typeof response.data)
+        searchHistory.value = []
+      }
     } else {
-      // 从本地加载
-      searchHistory.value = JSON.parse(localStorage.getItem('searchHistory') || '[]')
+      console.warn('搜索历史API响应异常:', response?.code, response?.message)
+      searchHistory.value = []
     }
   } catch (error) {
     console.error('加载搜索历史失败:', error)
-    searchHistory.value = JSON.parse(localStorage.getItem('searchHistory') || '[]')
+    console.error('错误详情:', error.message)
+    console.error('错误堆栈:', error.stack)
+    searchHistory.value = []
   }
 }
 
-// 加载热门搜索
-async function loadHotSearches() {
-  try {
-    const response = await getHotSearch()
-    if (response && response.code === 200 && response.data && response.data.length > 0) {
-      // 处理后端返回的数据，确保薛之谦和周杰伦排在前面
-      let hotData = response.data
-      
-      // 查找薛之谦和周杰伦的数据
-      const xuezhiqian = hotData.find(item => item.name === '薛之谦' || item.keyword === '薛之谦')
-      const zhoujielun = hotData.find(item => item.name === '周杰伦' || item.keyword === '周杰伦')
-      
-      // 移除原有的薛之谦和周杰伦数据
-      hotData = hotData.filter(item => 
-        item.name !== '薛之谦' && item.keyword !== '薛之谦' &&
-        item.name !== '周杰伦' && item.keyword !== '周杰伦'
-      )
-      
-      // 构建最终的热门搜索列表
-      const finalHotSearches = []
-      
-      // 第一位：薛之谦
-      if (xuezhiqian) {
-        finalHotSearches.push({
-          keyword: xuezhiqian.name || xuezhiqian.keyword || '薛之谦',
-          hot: true,
-          type: 'artist',
-          id: xuezhiqian.id || 1
-        })
-      } else {
-        finalHotSearches.push({
-          keyword: '薛之谦',
-          hot: true,
-          type: 'artist',
-          id: 1
-        })
-      }
-      
-      // 第二位：周杰伦
-      if (zhoujielun) {
-        finalHotSearches.push({
-          keyword: zhoujielun.name || zhoujielun.keyword || '周杰伦',
-          hot: true,
-          type: 'artist',
-          id: zhoujielun.id || 2
-        })
-      } else {
-        finalHotSearches.push({
-          keyword: '周杰伦',
-          hot: true,
-          type: 'artist',
-          id: 2
-        })
-      }
-      
-      // 添加其他热门搜索数据
-      hotData.slice(0, 8).forEach((item, index) => {
-        finalHotSearches.push({
-          keyword: item.name || item.keyword || item.title,
-          hot: index < 1, // 前1个标记为热门
-          type: item.type || 'artist',
-          id: item.id || (index + 3)
-        })
-      })
-      
-      hotSearches.value = finalHotSearches
-      console.log('🔥 热门搜索数据加载成功:', finalHotSearches)
-    } else {
-      // 后端没有数据或请求失败时使用默认数据
-      console.log('⚠️ 后端热门搜索数据为空，使用默认数据')
-      hotSearches.value = getDefaultHotSearches()
-    }
-  } catch (error) {
-    console.error('❌ 加载热门搜索失败:', error)
-    // 网络错误时使用默认数据
-    hotSearches.value = getDefaultHotSearches()
-  }
-}
-
-// 获取默认热门搜索数据
-function getDefaultHotSearches() {
-  return [
-    { keyword: '薛之谦', hot: true, type: 'artist', id: 1 },
-    { keyword: '周杰伦', hot: true, type: 'artist', id: 2 },
-    { keyword: '林俊杰', hot: true, type: 'artist', id: 3 },
-    { keyword: '邓紫棋', type: 'artist', id: 4 },
-    { keyword: '张学友', type: 'artist', id: 5 },
-    { keyword: '陈奕迅', type: 'artist', id: 6 },
-    { keyword: '演员', type: 'song', id: 1 },
-    { keyword: '稻香', type: 'song', id: 2 },
-    { keyword: '华语流行', type: 'playlist', id: 1 },
-    { keyword: '经典老歌', type: 'playlist', id: 2 }
-  ]
-}
 
 // 辅助方法
 function getResultIcon(type) {
@@ -912,87 +1019,7 @@ function getResultTypeText(type) {
   return typeTexts[type] || ''
 }
 
-function getHotSearchTypeText(type) {
-  const typeTexts = {
-    song: '歌曲',
-    artist: '歌手',
-    album: '专辑',
-    playlist: '歌单',
-    mv: 'MV'
-  }
-  return typeTexts[type] || ''
-}
 
-function applyCustomColor() {
-  // 生成自定义主题的CSS变量
-  const color = customColor.value
-  // 提取颜色的色相值（简单计算）
-  const hex = color.replace('#', '')
-  const r = parseInt(hex.substr(0, 2), 16) / 255
-  const g = parseInt(hex.substr(2, 2), 16) / 255
-  const b = parseInt(hex.substr(4, 2), 16) / 255
-  
-  // 计算色相 (简单版本)
-  let hue = 0
-  const cmax = Math.max(r, g, b)
-  const cmin = Math.min(r, g, b)
-  const delta = cmax - cmin
-  
-  if (delta === 0) {
-    hue = 0
-  } else if (cmax === r) {
-    hue = ((g - b) / delta) % 6
-  } else if (cmax === g) {
-    hue = (b - r) / delta + 2
-  } else {
-    hue = (r - g) / delta + 4
-  }
-  
-  hue = Math.round(hue * 60)
-  if (hue < 0) hue += 360
-  
-  const style = document.createElement('style')
-  style.id = 'custom-theme'
-  style.textContent = `
-    [data-theme="custom"] {
-      --primary: ${color};
-      --primary-light: ${adjustBrightness(color, 20)};
-      --primary-dark: ${adjustBrightness(color, -20)};
-      --secondary: ${adjustHue(color, 30)};
-      --accent: ${adjustHue(color, 60)};
-      --background: ${adjustBrightness(color, 95)};
-      --background-light: ${adjustBrightness(color, 98)};
-      --background-card: ${adjustBrightness(color, 95, 0.95)};
-      --text-primary: ${adjustBrightness(color, -70)};
-      --text-secondary: ${color};
-      --text-tertiary: ${adjustBrightness(color, 20)};
-      --border: ${adjustBrightness(color, 0, 0.3)};
-      --custom-hue: ${hue}deg;
-      --success: #10b981;
-      --warning: #f59e0b;
-      --error: #ef4444;
-    }
-  `
-  
-  // 移除旧的自定义主题样式
-  const oldStyle = document.getElementById('custom-theme')
-  if (oldStyle) oldStyle.remove()
-  
-  // 添加新的自定义主题样式
-  document.head.appendChild(style)
-  
-  // 应用自定义主题
-  currentTheme.value = 'custom'
-  localStorage.setItem('theme', 'custom')
-  localStorage.setItem('customColor', color)
-  document.documentElement.setAttribute('data-theme', 'custom')
-  
-  // 触发主题变化事件，通知其他组件
-  window.dispatchEvent(new CustomEvent('theme-changed', { detail: { theme: 'custom' } }))
-  
-  ElMessage.success('已应用自定义颜色主题')
-  showColorPicker.value = false
-}
 
 // 辅助函数：调整颜色亮度
 function adjustBrightness(color, percent, alpha = 1) {
@@ -1026,9 +1053,9 @@ function adjustHue(color, degrees) {
 }
 
 function go0717() {
-  if (route.path !== '/0717') {
-    router.push('/0717')
-  }
+  // 在新窗口中打开0717页面（无导航栏版本）
+  const url = router.resolve({ path: '/0717', query: { popup: 'true' } }).href
+  window.open(url, '_blank', 'noopener,noreferrer')
 }
 
 function goToGame() {
@@ -1239,7 +1266,7 @@ function logout() {
 
 /* 黑色主题下的登录按钮 */
 [data-theme="black"] .login-nav-btn {
-  background: #000;
+  background: var(--background-card);
   color: #fff;
   border: 1px solid #fff;
 }
@@ -1252,7 +1279,7 @@ function logout() {
 
 /* 黑色主题下的登录按钮悬停效果 */
 [data-theme="black"] .login-nav-btn:hover {
-  background: #333;
+  background: var(--background-light);
 }
 .user-avatar img {
   width: 36px;
@@ -1453,76 +1480,78 @@ function logout() {
   padding: 20px;
 }
 
-.preset-colors h4,
-.custom-color h4 {
-  margin-bottom: 15px;
-  color: var(--text-primary);
-  font-weight: 600;
-}
-
 .color-grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: 10px;
+  gap: 16px;
   margin-bottom: 20px;
 }
 
 .color-item {
-  height: 60px;
-  border-radius: 8px;
+  height: 80px;
+  border-radius: 12px;
   display: flex;
+  flex-direction: column;
   align-items: center;
-  justify-content: center;
+  justify-content: space-between;
   cursor: pointer;
-  transition: all 0.2s;
+  transition: all 0.3s ease;
   border: 2px solid transparent;
   position: relative;
+  padding: 8px;
+  overflow: hidden;
 }
 
 .color-item:hover {
   transform: scale(1.05);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
 }
 
 .color-item.active {
-  border-color: var(--primary);
-  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
+  border-color: #31c27c;
+  box-shadow: 0 0 0 3px rgba(49, 194, 124, 0.3);
+  transform: scale(1.02);
+}
+
+.color-preview {
+  width: 100%;
+  height: 40px;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 4px;
+  border: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+.color-text {
+  font-weight: bold;
+  font-size: 14px;
 }
 
 .color-name {
   color: white;
   font-weight: 600;
-  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
+  font-size: 12px;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.7);
+  text-align: center;
 }
 
-.custom-color-input {
-  display: flex;
-  align-items: center;
-  gap: 10px;
+.theme-tip {
+  text-align: center;
+  padding: 16px;
+  background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+  border-radius: 8px;
+  margin-top: 16px;
 }
 
-.color-input {
-  width: 60px;
-  height: 40px;
-  border: none;
-  border-radius: 6px;
-  cursor: pointer;
+.theme-tip p {
+  margin: 0;
+  color: #64748b;
+  font-size: 14px;
+  line-height: 1.5;
 }
 
-.apply-btn {
-  padding: 8px 16px;
-  background: var(--primary);
-  color: white;
-  border: none;
-  border-radius: 6px;
-  cursor: pointer;
-  font-weight: 500;
-  transition: background 0.2s;
-}
-
-.apply-btn:hover {
-  background: var(--primary-dark);
-}
 
 /* 背景选择器样式 */
 .background-picker-container {
@@ -1655,6 +1684,33 @@ function logout() {
   margin-left: 0;
 }
 
+/* 搜索图标按钮样式 */
+.search-icon-button {
+  position: absolute;
+  right: 0;
+  top: 0;
+  height: 100%;
+  width: 38px;
+  background: none;
+  border: none;
+  border-radius: 0 20px 20px 0;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background-color 0.2s;
+  padding: 0;
+}
+
+.search-icon-button:hover {
+  background: rgba(0, 0, 0, 0.05);
+}
+
+.search-icon-button:focus {
+  outline: none;
+  background: rgba(0, 0, 0, 0.08);
+}
+
 /* 独立星球图标样式 */
 .independent-planet-icon {
   margin-left: 12px;
@@ -1708,6 +1764,31 @@ function logout() {
   outline: none;
   transition: all 0.2s;
   box-sizing: border-box;
+}
+
+.clear-search-btn {
+  position: absolute;
+  right: 40px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  font-size: 16px;
+  color: #9ca3af;
+  cursor: pointer;
+  padding: 4px;
+  border-radius: 50%;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+}
+
+.clear-search-btn:hover {
+  background: #f3f4f6;
+  color: #6b7280;
 }
 
 .search-icon {
@@ -1847,95 +1928,66 @@ function logout() {
 
 /* 搜索历史 */
 .history-list {
-  padding: 0 8px;
+  padding: 8px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
 }
 
 .history-item {
-  display: flex;
+  display: inline-flex;
   align-items: center;
-  padding: 8px 12px;
-  cursor: pointer;
+  justify-content: space-between;
+  padding: 6px 12px;
   transition: all 0.2s ease;
-  border-radius: 6px;
-  margin-bottom: 2px;
+  border-radius: 16px;
+  background: #f1f5f9;
+  border: 1px solid #e2e8f0;
+  white-space: nowrap;
+  max-width: 140px;
+  position: relative;
 }
 
 .history-item:hover {
-  background: #f8fafc;
-  transform: translateX(2px);
-}
-
-.history-icon {
-  margin-right: 10px;
-  font-size: 14px;
-  opacity: 0.6;
+  background: #e2e8f0;
+  border-color: #cbd5e1;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
 .history-text {
-  font-size: 13px;
-  color: #4b5563;
+  font-size: 12px;
+  color: #475569;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  cursor: pointer;
+  flex: 1;
+  margin-right: 4px;
 }
 
-/* 热门搜索 */
-.hot-search-list {
-  padding: 0 8px;
-}
-
-.hot-search-item {
+.history-delete-btn {
+  background: none;
+  border: none;
+  color: #9ca3af;
+  font-size: 12px;
+  cursor: pointer;
+  padding: 2px 4px;
+  border-radius: 50%;
+  transition: all 0.2s ease;
   display: flex;
   align-items: center;
-  padding: 8px 12px;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  border-radius: 6px;
-  margin-bottom: 2px;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0;
 }
 
-.hot-search-item:hover {
-  background: linear-gradient(135deg, #fef7f0 0%, #fed7aa 100%);
-  transform: translateX(2px);
+.history-delete-btn:hover {
+  background: #ef4444;
+  color: white;
+  transform: scale(1.1);
 }
 
-.hot-search-item.hot-top {
-  background: linear-gradient(135deg, #fef2f2 0%, #fecaca 100%);
-}
-
-.hot-search-item.hot-top:hover {
-  background: linear-gradient(135deg, #fee2e2 0%, #fca5a5 100%);
-}
-
-.hot-rank {
-  font-size: 12px;
-  font-weight: bold;
-  color: #ef4444;
-  min-width: 20px;
-  margin-right: 8px;
-}
-
-.hot-search-item.hot-top .hot-rank {
-  color: #dc2626;
-}
-
-.hot-text {
-  font-size: 13px;
-  color: #374151;
-  flex: 1;
-}
-
-.hot-type {
-  font-size: 10px;
-  color: #9ca3af;
-  background: #f3f4f6;
-  padding: 1px 4px;
-  border-radius: 3px;
-  margin-left: 8px;
-  font-weight: 500;
-}
-
-.hot-badge {
-  font-size: 12px;
-  margin-left: 4px;
-}
 
 .no-results {
   padding: 24px 16px;
@@ -2015,14 +2067,14 @@ function logout() {
 
 /* 黑色主题下的登录按钮样式 */
 [data-theme="black"] .login-nav-btn {
-  background: transparent;
+  background: var(--background-card);
   border-color: #fff;
   color: #fff;
 }
 
 /* 黑色主题下的登录按钮悬停样式 */
 [data-theme="black"] .login-nav-btn:hover {
-  background: rgba(255, 255, 255, 0.1);
+  background: var(--background-hover);
 }
 
 /* 黑色主题下的用户头像边框 */

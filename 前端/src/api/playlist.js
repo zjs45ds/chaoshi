@@ -18,6 +18,14 @@ export const getPlaylistById = (id) =>
   request.get(`/api/playlists/${id}`)
 
 /**
+ * 获取歌单中的歌曲
+ * @param {number} playlistId - 歌单ID
+ * @returns {Promise<Array>} 歌曲列表
+ */
+export const getPlaylistSongs = (playlistId) => 
+  request.get(`/api/playlists/${playlistId}/songs`)
+
+/**
  * 获取推荐歌单
  * @param {number} limit - 限制数量，默认为10
  * @returns {Promise<Array>} 推荐歌单列表
@@ -84,4 +92,4 @@ export const searchPlaylists = (keyword, page = 1, size = 10) =>
  * @returns {Promise<Object>} 删除结果
  */
 export const deletePlaylist = (id) => 
-  request.delete(`/api/playlists/${id}`) 
+  request.delete(`/api/playlists/${id}`)

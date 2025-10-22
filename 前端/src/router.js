@@ -4,7 +4,6 @@ import { handleError } from '@/utils/errorHandler.js'
 // ====== 核心页面（同步加载，首次访问必需） ======
 import Home from './views/Home.vue'
 
-// ====== 懒加载组件定义 ======
 // 音乐相关页面 - 高优先级预加载
 const Artist = () => import(/* webpackChunkName: "music" */ './views/Artist.vue')
 const Album = () => import(/* webpackChunkName: "music" */ './views/Album.vue')
@@ -165,7 +164,7 @@ const routes = [
     meta: {
       title: '我的音乐',
       keepAlive: true,
-      requireAuth: true
+      requireAuth: false // 改为false，允许未登录用户访问，在组件内部处理登录检查
     }
   },
   {

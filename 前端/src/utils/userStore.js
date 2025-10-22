@@ -1,244 +1,196 @@
 /**
- * 用户状态管理工具
- * 统一管理用户信息的存储、更新和事件通知
+ * 用户信息统一管理
+ * 从数据库获取最新的用户信息，确保所有组件使用一致的数据
  */
 
-// Vue 3 imports (for useUserProfile hook)
-import { ref, onMounted, onUnmounted } from 'vue'
+import { ref, reactive } from 'vue'
+import { getUserProfile, getUserInfo } from '@/api/user.js'
 
-// 默认用户数据
-const DEFAULT_USER_DATA = {
-  avatar: 'https://q1.qlogo.cn/g?b=qq&nk=10000&s=100',
-  nickname: '苏黎世的从前',
-  bio: '热爱音乐，分享美好。每一首歌都是心灵的触动，每一个音符都是情感的流露。',
-  bannerBg: 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=1920&h=1080&fit=crop&q=80'
-}
+// 全局用户信息状态
+const userInfo = reactive({
+  id: null,
+  username: '',
+  email: '',
+  phone: '',
+  bio: '',
+  avatar: ''
+})
 
-// 用户数据存储键名
-const STORAGE_KEYS = {
-  AVATAR: 'userAvatar',
-  NICKNAME: 'userNickname', 
-  BIO: 'userBio',
-  BANNER_BG: 'userBannerBg'
-}
+const isLoading = ref(false)
+const isInitialized = ref(false)
 
-// 用户事件名称
-const USER_EVENTS = {
-  AVATAR_CHANGED: 'user-avatar-changed',
-  NICKNAME_CHANGED: 'user-nickname-changed',
-  BIO_CHANGED: 'user-bio-changed',
-  BACKGROUND_CHANGED: 'background-changed',
-  PROFILE_UPDATED: 'user-profile-updated'
+/**
+ * 获取当前用户ID
+ */
+export const getCurrentUserId = () => {
+  return localStorage.getItem('userId') || localStorage.getItem('currentUserId') || '1'
 }
 
 /**
- * 获取用户数据
- * @param {string} key - 数据键名
- * @returns {string} 用户数据
+ * 从数据库获取最新用户信息
  */
-export function getUserData(key) {
-  const storageKey = STORAGE_KEYS[key.toUpperCase()]
-  const defaultValue = DEFAULT_USER_DATA[key]
-  
-  if (!storageKey) {
-    console.warn(`未知的用户数据键: ${key}`)
-    return defaultValue || ''
-  }
-  
-  return localStorage.getItem(storageKey) || defaultValue
-}
-
-/**
- * 设置用户数据
- * @param {string} key - 数据键名
- * @param {string} value - 数据值
- * @param {boolean} triggerEvent - 是否触发更新事件
- */
-export function setUserData(key, value, triggerEvent = true) {
-  const storageKey = STORAGE_KEYS[key.toUpperCase()]
-  const eventName = USER_EVENTS[`${key.toUpperCase()}_CHANGED`]
-  
-  if (!storageKey) {
-    console.warn(`未知的用户数据键: ${key}`)
-    return
-  }
-  
-  // 存储到localStorage
-  localStorage.setItem(storageKey, value)
-  
-  // 触发更新事件
-  if (triggerEvent && eventName) {
-    window.dispatchEvent(new CustomEvent(eventName, {
-      detail: { key, value }
-    }))
-  }
-}
-
-/**
- * 获取完整的用户信息
- * @returns {Object} 用户信息对象
- */
-export function getUserProfile() {
-  return {
-    avatar: getUserData('avatar'),
-    nickname: getUserData('nickname'),
-    bio: getUserData('bio'),
-    bannerBg: getUserData('bannerBg')
-  }
-}
-
-/**
- * 更新用户信息
- * @param {Object} userData - 用户数据对象
- * @param {boolean} triggerEvent - 是否触发更新事件
- */
-export function updateUserProfile(userData, triggerEvent = true) {
-  Object.keys(userData).forEach(key => {
-    if (userData[key] !== undefined && userData[key] !== null) {
-      setUserData(key, userData[key], false)
-    }
-  })
-  
-  // 统一触发个人资料更新事件
-  if (triggerEvent) {
-    window.dispatchEvent(new CustomEvent(USER_EVENTS.PROFILE_UPDATED, {
-      detail: { userData }
-    }))
-  }
-}
-
-/**
- * 重置用户数据为默认值
- * @param {Array<string>} keys - 要重置的数据键名数组，不传则重置全部
- * @param {boolean} triggerEvent - 是否触发更新事件
- */
-export function resetUserData(keys = null, triggerEvent = true) {
-  const keysToReset = keys || Object.keys(DEFAULT_USER_DATA)
-  
-  keysToReset.forEach(key => {
-    const defaultValue = DEFAULT_USER_DATA[key]
-    if (defaultValue !== undefined) {
-      setUserData(key, defaultValue, false)
-    }
-  })
-  
-  if (triggerEvent) {
-    window.dispatchEvent(new CustomEvent(USER_EVENTS.PROFILE_UPDATED, {
-      detail: { reset: true, keys: keysToReset }
-    }))
-  }
-}
-
-/**
- * 创建用户数据监听器
- * @param {Object} handlers - 事件处理器对象
- * @param {Function} handlers.onAvatarChanged - 头像变更处理器
- * @param {Function} handlers.onNicknameChanged - 昵称变更处理器  
- * @param {Function} handlers.onBioChanged - 个人简介变更处理器
- * @param {Function} handlers.onBackgroundChanged - 背景变更处理器
- * @param {Function} handlers.onProfileUpdated - 个人资料更新处理器
- * @returns {Function} 清理函数
- */
-export function createUserDataListener(handlers = {}) {
-  const {
-    onAvatarChanged,
-    onNicknameChanged,
-    onBioChanged,
-    onBackgroundChanged,
-    onProfileUpdated
-  } = handlers
-  
-  // 创建事件监听器
-  const listeners = []
-  
-  if (onAvatarChanged) {
-    const listener = () => onAvatarChanged(getUserData('avatar'))
-    window.addEventListener(USER_EVENTS.AVATAR_CHANGED, listener)
-    listeners.push([USER_EVENTS.AVATAR_CHANGED, listener])
-  }
-  
-  if (onNicknameChanged) {
-    const listener = () => onNicknameChanged(getUserData('nickname'))
-    window.addEventListener(USER_EVENTS.NICKNAME_CHANGED, listener)
-    listeners.push([USER_EVENTS.NICKNAME_CHANGED, listener])
-  }
-  
-  if (onBioChanged) {
-    const listener = () => onBioChanged(getUserData('bio'))
-    window.addEventListener(USER_EVENTS.BIO_CHANGED, listener)
-    listeners.push([USER_EVENTS.BIO_CHANGED, listener])
-  }
-  
-  if (onBackgroundChanged) {
-    const listener = (event) => onBackgroundChanged(event.detail?.value || getUserData('bannerBg'))
-    window.addEventListener(USER_EVENTS.BACKGROUND_CHANGED, listener)
-    listeners.push([USER_EVENTS.BACKGROUND_CHANGED, listener])
-  }
-  
-  if (onProfileUpdated) {
-    const listener = (event) => onProfileUpdated(getUserProfile(), event.detail)
-    window.addEventListener(USER_EVENTS.PROFILE_UPDATED, listener)
-    listeners.push([USER_EVENTS.PROFILE_UPDATED, listener])
-  }
-  
-  // 返回清理函数
-  return function cleanup() {
-    listeners.forEach(([eventName, listener]) => {
-      window.removeEventListener(eventName, listener)
-    })
-  }
-}
-
-/**
- * Vue 3 组合式API钩子
- * @param {Object} options - 配置选项
- * @returns {Object} 响应式用户数据和方法
- */
-export function useUserProfile(options = {}) {
-  const avatar = ref(getUserData('avatar'))
-  const nickname = ref(getUserData('nickname'))
-  const bio = ref(getUserData('bio'))
-  const bannerBg = ref(getUserData('bannerBg'))
-  
-  let cleanup = null
-  
-  onMounted(() => {
-    // 创建数据监听器
-    cleanup = createUserDataListener({
-      onAvatarChanged: (value) => { avatar.value = value },
-      onNicknameChanged: (value) => { nickname.value = value },
-      onBioChanged: (value) => { bio.value = value },
-      onBackgroundChanged: (value) => { bannerBg.value = value },
-      onProfileUpdated: (profile) => {
-        avatar.value = profile.avatar
-        nickname.value = profile.nickname
-        bio.value = profile.bio
-        bannerBg.value = profile.bannerBg
+export const fetchUserInfo = async (userId = null) => {
+  try {
+    isLoading.value = true
+    const targetUserId = userId || getCurrentUserId()
+    
+    console.log('📡 从数据库获取用户信息，用户ID:', targetUserId)
+    
+    let response = null
+    let userData = null
+    
+    // 首先尝试使用profile API
+    try {
+      response = await getUserProfile(targetUserId)
+      console.log('📡 Profile API响应:', response)
+      
+      if (response && response.code === 200 && response.data) {
+        userData = response.data
+        console.log('✅ 通过Profile API获取用户数据成功')
       }
-    })
-  })
-  
-  onUnmounted(() => {
-    if (cleanup) {
-      cleanup()
+    } catch (profileError) {
+      console.warn('⚠️ Profile API调用失败，尝试备用API:', profileError)
+      
+      // 使用info API作为备用
+      try {
+        response = await getUserInfo(targetUserId)
+        console.log('📡 Info API响应:', response)
+        
+        if (response && response.code === 200 && response.data) {
+          userData = response.data
+          console.log('✅ 通过Info API获取用户数据成功')
+        }
+      } catch (infoError) {
+        console.error('❌ Info API也失败了:', infoError)
+        throw new Error('无法获取用户信息')
+      }
     }
-  })
-  
-  return {
-    avatar,
-    nickname,
-    bio,
-    bannerBg,
-    getUserData,
-    setUserData,
-    updateUserProfile,
-    resetUserData
+    
+    if (userData) {
+      // 更新全局用户信息
+      Object.assign(userInfo, {
+        id: userData.id || targetUserId,
+        username: userData.username || '用户',
+        email: userData.email || '',
+        phone: userData.phone || '',
+        bio: userData.bio || '',
+        avatar: userData.avatar || 'https://q1.qlogo.cn/g?b=qq&nk=10000&s=100'
+      })
+      
+      // 同步更新localStorage（保持兼容性）
+      localStorage.setItem('userNickname', userInfo.username)
+      localStorage.setItem('nickname', userInfo.username)
+      localStorage.setItem('username', userInfo.username)
+      localStorage.setItem('userAvatar', userInfo.avatar)
+      localStorage.setItem('userBio', userInfo.bio)
+      
+      isInitialized.value = true
+      console.log('✅ 用户信息更新成功:', userInfo)
+      
+      // 触发全局事件通知其他组件
+      window.dispatchEvent(new CustomEvent('user-info-updated', {
+        detail: { userInfo: { ...userInfo } }
+      }))
+      
+      return { ...userInfo }
+    } else {
+      throw new Error('未获取到用户数据')
+    }
+    
+  } catch (error) {
+    console.error('❌ 获取用户信息失败:', error)
+    
+    // 如果API失败，使用localStorage的备用数据
+    const fallbackData = {
+      id: getCurrentUserId(),
+      username: localStorage.getItem('userNickname') || localStorage.getItem('nickname') || '用户',
+      email: localStorage.getItem('userEmail') || '',
+      phone: localStorage.getItem('userPhone') || '',
+      bio: localStorage.getItem('userBio') || '',
+      avatar: localStorage.getItem('userAvatar') || 'https://q1.qlogo.cn/g?b=qq&nk=10000&s=100'
+    }
+    
+    Object.assign(userInfo, fallbackData)
+    console.log('⚠️ 使用备用数据:', userInfo)
+    
+    return { ...userInfo }
+  } finally {
+    isLoading.value = false
   }
 }
 
-// 导出常量
-export {
-  DEFAULT_USER_DATA,
-  STORAGE_KEYS,
-  USER_EVENTS
+/**
+ * 更新用户信息（用于Profile.vue保存后）
+ */
+export const updateUserInfo = (newUserInfo) => {
+  Object.assign(userInfo, newUserInfo)
+  
+  // 同步更新localStorage
+  localStorage.setItem('userNickname', userInfo.username)
+  localStorage.setItem('nickname', userInfo.username)
+  localStorage.setItem('username', userInfo.username)
+  localStorage.setItem('userAvatar', userInfo.avatar)
+  localStorage.setItem('userBio', userInfo.bio)
+  
+  // 触发全局事件
+  window.dispatchEvent(new CustomEvent('user-info-updated', {
+    detail: { userInfo: { ...userInfo } }
+  }))
+  
+  console.log('✅ 用户信息已更新:', userInfo)
 }
+
+/**
+ * 获取当前用户信息（响应式）
+ */
+export const getCurrentUserInfo = () => {
+  return userInfo
+}
+
+/**
+ * 获取用户名
+ */
+export const getUsername = () => {
+  return userInfo.username || localStorage.getItem('userNickname') || localStorage.getItem('nickname') || '用户'
+}
+
+/**
+ * 获取用户头像
+ */
+export const getUserAvatar = () => {
+  return userInfo.avatar || localStorage.getItem('userAvatar') || 'https://q1.qlogo.cn/g?b=qq&nk=10000&s=100'
+}
+
+/**
+ * 获取用户简介
+ */
+export const getUserBio = () => {
+  return userInfo.bio || localStorage.getItem('userBio') || ''
+}
+
+/**
+ * 检查是否已初始化
+ */
+export const getIsInitialized = () => {
+  return isInitialized.value
+}
+
+/**
+ * 检查是否正在加载
+ */
+export const getIsLoading = () => {
+  return isLoading.value
+}
+
+/**
+ * 初始化用户信息（应用启动时调用）
+ */
+export const initUserInfo = async () => {
+  if (!isInitialized.value) {
+    await fetchUserInfo()
+  }
+  return { ...userInfo }
+}
+
+// 导出响应式状态供组件使用
+export { userInfo, isLoading, isInitialized }

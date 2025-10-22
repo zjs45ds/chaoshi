@@ -1,3 +1,4 @@
+// 排行榜页面
 <template>
   <div class="toplist-page">
     <div v-if="loading" class="loading-container">
@@ -151,12 +152,12 @@ onMounted(() => {
   left: 0;
   right: 0;
   bottom: 0;
-  background: transparent;
+  background: rgba(0, 0, 0, 0.1);
   display: flex;
   align-items: center;
   justify-content: center;
   opacity: 0;
-  transition: opacity 0.3s ease;
+  transition: all 0.3s ease;
   border-radius: 12px;
   z-index: 2;
   pointer-events: none;
@@ -165,6 +166,7 @@ onMounted(() => {
 .toplist-cover-container:hover .toplist-overlay {
   opacity: 1;
   pointer-events: auto;
+  background: rgba(0, 0, 0, 0.3);
 }
 
 .toplist-cover-container:hover .toplist-cover {
@@ -181,16 +183,18 @@ onMounted(() => {
   justify-content: center;
   cursor: pointer;
   transition: all 0.3s ease;
-  box-shadow: 0 0 20px rgba(255, 255, 255, 0.7);
-  border: 1px solid rgba(255, 255, 255, 0.8);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+  border: 2px solid rgba(255, 255, 255, 0.9);
   pointer-events: auto;
   z-index: 3;
+  position: relative;
 }
 
 .toplist-play-btn:hover {
   background: rgba(255, 255, 255, 1);
-  transform: scale(1.1);
-  box-shadow: 0 0 25px rgba(255, 255, 255, 0.8);
+  transform: scale(1.15);
+  box-shadow: 0 6px 30px rgba(0, 0, 0, 0.3);
+  border: 2px solid rgba(255, 255, 255, 1);
 }
 
 .toplist-play-icon-svg {
@@ -253,6 +257,23 @@ onMounted(() => {
   .toplist-cover-container {
     width: 240px;
     height: 140px;
+  }
+  
+  /* 移动端显示播放按钮 */
+  .toplist-overlay {
+    opacity: 0.7;
+    pointer-events: auto;
+    background: rgba(0, 0, 0, 0.2);
+  }
+  
+  .toplist-play-btn {
+    width: 56px;
+    height: 56px;
+  }
+  
+  .toplist-play-icon-svg {
+    width: 24px;
+    height: 24px;
   }
   
   .toplist-name {

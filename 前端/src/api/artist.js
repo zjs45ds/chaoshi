@@ -7,7 +7,7 @@ import { request } from '@/utils/httpUtils.js'
  * @returns {Promise<Object>} 包含歌手列表的响应对象
  */
 export const getArtistList = (page = 1, size = 10) => 
-  request.get('/api/artists', { page, size })
+  request.get('/api/artists', { params: { page, size } })
 
 /**
  * 获取歌手详情

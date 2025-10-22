@@ -1,3 +1,4 @@
+// 开放平台页面
 <template>
   <div class="op-page" ref="opPageRef" :style="backgroundStyle">
     <div class="op-banner">

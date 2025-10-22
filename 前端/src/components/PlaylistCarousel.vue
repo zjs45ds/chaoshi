@@ -1,3 +1,4 @@
+// 播放列表轮播组件
 <template>
   <UniversalCarousel 
     :items="playlists" 

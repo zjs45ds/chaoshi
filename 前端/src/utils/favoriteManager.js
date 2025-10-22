@@ -51,6 +51,8 @@ export const initFavoriteSongs = async () => {
         name: song.name,
         artist: song.artistName || song.artist || '未知歌手',
         album: song.albumName || song.album || '未知专辑',
+        artistId: song.artistId || song.artist_id,
+        albumId: song.albumId || song.album_id,
         duration: formatDuration(song.duration || 0),
         cover: song.coverUrl || song.cover || 'https://qpic.y.qq.com/music_cover/N6GhicG06jmQnia2FZRicpvhQXiaLPoEJcRlnjtIlFeBXTuPgsgdFwykWg/600?n=1',
         audioUrl: song.audioUrl || song.filePath || song.file_path || ''
@@ -99,6 +101,7 @@ export const toggleSongLike = async (song) => {
     const isCurrentlyLiked = isSongLiked(song.id)
     const action = isCurrentlyLiked ? 'unlike' : 'like'
     
+    // 参数顺序修正：根据song.js中的定义，应该是(userId, songId, action)
     const response = await favoriteSong(userId, song.id, action)
     
     if (response && response.code === 200) {
@@ -109,8 +112,23 @@ export const toggleSongLike = async (song) => {
         favoriteStatus.set(song.id, false)
         console.log(`♡ 已从我喜欢中移除：${song.name}`)
       } else {
-        // 添加
-        favoriteSongs.value.unshift(song)
+        // 添加 - 确保歌曲对象格式完整，包含所有必要字段
+        const formattedSong = {
+          id: song.id,
+          name: song.name,
+          artist: song.artist || song.artistName || '未知歌手',
+          album: song.album || song.albumName || '未知专辑',
+          artistId: song.artistId || '',
+          albumId: song.albumId || '',
+          duration: formatDuration(song.duration || 0),
+          cover: song.cover || song.coverUrl || 'https://qpic.y.qq.com/music_cover/N6GhicG06jmQnia2FZRicpvhQXiaLPoEJcRlnjtIlFeBXTuPgsgdFwykWg/600?n=1',
+          audioUrl: song.audioUrl || song.filePath || ''
+        }
+        
+        // 确保不添加重复歌曲
+        if (!favoriteSongs.value.some(s => s.id === song.id)) {
+          favoriteSongs.value.unshift(formattedSong)
+        }
         favoriteStatus.set(song.id, true)
         console.log(`♥ 已添加到我喜欢：${song.name}`)
       }
@@ -124,16 +142,50 @@ export const toggleSongLike = async (song) => {
         }
       }))
       
+      // 只有在成功添加到我喜欢的列表后才返回true
       return !isCurrentlyLiked
     } else {
       console.error('收藏操作失败，请稍后重试')
-      return isCurrentlyLiked
+      // 当操作失败时，重新同步后端状态
+      await refreshFavoriteSongs()
+      return isSongLiked(song.id)
     }
   } catch (error) {
     let shouldShowError = true
     let errorMessage = '操作失败'
     
-    if (error.message === 'Network Error' || error.code === 'ECONNABORTED' || error.code === 'ECONNREFUSED') {
+    // 特殊处理：歌曲已在收藏夹中
+    if (error.response?.data?.message && error.response.data.message.includes('歌曲已经在收藏夹中')) {
+      // 静默处理这种情况，直接更新本地状态为已收藏
+      // 使用格式化的歌曲对象，确保包含所有必要字段
+      const formattedSong = {
+        id: song.id,
+        name: song.name,
+        artist: song.artist || song.artistName || '未知歌手',
+        album: song.album || song.albumName || '未知专辑',
+        artistId: song.artistId || '',
+        albumId: song.albumId || '',
+        duration: formatDuration(song.duration || 0),
+        cover: song.cover || song.coverUrl || 'https://qpic.y.qq.com/music_cover/N6GhicG06jmQnia2FZRicpvhQXiaLPoEJcRlnjtIlFeBXTuPgsgdFwykWg/600?n=1',
+        audioUrl: song.audioUrl || song.filePath || ''
+      }
+      
+      favoriteSongs.value = [formattedSong, ...favoriteSongs.value.filter(s => s.id !== song.id)]
+      favoriteStatus.set(song.id, true)
+      
+      // 触发自定义事件，通知其他组件更新
+      window.dispatchEvent(new CustomEvent('songLikeChanged', {
+        detail: { 
+          songId: song.id, 
+          isLiked: true,
+          song: formattedSong
+        }
+      }))
+      
+      shouldShowError = false
+      console.log(`歌曲${song.name}已在收藏夹中，已更新本地状态`)
+      return true
+    } else if (error.message === 'Network Error' || error.code === 'ECONNABORTED' || error.code === 'ECONNREFUSED') {
       // 网络错误已在httpUtils.js中处理
       shouldShowError = false
     } else if (error.response?.data?.message) {
@@ -146,6 +198,7 @@ export const toggleSongLike = async (song) => {
       console.error('收藏操作失败:', errorMessage)
     }
     
+    // 无论如何，返回最新的本地状态
     return isSongLiked(song.id)
   }
 }

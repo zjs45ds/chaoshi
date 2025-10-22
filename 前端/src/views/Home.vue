@@ -1,10 +1,12 @@
+// 首页
 <template>
   <div class="home-page">
     <!-- 修复背景主题和布局结构 -->
     <div class="banner-section">
       <!-- Banner轮播区域 -->
-      <div class="banner-carousel" v-if="banners && banners.length > 0 && banners[currentBanner] && banners[currentBanner].img">
-        <img :src="banners[currentBanner].img" class="banner-img" :alt="'banner'+banners[currentBanner].id" />
+      <div class="banner-carousel" v-if="banners && banners.length > 0">
+        <img v-if="banners[currentBanner]?.img_url" :src="banners[currentBanner].img_url" class="banner-img" :alt="'banner'+(banners[currentBanner]?.id || '')" />
+        <img v-else src="https://via.placeholder.com/1200x300/eeeeee/999999?text=潮石音乐" class="banner-img" alt="潮石音乐" />
         <div class="banner-dots">
           <span v-for="(b, idx) in banners" :key="b.id" :class="['dot', {active: idx === currentBanner}]" @click="goBanner(idx)"></span>
         </div>
@@ -18,7 +20,6 @@
       </div>
     </div>
 
-        <!-- 主要内容区域 - 添加 container 包装器确保居中 -->
     <div class="content-container">
       <!-- 推荐歌单区域 -->
       <section class="playlist-section">
@@ -42,7 +43,7 @@
             <div class="playlist-list">
               <div v-for="p in playlistPageList" :key="p.id" class="chaoshi-card" @click="goTo(`/playlist/${p.id}`)">
                 <div class="chaoshi-image-container">
-                  <img :src="p.cover" :alt="p.name" class="chaoshi-image" />
+                  <img :src="p.cover || require('@/assets/1音乐.png')" :alt="p.name" class="chaoshi-image" />
                   <div class="chaoshi-overlay">
                     <div class="chaoshi-play-btn">
                       <svg class="chaoshi-play-icon-svg" viewBox="0 0 1024 1024" version="1.1" xmlns="http://www.w3.org/2000/svg">
@@ -73,9 +74,10 @@
 
       <!-- 热门歌手区域 -->
       <section class="artist-section">
-        <div class="section-title-wrap center-title">
+        <div class="section-title-wrap toplist-title-wrap">
           <h2 class="section-title">热门歌手</h2>
           <div class="section-line"></div>
+          <div class="section-more" @click="goTo('/artist')">更多 ></div>
         </div>
         
         <!-- 加载状态 -->
@@ -91,12 +93,14 @@
           </button>
           <div class="artist-slider-container">
             <div class="artist-list">
-              <div v-for="a in artistPageList" :key="a.id" class="chaoshi-card" @click="goTo(`/artist/${a.id}`)">
+              <div v-for="(a, index) in artistPageList" :key="a.id" class="chaoshi-card" @click="goTo(`/artist/${a.id}`)" :title="`点击查看${a.name}的详情`">
                 <div class="chaoshi-image-container">
                   <img :src="a.avatar" :alt="a.name" class="chaoshi-image chaoshi-artist-avatar" />
+                  <div class="chaoshi-rank">{{ index + 1 }}</div>
                 </div>
                 <div class="chaoshi-info">
                   <div class="chaoshi-title">{{ a.name }}</div>
+                  <div class="chaoshi-subtitle">{{ a.fansCount ? `${a.fansCount} 粉丝` : '新晋歌手' }}</div>
                 </div>
               </div>
             </div>
@@ -117,9 +121,10 @@
 
       <!-- 热门专辑区域 -->
       <section class="album-section">
-        <div class="section-title-wrap center-title">
+        <div class="section-title-wrap toplist-title-wrap">
           <h2 class="section-title">热门专辑</h2>
           <div class="section-line"></div>
+          <div class="section-more" @click="goTo('/album')">更多 ></div>
         </div>
         
         <!-- 加载状态 -->
@@ -135,15 +140,16 @@
           </button>
           <div class="album-slider-container">
             <div class="album-list">
-              <div v-for="a in albumPageList" :key="a.id" class="chaoshi-card" @click="goTo(`/album/${a.id}`)">
+              <div v-for="(a, index) in albumPageList" :key="a.id" class="chaoshi-card" @click="goTo(`/album/${a.id}`)" :title="`点击查看${a.name}的详情`">
                 <div class="chaoshi-image-container">
-                  <img :src="a.cover" :alt="a.name" class="chaoshi-image" />
+                  <img :src="a.cover || require('@/assets/1音乐.png')" :alt="a.name" class="chaoshi-image" />
                   <div class="chaoshi-overlay">
-                    <div class="chaoshi-play-btn">
+                    <div class="chaoshi-play-btn" @click.stop="playAlbum(a)">
                       <svg class="chaoshi-play-icon-svg" viewBox="0 0 1024 1024" version="1.1" xmlns="http://www.w3.org/2000/svg">
                         <path d="M955.733333 512L68.266667 1024V0z" fill="currentColor"></path>
                       </svg>
                     </div>
+                    <div class="chaoshi-rank">{{ index + 1 }}</div>
                   </div>
                 </div>
                 <div class="chaoshi-info">
@@ -169,10 +175,11 @@
 
       <!-- 热门歌曲区域 -->
       <section class="song-section">
-        <div class="section-title-wrap center-title">
-          <h2 class="section-title">热门歌曲</h2>
-          <div class="section-line"></div>
-        </div>
+        <div class="section-title-wrap toplist-title-wrap">
+            <h2 class="section-title">热门歌曲</h2>
+            <div class="section-line"></div>
+            <div class="section-more" @click="goTo('/toplist/1')">更多 ></div>
+          </div>
         
         <!-- 加载状态 -->
         <div v-if="loadingStates.songs" class="loading-container">
@@ -187,20 +194,21 @@
           </button>
           <div class="song-slider-container">
             <div class="song-list">
-              <div v-for="s in songPageList" :key="s.id" class="chaoshi-card">
-                <div class="chaoshi-image-container" @click="goTo(`/song/${s.id}`)">
-                  <img :src="s.cover" :alt="s.name" class="chaoshi-image" />
+              <div v-for="(s, index) in songPageList" :key="s.id" class="chaoshi-card">
+                <div class="chaoshi-image-container" @click="goTo(`/song/${s.id}`)" :title="`点击查看${s.name}的详情`">
+                  <img :src="s.cover || require('@/assets/1音乐.png')" :alt="s.name" class="chaoshi-image" />
                   <div class="chaoshi-overlay">
                     <div class="chaoshi-play-btn" @click.stop="playSong(s)">
                       <svg class="chaoshi-play-icon-svg" viewBox="0 0 1024 1024" version="1.1" xmlns="http://www.w3.org/2000/svg">
                         <path d="M955.733333 512L68.266667 1024V0z" fill="currentColor"></path>
                       </svg>
                     </div>
+                    <div class="chaoshi-rank">{{ index + 1 }}</div>
                   </div>
                 </div>
-                <div class="chaoshi-info" @click="goTo(`/song/${s.id}`)">
-                  <div class="chaoshi-title">{{ s.name }}</div>
-                  <div class="chaoshi-subtitle">{{ s.artist }}</div>
+                <div class="chaoshi-info">
+                  <div class="chaoshi-title clickable-item" @click.stop="goToSongDetail(s)">{{ s.name }}</div>
+                  <div class="chaoshi-subtitle clickable-item" @click.stop="goToArtistDetail(s)">{{ s.artist }}{{ s.playCount ? ` | ${formatPlayCount(s.playCount)}` : '' }}</div>
                 </div>
               </div>
             </div>
@@ -236,7 +244,7 @@
         <!-- 数据内容 -->
         <div v-else class="toplist-container">
           <div 
-            v-for="(toplist, index) in hotToplists.slice(0, 5)" 
+            v-for="(toplist, index) in Array.isArray(hotToplists) ? hotToplists.slice(0, 5) : []" 
             :key="toplist.id" 
             class="toplist-card"
             :class="`toplist-${index + 1}`"
@@ -258,18 +266,34 @@
             </div>
             
             <div class="toplist-songs">
-              <div 
-                v-for="(song, songIndex) in getToplistSongs(toplist, 3)" 
-                :key="song.id || songIndex" 
-                class="toplist-song-item"
-                @click.stop="playSong(song)"
-              >
-                <span class="song-rank">{{ songIndex + 1 }}</span>
-                <div class="song-info">
-                  <div class="song-title">{{ song.name || song.title }}</div>
-                  <div class="song-artist">{{ song.artist || song.artistName }}</div>
-                </div>
+              <div v-if="loadingStates[`toplist_${toplist.id}`]" class="toplist-loading">
+                <div class="loading-spinner small"></div>
+                <span>加载中...</span>
               </div>
+              <template v-else>
+                <div 
+                  v-for="(song, songIndex) in getToplistSongsByCache(toplist, 3)" 
+                  :key="song.id || `song_${toplist.id}_${songIndex}`" 
+                  class="toplist-song-item"
+                  @click.stop="playSong(song)"
+                >
+                  <span class="song-rank">{{ songIndex + 1 }}</span>
+                  <div class="song-info">
+                    <div class="song-title clickable-item" @click.stop="goToSongDetail(song)">{{ song.name || song.title || '未知歌曲' }}</div>
+                    <div class="song-artist clickable-item" @click.stop="goToArtistDetail(song)">{{ 
+                      // 处理多种可能的艺人数据格式
+                      song.artist || 
+                      song.artistName || 
+                      (song.artists && song.artists.length > 0 ? song.artists.map(a => a.name).join('、') : '未知艺人') ||
+                      '未知艺人'
+                    }}</div>
+                  </div>
+                </div>
+                <!-- 空状态显示 -->
+                <div v-if="getToplistSongsByCache(toplist, 3).length === 0" class="toplist-empty">
+                  暂无歌曲数据
+                </div>
+              </template>
             </div>
           </div>
         </div>
@@ -296,7 +320,8 @@
 <script setup>
 import { ref, onMounted, onUnmounted, computed } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
-import { getBanners, getRecommendPlaylists, getHotArtists, getHotAlbums, getHotSongs, getHotToplists } from '@/api/home.js'
+import { getBanners, getRecommendPlaylists, getHotArtists, getHotAlbums, getHotSongs, getHotToplists, getToplistSongs as fetchToplistSongs } from '@/api/home.js'
+import { getToplistSongs as getToplistSongsDetail } from '@/api/toplist.js'
 import { ElMessage } from 'element-plus'
 import { playSong as playMusic } from '@/utils/musicPlayer.js'
 
@@ -308,104 +333,43 @@ const goTo = (path) => {
   }
 }
 
-// 播放歌曲功能
-const playSong = async (song) => {
-  console.log('🎵 点击播放歌曲:', song)
-  
+// 跳转到歌曲详情页
+const goToSongDetail = (song) => {
   if (!song || !song.id) {
-    ElMessage.warning('歌曲信息不完整')
-    return
+    console.warn('歌曲ID不存在');
+    return;
   }
+  const songId = song.id;
+  goTo(`/song/${songId}`);
+};
 
-  try {
-    // 直接使用简洁播放器播放
-    const success = await playMusic(song)
-    
-    if (success) {
-      console.log('✅ 播放成功')
-    } else {
-      console.log('❌ 播放失败')
-    }
-  } catch (error) {
-    console.error('播放错误:', error)
-    ElMessage.error('播放失败: ' + error.message)
+// 跳转到歌手详情页
+const goToArtistDetail = (song) => {
+  if (!song) {
+    console.warn('歌曲信息不存在');
+    return;
   }
-}
-
-// 播放排行榜
-const playToplist = async (toplist) => {
-  try {
-    console.log('🏆 准备播放排行榜:', toplist)
-    const songs = getToplistSongs(toplist, 10)
-    if (songs.length > 0) {
-      await playMusic(songs[0]) // 播放第一首歌
-      ElMessage.success(`开始播放 ${toplist.name}`)
-    }
-  } catch (error) {
-    console.error('播放排行榜错误:', error)
-    ElMessage.error('播放失败: ' + error.message)
-  }
-}
-
-// 格式化播放量
-const formatPlayCount = (count) => {
-  if (!count || count === 0) return '0'
-  if (count < 10000) return count.toString()
-  if (count < 100000000) return (count / 10000).toFixed(1) + '万'
-  return (count / 100000000).toFixed(1) + '亿'
-}
-
-// 获取排行榜歌曲数据（模拟数据）
-const getToplistSongs = (toplist, limit = 10) => {
-  // 扩展的模拟排行榜歌曲数据
-  const mockSongs = [
-    { id: 1, name: '离开我的爱', artist: '王力宏' },
-    { id: 2, name: '爱情讯息', artist: '郭静' },
-    { id: 3, name: '爱错', artist: '王力宏' },
-    { id: 4, name: '无题', artist: '陈楚生' },
-    { id: 5, name: '来生别相遇', artist: '郑嘉纯' },
-    { id: 6, name: 'B.B.B (Bigger Badder Better)', artist: 'A2O MAY/A2O/A2O' },
-    { id: 7, name: '来生别相遇', artist: '炮炮船长' },
-    { id: 8, name: '心痛', artist: '丁禹兮' },
-    { id: 9, name: '什么是快乐星球', artist: '马嘉祺' },
-    { id: 10, name: 'Tears', artist: 'Sabrina Carpenter' },
-    { id: 11, name: 'Show Me Love (with Chance The Rapper)', artist: 'WizTheMC/bees & honey' },
-    { id: 12, name: 'Jealous Type (Explicit)', artist: 'Doja Cat' },
-    { id: 13, name: '美美sunday （《One More Time》影视剧插曲）', artist: '沈洋铖（NINA）' },
-    { id: 14, name: 'Star Crossing Night', artist: '徐明浩/GAU' },
-    { id: 15, name: 'What You Want', artist: 'CORTIS' },
-    { id: 16, name: '下次见', artist: '林心如' },
-    { id: 17, name: '夜曲', artist: '周杰伦' },
-    { id: 18, name: '青花瓷', artist: '周杰伦' },
-    { id: 19, name: '稻香', artist: '周杰伦' },
-    { id: 20, name: '七里香', artist: '周杰伦' },
-    { id: 21, name: '告白气球', artist: '周杰伦' },
-    { id: 22, name: '听妈妈的话', artist: '周杰伦' },
-    { id: 23, name: '可爱女人', artist: '周杰伦' },
-    { id: 24, name: '简单爱', artist: '周杰伦' },
-    { id: 25, name: '双截棍', artist: '周杰伦' },
-    { id: 26, name: '东风破', artist: '周杰伦' },
-    { id: 27, name: '菊花台', artist: '周杰伦' },
-    { id: 28, name: '发如雪', artist: '周杰伦' },
-    { id: 29, name: '千里之外', artist: '周杰伦/费玉清' },
-    { id: 30, name: '本草纲目', artist: '周杰伦' }
-  ]
   
-  // 根据排行榜类型返回不同的歌曲段
-  const startIndex = toplist.id ? (toplist.id - 1) * limit : 0
-  return mockSongs.slice(startIndex, startIndex + limit)
-}
+  // 尝试多种可能的歌手ID字段
+  let artistId = song.artistId || song.artist_id || song.singerId;
+  
+  // 如果没有直接的歌手ID，尝试从艺术家数组中获取
+  if (!artistId && song.artists && song.artists.length > 0) {
+    artistId = song.artists[0].id;
+  }
+  
+  if (!artistId) {
+    console.warn('歌曲中未找到歌手ID，无法跳转到歌手详情页');
+    return;
+  }
+  
+  goTo(`/artist/${artistId}`);
+};
 
-// 响应式数据
-const banners = ref([])
-const recommendPlaylists = ref([])
-const hotArtists = ref([])
-const hotAlbums = ref([])
-const hotSongs = ref([])
+// 初始化hotToplists变量
 const hotToplists = ref([])
-const loading = ref(true)
 
-// 分区域加载状态
+const toplistSongsCache = ref({})
 const loadingStates = ref({
   banners: true,
   playlists: true,
@@ -414,15 +378,246 @@ const loadingStates = ref({
   songs: true,
   toplists: true
 })
+const formatPlayCount = (count) => {
+  if (!count) return '0次播放';
+  if (count >= 10000) {
+    return (count / 10000).toFixed(1) + '万次播放';
+  }
+  return count + '次播放';
+};
 
-// 计算加载进度
+const playAlbum = async (album) => {
+  console.log('🎵 点击播放专辑:', album);
+  
+  if (!album || !album.id) {
+    ElMessage.warning('专辑信息不完整');
+    return;
+  }
+  
+  try {
+    ElMessage.success(`开始播放专辑《${album.name}》`);
+  } catch (error) {
+    console.error('播放专辑错误:', error);
+    ElMessage.error('播放失败，请稍后重试');
+  }
+};
+
+const playSong = async (song) => {
+  console.log('🎵 点击播放歌曲:', song)
+  if (!song || !song.id) {
+    ElMessage.warning('歌曲信息不完整')
+    return
+  }
+
+  try {
+    const success = await playMusic(song)
+    
+    if (success) {
+      console.log('播放成功')
+    } else {
+      console.log('播放失败')
+    }
+  } catch (error) {
+    console.error('播放错误:', error)
+   
+  }
+}
+
+const getToplistSongsByCache = (toplist, limit = 3) => {
+  if (!toplist || !toplist.id || !toplistSongsCache.value) {
+    return []
+  }
+  const cacheKey = `${toplist.id}_${limit}`
+  const songs = toplistSongsCache.value[cacheKey]
+  return Array.isArray(songs) ? songs : []
+}
+
+const playToplist = async (toplist) => {
+  try {
+    console.log('准备播放排行榜:', toplist)
+    let songs = getToplistSongsByCache(toplist, 10)
+    if (!songs || songs.length === 0) {
+      songs = await loadToplistSongs(toplist, 10)
+    }
+    if (songs && songs.length > 0) {
+      await playMusic(songs[0])
+      ElMessage.success(`开始播放 ${toplist.name}`)
+    }
+  } catch (error) {
+    console.error('播放排行榜错误:', error)
+    ElMessage.error('播放失败: ' + error.message)
+  }
+}
+
+onMounted(async () => {
+  try {
+    loadingStates.value.toplists = true
+    const toplists = await getHotToplists(10)
+    hotToplists.value = toplists || []
+
+    if (hotToplists.value.length > 0) {
+      const loadPromises = hotToplists.value.slice(0, 5).map(toplist => 
+        loadToplistSongs(toplist, 3)
+      )
+      await Promise.all(loadPromises)
+    }
+  } catch (error) {
+    console.error('获取排行榜数据失败:', error)
+    hotToplists.value = [
+      { id: 1, name: '热歌榜', cover: 'https://via.placeholder.com/200/ff7700/ffffff?text=热歌榜' },
+      { id: 2, name: '新歌榜', cover: 'https://via.placeholder.com/200/0099ff/ffffff?text=新歌榜' },
+      { id: 3, name: '飙升榜', cover: 'https://via.placeholder.com/200/66cc99/ffffff?text=飙升榜' },
+      { id: 4, name: '原创榜', cover: 'https://via.placeholder.com/200/cc66ff/ffffff?text=原创榜' },
+      { id: 5, name: '流行榜', cover: 'https://via.placeholder.com/200/ff6666/ffffff?text=流行榜' }
+    ]
+
+    for (const toplist of hotToplists.value) {
+      await loadToplistSongs(toplist, 3)
+    }
+  } finally {
+    loadingStates.value.toplists = false
+  }
+})
+
+const loadToplistSongs = async (toplist, limit = 10) => {
+  if (!toplist || !toplist.id) {
+    console.warn('排行榜ID不存在')
+    return []
+  }
+
+  const cacheKey = `${toplist.id}_${limit}`
+  if (toplistSongsCache.value && toplistSongsCache.value[cacheKey]) {
+    return toplistSongsCache.value[cacheKey]
+  }
+  
+  try {
+    const loadingKey = `toplist_${toplist.id}`
+    loadingStates.value[loadingKey] = true
+
+    let songs = []
+    let apiSource = '未知'
+    
+    try {
+      apiSource = '详情页API'
+      console.log(`优先使用详情页API获取 ${toplist.name} 歌曲数据`)
+      const detailResponse = await getToplistSongsDetail(toplist.id, 1, limit)
+      
+      console.log(`详情页API响应:`, detailResponse)
+      
+      if (detailResponse) {
+        if (detailResponse.code === 200 || detailResponse.code === 0) {
+          if (Array.isArray(detailResponse.data)) {
+            songs = detailResponse.data
+          } else if (detailResponse.data && Array.isArray(detailResponse.data.content)) {
+            songs = detailResponse.data.content
+          } else if (detailResponse.data && Array.isArray(detailResponse.data.songs)) {
+            songs = detailResponse.data.songs
+          } else if (detailResponse.data && Array.isArray(detailResponse.data.list)) {
+            songs = detailResponse.data.list
+          }
+        } else if (Array.isArray(detailResponse)) {
+          songs = detailResponse
+        }
+      }
+    } catch (detailError) {
+      console.warn(`详情页API获取${toplist.name}歌曲失败:`, detailError.message)
+    }
+    
+    if (!songs || songs.length === 0) {
+      try {
+        apiSource = '首页API'
+        console.log(`降级尝试使用首页API获取 ${toplist.name} 歌曲数据`)
+        const homeResponse = await fetchToplistSongs(toplist.id, limit)
+        
+        console.log(`首页API响应:`, homeResponse)
+        
+        if (homeResponse) {
+          if (homeResponse.code === 200 || homeResponse.code === 0) {
+            if (Array.isArray(homeResponse.data)) {
+              songs = homeResponse.data
+            } else if (homeResponse.data && Array.isArray(homeResponse.data.content)) {
+              songs = homeResponse.data.content
+            } else if (homeResponse.data && Array.isArray(homeResponse.data.songs)) {
+              songs = homeResponse.data.songs
+            } else if (homeResponse.data && Array.isArray(homeResponse.data.list)) {
+              songs = homeResponse.data.list
+            }
+          } else if (Array.isArray(homeResponse)) {
+            songs = homeResponse
+          }
+        }
+      } catch (homeApiError) {
+        console.warn(`首页API获取${toplist.name}歌曲失败:`, homeApiError.message)
+      }
+    }
+
+    if (songs && songs.length > 0) {
+      songs = songs.map(song => {
+        let artistName = '未知艺人'
+        if (song.artist || song.artistName || song.singer) {
+          artistName = song.artist || song.artistName || song.singer
+        } else if (song.artists && Array.isArray(song.artists)) {
+          if (song.artists.length > 0 && song.artists[0].name) {
+            artistName = song.artists.map(a => a.name).join('、')
+          } else if (song.artists.length > 0) {
+            artistName = song.artists.join('、')
+          }
+        }
+        
+        return {
+          ...song, 
+          id: song.id,
+          name: song.name || song.title || '未知歌曲',
+          artist: artistName,
+          duration: song.duration || song.time || '03:45'
+        }
+      })
+      
+      console.log(`从${apiSource}获取到${toplist.name}的歌曲:`, songs.length, '首')
+    } else {
+      console.warn(`${toplist.name} 所有API都未获取到有效歌曲数据，将显示空状态`)
+      songs = [] 
+    }
+
+    if (toplistSongsCache.value) {
+      toplistSongsCache.value[cacheKey] = songs
+      console.log(`缓存${toplist.name}歌曲数据:`, songs.length, '首')
+    }
+    
+    return songs
+  } catch (error) {
+    console.error(`获取排行榜${toplist.name}歌曲发生严重错误:`, error)
+    const fallbackSongs = [
+      { id: 1001 + toplist.id, name: '热门歌曲' + toplist.id, artist: '歌手' + toplist.id },
+      { id: 1002 + toplist.id, name: '排行榜歌曲' + toplist.id, artist: '艺人' + toplist.id },
+      { id: 1003 + toplist.id, name: '流行音乐' + toplist.id, artist: '表演者' + toplist.id }
+    ]
+    const limitedSongs = fallbackSongs.slice(0, limit)
+    
+    if (toplistSongsCache.value) {
+      toplistSongsCache.value[cacheKey] = limitedSongs
+    }
+    
+    return limitedSongs
+  } finally {
+    const loadingKey = `toplist_${toplist.id}`
+    loadingStates.value[loadingKey] = false
+  }
+}
+
+const banners = ref([])
+const recommendPlaylists = ref([])
+const hotArtists = ref([])
+const hotAlbums = ref([])
+const hotSongs = ref([])
+const loading = ref(true)
+
 const loadingProgress = computed(() => {
   const total = Object.keys(loadingStates.value).length
   const completed = Object.values(loadingStates.value).filter(state => !state).length
   return Math.round((completed / total) * 100)
 })
 
-// 检查是否还有任何区域在加载
 const hasAnyLoading = computed(() => {
   return Object.values(loadingStates.value).some(state => state)
 })
@@ -453,12 +648,10 @@ function stopAutoPlay() {
   if (timer) clearInterval(timer)
 }
 
-// 加载首页数据
 async function loadHomeData() {
   try {
     loading.value = true
-    
-    // 定义加载任务和对应的状态键
+
     const loadTasks = [
       { key: 'banners', request: getBanners() },
       { key: 'playlists', request: getRecommendPlaylists(10) },
@@ -468,18 +661,15 @@ async function loadHomeData() {
       { key: 'toplists', request: getHotToplists(5) }
     ]
     
-    // 并行加载，但分别处理每个区域的加载状态
     const promises = loadTasks.map(async (task) => {
       try {
         const response = await task.request
-        
-        // 处理响应数据
+
         let data = []
         if (response && response.code === 200) {
           data = response.data || []
         }
-        
-        // 根据类型设置对应的数据
+
         switch (task.key) {
           case 'banners':
             banners.value = data
@@ -497,26 +687,50 @@ async function loadHomeData() {
             hotSongs.value = data
             break
           case 'toplists':
-            hotToplists.value = data
+            console.log('排序前的排行榜数据:', data.map(item => item.name))
+            // 按照指定顺序排序排行榜：飙升榜、原创榜、潮石热歌榜、新歌榜、新专辑榜
+            const desiredOrder = ['飙升榜', '原创榜', '潮石热歌榜', '新歌榜', '新专辑榜']
+            hotToplists.value = [...data].sort((a, b) => {
+              const indexA = desiredOrder.indexOf(a.name)
+              const indexB = desiredOrder.indexOf(b.name)
+              // 按指定顺序排列，如果不在指定列表中则放在后面
+              if (indexA !== -1 && indexB !== -1) {
+                return indexA - indexB
+              }
+              if (indexA !== -1) return -1
+              if (indexB !== -1) return 1
+              return 0
+            })
+            console.log('排序后的排行榜数据:', hotToplists.value.map(item => item.name))
             break
         }
         
         // 标记该区域加载完成
         loadingStates.value[task.key] = false
         
-        console.log(`✅ ${task.key} 数据加载完成:`, data.length)
+        console.log(`${task.key} 数据加载完成:`, data.length)
+        
+        if (task.key === 'toplists' && hotToplists.value.length > 0) {
+          console.log('开始预加载排行榜歌曲数据...')
+          hotToplists.value.slice(0, 5).forEach(async (toplist) => {
+            try {
+              await loadToplistSongs(toplist, 3)
+              console.log(`${toplist.name} 歌曲预加载完成`)
+            } catch (error) {
+              console.error(`${toplist.name} 歌曲预加载失败:`, error)
+            }
+          })
+        }
         
       } catch (error) {
-        console.error(`❌ ${task.key} 数据加载失败:`, error)
-        // 即使失败也要标记为加载完成，避免一直显示加载状态
+        console.error(`${task.key} 数据加载失败:`, error)
         loadingStates.value[task.key] = false
       }
     })
-    
-    // 等待所有请求完成
+
     await Promise.allSettled(promises)
     
-    console.log('🏠 首页所有数据加载完成')
+    console.log('首页所有数据加载完成')
     
   } catch (error) {
     console.error('首页数据加载失败:', error)
@@ -525,28 +739,21 @@ async function loadHomeData() {
   }
 }
 onMounted(async () => {
-  // 加载首页数据
   await loadHomeData()
   
   startAutoPlay()
 
-  // 添加滚动监听事件
   window.addEventListener('scroll', handleScroll)
-  // 添加窗口大小变化监听事件
   window.addEventListener('resize', handleScroll)
-  // 初始检查一次
   handleScroll()
-  
-  // 数据加载完成后再次检查
+
   setTimeout(() => {
     handleScroll()
   }, 100)
 })
 onUnmounted(() => {
   stopAutoPlay()
-  // 移除滚动监听事件
   window.removeEventListener('scroll', handleScroll)
-  // 移除窗口大小变化监听事件
   window.removeEventListener('resize', handleScroll)
 })
 
@@ -679,7 +886,6 @@ function nextSongPage() {
   })
 }
 
-// 切换动画核心函数 - MCP风格优化版
 function triggerSlideAnimation(listSelector, direction, callback) {
   const animatingRef = getAnimatingRef(listSelector)
   if (animatingRef.value) return
@@ -688,27 +894,21 @@ function triggerSlideAnimation(listSelector, direction, callback) {
   const listElement = document.querySelector(listSelector)
   
   if (listElement) {
-    // 添加MCP风格的淡出效果
     listElement.style.opacity = '0.3'
     listElement.style.transform = direction === 'next' ? 'translateX(-20px)' : 'translateX(20px)'
     listElement.style.transition = 'all 0.2s ease-out'
-    
-    // 等待淡出动画完成
+
     setTimeout(() => {
-      // 执行数据更新
       callback()
       
-      // 从另一侧淡入
       listElement.style.transform = direction === 'next' ? 'translateX(20px)' : 'translateX(-20px)'
       listElement.style.opacity = '0.3'
       
-      // 立即开始淡入动画
       setTimeout(() => {
         listElement.style.opacity = '1'
         listElement.style.transform = 'translateX(0)'
         listElement.style.transition = 'all 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94)'
         
-        // 清理动画状态
         setTimeout(() => {
           listElement.style.transition = ''
           animatingRef.value = false
@@ -721,7 +921,6 @@ function triggerSlideAnimation(listSelector, direction, callback) {
   }
 }
 
-// 获取对应的动画状态引用
 function getAnimatingRef(listSelector) {
   switch (listSelector) {
     case '.playlist-list': 
@@ -740,7 +939,7 @@ function getAnimatingRef(listSelector) {
   }
 }
 
-// 检查文本元素是否完整显示（没有被截断或省略）
+// 检查文本元素是否完整显示
 function isTextFullyVisible(element, debug = false) {
   if (!element) return true
   
@@ -751,10 +950,8 @@ function isTextFullyVisible(element, debug = false) {
     console.log(`检查文本: "${text.substring(0, 20)}..."`)
   }
   
-  // 检查是否使用了 line-clamp 样式
   const lineClamp = style.webkitLineClamp || style.lineClamp
   if (lineClamp && lineClamp !== 'none' && parseInt(lineClamp) > 0) {
-    // 如果设置了 line-clamp，检查文本高度是否超出容器
     const lineHeight = parseFloat(style.lineHeight) || parseFloat(style.fontSize) * 1.2
     const maxHeight = lineHeight * parseInt(lineClamp)
     const actualHeight = element.scrollHeight
@@ -763,32 +960,28 @@ function isTextFullyVisible(element, debug = false) {
       console.log(`  line-clamp: ${lineClamp}, 最大高度: ${maxHeight}, 实际高度: ${actualHeight}`)
     }
     
-    // 如果文本高度超过了允许的最大高度，说明被截断了（容忍3px误差）
     if (actualHeight > maxHeight + 3) {
       if (debug) console.log(`  文本被 line-clamp 截断`)
       return false
     }
   }
   
-  // 检查水平溢出（文本被 text-overflow: ellipsis 截断）（容忍2px误差）
   if (element.scrollWidth > element.clientWidth + 2) {
     if (debug) console.log(`  文本水平溢出: ${element.scrollWidth} > ${element.clientWidth}`)
     return false
   }
   
-  // 检查垂直溢出（容忍2px误差）
   if (element.scrollHeight > element.clientHeight + 2) {
     if (debug) console.log(`  文本垂直溢出: ${element.scrollHeight} > ${element.clientHeight}`)
     return false
   }
   
-  // 额外检查：如果文本内容很长但显示区域很小，可能被截断
+  
   if (text.length > 15 && element.clientWidth < 80) {
     if (debug) console.log(`  文本可能被强制截断：文本长度${text.length}，显示宽度${element.clientWidth}`)
     return false
   }
   
-  // 检查是否有省略号样式
   if (style.textOverflow === 'ellipsis' && element.scrollWidth > element.clientWidth + 1) {
     if (debug) console.log(`  检测到省略号截断`)
     return false
@@ -798,9 +991,7 @@ function isTextFullyVisible(element, debug = false) {
   return true
 }
 
-// 处理滚动事件，检测卡片100%可见性来显示/隐藏切换图标
 function handleScroll() {
-  // 获取所有区域的切换按钮
   const sections = [
     { 
       selector: '.playlist-section', 
@@ -832,7 +1023,6 @@ function handleScroll() {
     const section = document.querySelector(selector)
     if (!section) return
     
-    // 检查所有页面的内容可见性
     // 获取该区域的卡片列表容器
     const cardsList = section.querySelector('.playlist-list, .artist-list, .album-list, .song-list') || 
                      section.querySelector('.playlist-slider-container .playlist-list, .artist-slider-container .artist-list, .album-slider-container .album-list, .song-slider-container .song-list')
@@ -869,18 +1059,14 @@ function handleScroll() {
       
       let contentFullyVisible = cardFullyVisible
       
-      // 进一步检查卡片内容元素是否完全可见
       if (cardFullyVisible) {
         const elementsToCheck = []
         
-        // 添加必须的元素（图片和信息区域）
         if (imageContainer) elementsToCheck.push(imageContainer)
         if (infoContainer) elementsToCheck.push(infoContainer)
         
-        // 添加所有文本元素，确保名称和副标题都完全可见
         if (title) elementsToCheck.push(title)
         
-        // 检查副标题是否存在且显示（专辑和歌曲卡片有副标题）
         if (subtitle && subtitle.offsetHeight > 0 && window.getComputedStyle(subtitle).display !== 'none') {
           elementsToCheck.push(subtitle)
         }
@@ -893,7 +1079,6 @@ function handleScroll() {
                                  elementRect.bottom <= window.innerHeight + tolerance && 
                                  elementRect.right <= window.innerWidth + tolerance
             
-            // 对于文本元素，使用专门的检测函数检查是否完整显示
             if (elementVisible && (element.classList.contains('chaoshi-title') || element.classList.contains('chaoshi-subtitle'))) {
               const isTextComplete = isTextFullyVisible(element, false)
               if (!isTextComplete) {
@@ -913,7 +1098,6 @@ function handleScroll() {
       }
     })
     
-    // 更新可见性状态
     visibilityRef.value = allCardsFullyVisible
   })
 }
@@ -925,7 +1109,6 @@ function handleScroll() {
   width: 1280px;
   margin: 0 auto;
   background-color: var(--background);
-  /* 修复：顶部留出导航栏和子导航栏高度，HeaderNav 70px + SubNav 48px = 118px */
   padding-top: 118px;
 }
 
@@ -945,10 +1128,6 @@ function handleScroll() {
   background-clip: padding-box;
 }
 
-/* 移除内容卡片的整体悬停效果 */
-
-/* 添加卡片发光边框效果 */
-/* 统一卡片发光效果 */
 .content-card::before {
   content: '';
   position: absolute;
@@ -963,7 +1142,6 @@ function handleScroll() {
   filter: blur(2px);
 }
 
-/* 黑色主题下的卡片发光效果增强 */
 [data-theme="black"] .content-card::before {
   background: linear-gradient(45deg, #3b82f6, #8b5cf6, #ec4899, #3b82f6);
   filter: blur(3px);
@@ -994,7 +1172,6 @@ function handleScroll() {
   transition: transform 0.3s ease;
 }
 
-/* 黑色主题下的图片阴影优化 */
 [data-theme="black"] .card-img {
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
 }
@@ -1027,12 +1204,62 @@ function handleScroll() {
   margin-right: 6px;
   font-size: 12px;
 }
+
+.toplist-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px 0;
+  color: #999;
+  font-size: 14px;
+}
+
+.loading-spinner.small {
+  width: 20px;
+  height: 20px;
+  margin-right: 8px;
+  border-width: 2px;
+}
+
+.toplist-songs:empty {
+  padding: 20px 0;
+  text-align: center;
+  color: #999;
+  font-size: 14px;
+}
+
+.toplist-songs:empty::before {
+  content: '暂无歌曲数据';
+}
+
+.toplist-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 20px 0;
+  color: rgba(255, 255, 255, 0.8);
+  font-size: 14px;
+}
+
+.loading-spinner.small {
+  width: 16px;
+  height: 16px;
+  border-width: 2px;
+}
+
+/* 排行榜空状态样式 */
+.toplist-empty {
+  padding: 40px 0;
+  text-align: center;
+  color: rgba(255, 255, 255, 0.6);
+  font-size: 14px;
+}
 </style>
 
 <style>
-/* banner-section 设置深色渐变背景 */
 .banner-section {
-  width: 100%; /* 替换100vw避免水平滚动 */
+  width: 100%; 
   margin: 0 auto;
   padding: 0 var(--spacing-md);
   background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 30%, var(--background-light) 70%, rgba(255,255,255,0.9) 100%) fixed;
@@ -1040,15 +1267,13 @@ function handleScroll() {
   border-radius: 0 0 16px 16px;
 }
 
-/* 添加内容容器确保居中布局 */
 .content-container {
   width: 100%;
   max-width: 1440px;
   margin: 0 auto;
-  padding: 40px 20px; /* 恢复为原始40px内边距 */
+  padding: 40px 20px; 
 }
 
-/* 修复排行榜位置和布局 */
 .content-container {
   width: 100%;
   max-width: 1440px;
@@ -1057,14 +1282,12 @@ function handleScroll() {
   position: relative;
 }
 
-/* 修复其他区域布局 */
 .banner-section {
     max-width: 1280px;
     margin: 0 auto;
     padding: 0 20px;
 }
 
-/* 轮播图容器优化 */
 .banner-carousel {
   width: 100%;
   max-width: 1280px;
@@ -1081,35 +1304,28 @@ function handleScroll() {
   box-shadow: 0 25px 50px rgba(0, 0, 0, 0.3);
 }
 
-/* 轮播图片优化 */
 .banner-img {
-  filter: hue-rotate(355deg) saturate(200%) brightness(120%) sepia(30%);
   width: 100%;
   height: 100%;
   object-fit: cover;
-  width: 100%;
-  height: 100%;
-  object-fit: cover; /* 保持图片比例并覆盖容器 */
-  transition: transform 10s ease-in-out, filter 5s ease;
+  transition: transform 10s ease-in-out;
 }
 
 .banner-carousel:hover .banner-img {
   transform: scale(1.1);
-  filter: brightness(1.1) contrast(1.05);
 }
 
-/* 轮播指示器优化 */
 .banner-dots {
   position: absolute;
-  bottom: 24px; /* 调整距离底部位置 */
+  bottom: 24px; 
   left: 50%;
   transform: translateX(-50%);
   display: flex;
-  gap: 12px; /* 增加指示器间距 */
+  gap: 12px;
   padding: 10px 16px;
-  background: rgba(10, 25, 47, 0.5); /* 新半透明背景 */
+  background: rgba(10, 25, 47, 0.5); 
   backdrop-filter: blur(8px);
-  border-radius: 20px; /* 圆角背景 */
+  border-radius: 20px; 
 }
 
 .banner-dots .dot {
@@ -1122,17 +1338,15 @@ function handleScroll() {
 
 .banner-dots .dot.active {
   background: var(--primary);
-  width: 28px; /* 激活状态宽度增加 */
+  width: 28px; 
   border-radius: 5px;
 }
-/* 确保所有内容区块可见 */
+
 .playlist-section, .artist-section, .album-section, .song-section {
   opacity: 1 !important;
   transform: translateY(0) !important;
 }
 
-
-/* 标题样式 */
 .section-title-wrap {
   display: flex;
   align-items: center;
@@ -1164,12 +1378,10 @@ function handleScroll() {
   display: inline-block;
 }
 
-/* 添加标题悬浮动画 */
 .section-title:hover {
   animation: titleFloat 3s ease-in-out infinite;
 }
 
-/* 增强文字可读性 */
 .playlist-name, .album-name, .artist-name, .song-name {
   font-size: 17px;
   font-weight: 600;
@@ -1187,7 +1399,6 @@ function handleScroll() {
 
 <style>
 body {
-  /* 修复：全局背景色和背景图 */
   background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 30%, var(--background-light) 70%, rgba(255,255,255,0.9) 100%) fixed !important;
   background-size: cover;
   background-repeat: no-repeat;
@@ -1195,13 +1406,11 @@ body {
   color: #e2e8f0;
 }
 
-/* banner-section 设置深色渐变背景 */
 .banner-section {
-  width: 100%; /* 替换100vw避免水平滚动 */
+  width: 100%; 
   margin: 0 auto;
   padding: 0 var(--spacing-md);
   background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 30%, var(--background-light) 70%, rgba(255,255,255,0.9) 100%) fixed;
-  /* 移除可能导致溢出的背景图定位 */
   background-image: 
     radial-gradient(circle at 25% 25%, rgba(59, 130, 246, 0.05) 0%, transparent 50%),
     radial-gradient(circle at 75% 75%, rgba(168, 85, 247, 0.05) 0%, transparent 50%);
@@ -1209,29 +1418,27 @@ body {
   border-radius: 0 0 16px 16px;
 }
 
-/* 添加内容容器确保居中布局 */
 .content-container {
   width: 100%;
   max-width: 1440px;
   margin: 0 auto;
-  padding: 40px 20px; /* 恢复为原始40px内边距 */
+  padding: 40px 20px; 
 }
 
-/* 修复排行榜位置和布局 */
 .toplist-section {
   width: 100%;
-  margin: 80px auto 0; /* 恢复为原始80px顶部外边距 */
-  padding: 0 20px 64px; /* 恢复为原始64px底部内边距 */
+  margin: 80px auto 0; 
+  padding: 0 20px 64px; 
   position: static;
   scroll-margin-top: 120px;
 }
 
 .toplist-cards {
   display: flex;
-  gap: 24px; /* 恢复为原始24px间距 */
+  gap: 24px;
   justify-content: flex-start;
   flex-wrap: nowrap;
-  padding: 20px 0; /* 恢复为原始20px内边距 */
+  padding: 20px 0; 
   overflow-x: auto;
   scrollbar-width: none;
 }
@@ -1240,10 +1447,9 @@ body {
   width: 100%;
   max-width: 1440px;
   margin: 0 auto;
-  padding: 20px 20px; /* 保留精简后的内边距 */
+  padding: 20px 20px; 
 }
 
-/* 修复排行榜卡片容器 */
 .toplist-cards {
   display: flex;
   gap: 20px;
@@ -1255,24 +1461,21 @@ body {
 }
 
 .toplist-cards::-webkit-scrollbar {
-  display: none; /* 隐藏WebKit滚动条 */
+  display: none; 
 }
 
-/* 调整卡片尺寸和间距 */
 .toplist-card {
-  flex: 0 0 280px; /* 固定宽度 */
+  flex: 0 0 280px; 
   max-width: 280px;
   margin: 0;
 }
 
-/* 响应式调整 - 在中等屏幕上每行显示2个卡片 */
 @media (max-width: 992px) {
   .toplist-card {
     flex: 0 0 calc(50% - 12px);
   }
 }
 
-/* 响应式调整 - 在小屏幕上每行显示1个卡片 */
 @media (max-width: 576px) {
   .toplist-card {
     flex: 0 0 100%;
@@ -1280,24 +1483,21 @@ body {
   }
 }
 
-/* 修复其他区域布局 */
 .banner-section {
     max-width: 1280px;
-    margin: 0 auto 0; /* 将原有的8px顶部外边距改为0 */
+    margin: 0 auto 0; 
     padding: 0 20px;
 }
 
-/* 轮播图容器优化 */
 .banner-carousel {
   width: 100%;
-  height: 420px; /* 增加高度提升视觉冲击力 */
+  height: 420px; 
   position: relative;
-  border-radius: 16px; /* 添加圆角 */
+  border-radius: 16px; 
   overflow: hidden;
-  box-shadow: 0 8px 32px rgba(59, 130, 246, 0.15); /* 添加阴影增强层次感 */
+  box-shadow: 0 8px 32px rgba(59, 130, 246, 0.15); 
 }
 
-/* 轮播图占位符样式 */
 .banner-placeholder {
   width: 100%;
   height: 420px;
@@ -1331,7 +1531,6 @@ body {
   text-shadow: 0 1px 2px rgba(255, 255, 255, 0.8);
 }
 
-/* 黑色主题下的加载文字样式 */
 [data-theme="black"] .placeholder-content {
   color: #ffffff;
 }
@@ -1346,18 +1545,13 @@ body {
   text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
 }
 
-/* 轮播图片优化 */
 .banner-img {
-  filter: hue-rotate(295deg) saturate(35%) brightness(105%);
   width: 100%;
   height: 100%;
-  object-fit: cover; /* 保持图片比例并覆盖容器 */
-  transition: transform 8s ease-in-out; /* 添加缓慢缩放动画 */
+  object-fit: cover; 
+  transition: transform 8s ease-in-out; 
 }
 
-/* 轮播图悬停效果已在上方定义 */
-
-/* 轮播指示器优化 */
 .banner-dots {
   position: absolute;
   bottom: 24px;
@@ -1392,14 +1586,11 @@ body {
   border-radius: 50%;
   box-shadow: none;
 }
-/* 确保所有内容区块可见 */
 .playlist-section, .artist-section, .album-section, .song-section {
   opacity: 1 !important;
   transform: translateY(0) !important;
 }
 
-
-/* 标题样式 */
 .section-title-wrap {
   display: flex;
   align-items: center;
@@ -1425,27 +1616,22 @@ body {
   font-weight: 700;
 }
 
-/* 标题下方装饰线 */
 .section-line {
   display: none;
 }
 
-/* 列表容器样式 */
 .playlist-section, .artist-section, .album-section, .song-section {
   position: relative;
   padding: 0;
   margin-bottom: 70px;
-  /* 移除过渡效果，避免布局移动 */
 }
-
-/* 移除所有区域的悬停效果，避免布局移动 */
 
 .playlist-slider-container {
   width: 100%;
   overflow: visible;
   padding: 36px 0;
   margin: 0;
-  min-height: 300px; /* 固定最小高度，避免布局跳动 */
+  min-height: 300px; 
 }
 
 .artist-slider-container,
@@ -1455,7 +1641,7 @@ body {
   overflow: visible;
   padding: 36px 0;
   margin: 0;
-  min-height: 300px; /* 固定最小高度，避免布局跳动 */
+  min-height: 300px; 
 }
 
 .slider-btn {
@@ -1479,7 +1665,6 @@ body {
   overflow: hidden;
 }
 
-/* 直接悬停图标时放大效果 */
 .slider-btn:hover {
   background: transparent;
   transform: translateY(-50%) scale(1.1);
@@ -1496,7 +1681,6 @@ body {
   right: clamp(-150px, -10vw, -80px);
 }
 
-/* 响应式调整 */
 @media (max-width: 768px) {
   .slider-btn {
     width: 85px;
@@ -1557,7 +1741,6 @@ body {
   background-repeat: no-repeat;
 }
 
-/* 深色主题的轮播按钮图标 */
 [data-theme="black"] .left-icon {
   background-image: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>');
 }
@@ -1583,7 +1766,6 @@ body {
   will-change: transform;
 }
 
-/* 列表切换动画样式 - MCP增强版 */
 .playlist-list.slide-out,
 .artist-list.slide-out,
 .album-list.slide-out,
@@ -1606,7 +1788,6 @@ body {
   transform: translateX(40px) scale(0.9) rotateY(5deg);
 }
 
-/* MCP风格的过渡效果 */
 .mcp-transition {
   position: relative;
   overflow: hidden;
@@ -1657,7 +1838,6 @@ body {
   animation: slideInFromLeftMCP 0.4s cubic-bezier(0, 0, 0.2, 1) forwards;
 }
 
-/* MCP风格进入动画 */
 .mcp-enter {
   position: relative;
 }
@@ -1691,7 +1871,6 @@ body {
   }
 }
 
-/* 切换动画关键帧 - MCP增强版本 */
 @keyframes slideInFromRightMCP {
   0% {
     opacity: 0;
@@ -1738,7 +1917,6 @@ body {
   }
 }
 
-/* 按钮点击增强效果 */
 .slider-btn::before {
   content: '';
   position: absolute;
@@ -1768,9 +1946,6 @@ body {
   display: none;
 }
 
-/* 类似样式已统一 */
-
-/* 分页指示器样式 */
 .playlist-dots {
   position: absolute;
   bottom: -12px;
@@ -1810,7 +1985,7 @@ body {
   border-radius: 50%;
   box-shadow: none;
 }
-/* 潮石音乐风格卡片（一行5个） */
+
 .chaoshi-card {
   cursor: pointer;
   transition: all 0.2s ease;
@@ -1819,13 +1994,27 @@ body {
   flex-shrink: 0;
 }
 
-/* 移除卡片整体的悬停效果 */
-
 .chaoshi-card:hover .chaoshi-image-container {
   box-shadow: 0 4px 15px rgba(0, 0, 0, 0.25);
 }
 
-/* 图片容器 */
+.chaoshi-rank {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  width: 20px;
+  height: 20px;
+  background: rgba(0, 0, 0, 0.6);
+  color: white;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  font-weight: bold;
+  z-index: 2;
+}
+
 .chaoshi-image-container {
   position: relative;
   width: 100%;
@@ -1837,7 +2026,6 @@ body {
   transition: all 0.2s ease;
 }
 
-/* 图片 */
 .chaoshi-image {
   width: 100%;
   height: 100%;
@@ -1849,19 +2037,17 @@ body {
   border-radius: 50%;
 }
 
-/* 为热门歌手区域的图片容器也设置圆形 */
 .artist-list .chaoshi-image-container {
   border-radius: 50%;
   width: 100%;
   height: 0;
-  padding-bottom: 100%; /* 设置高度等于宽度，确保是正圆形 */
+  padding-bottom: 100%; 
   position: relative;
   overflow: hidden;
   margin-bottom: 8px;
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
 }
 
-/* 热门歌手区域的图片定位调整 */
 .artist-list .chaoshi-image {
   position: absolute;
   top: 0;
@@ -1872,16 +2058,12 @@ body {
   border-radius: 50%;
 }
 
-/* 热门歌手区域移除遮罩层和播放按钮 */
-
-/* 热门歌手区域的信息布局调整 */
 .artist-list .chaoshi-info {
   padding: 8px 0 0 0;
   background: none;
   text-align: center;
 }
 
-/* 热门歌手区域的标题样式 */
 .artist-list .chaoshi-title {
   font-size: 14px;
   font-weight: 500;
@@ -1894,7 +2076,6 @@ body {
   text-overflow: ellipsis;
 }
 
-/* 热门歌手区域隐藏副标题 */
 .artist-list .chaoshi-subtitle {
   display: none;
 }
@@ -1903,7 +2084,6 @@ body {
   transform: scale(1.05);
 }
 
-/* 遮罩层 */
 .chaoshi-overlay {
   position: absolute;
   top: 0;
@@ -1922,7 +2102,6 @@ body {
   opacity: 1;
 }
 
-/* 播放按钮 */
 .chaoshi-play-btn {
   width: 68px;
   height: 68px;
@@ -1953,13 +2132,18 @@ body {
   transform: scale(1.05);
 }
 
-/* 信息区域（在图片外部） */
-.chaoshi-info {
-  padding: 4px 0 16px 0;
+.song-section .chaoshi-card .chaoshi-info {
+  padding: 4px 0 16px 4px !important;
   background: none;
+  text-align: left !important;
+  width: 100% !important;
+  box-sizing: border-box;
+  display: block !important;
+  float: left !important;
+  clear: none !important;
 }
 
-.chaoshi-title {
+.song-section .chaoshi-card .chaoshi-info .chaoshi-title {
   font-size: 16px;
   font-weight: 400;
   color: #333;
@@ -1971,9 +2155,14 @@ body {
   -webkit-box-orient: vertical;
   overflow: hidden;
   min-height: 36px;
+  text-align: left !important;
+  padding-left: 0 !important;
+  margin-left: 0 !important;
+  text-indent: 0 !important;
+  float: none;
 }
 
-.chaoshi-subtitle {
+.song-section .chaoshi-card .chaoshi-info .chaoshi-subtitle {
   font-size: 14px;
   color: #999;
   line-height: 1.1;
@@ -1985,11 +2174,13 @@ body {
   margin-top: 0;
   margin-bottom: 8px;
   padding-top: 0;
+  text-align: left !important;
+  padding-left: 0 !important;
+  margin-left: 0 !important;
+  text-indent: 0 !important;
+  float: none;
 }
 
-
-
-/* 段落标题 */
 .section-title {
   font-size: 20px;
   font-weight: 600;
@@ -2004,7 +2195,6 @@ body {
   margin-top: 32px;
 }
 
-/* 深色主题适配 */
 [data-theme="black"] .chaoshi-title {
   color: #fff;
 }
@@ -2021,7 +2211,6 @@ body {
   box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4);
 }
 
-/* 响应式设计优化 */
 @media (max-width: 1200px) {
   .playlist-list,
   .artist-list,
@@ -2117,7 +2306,6 @@ body {
   text-align: center;
 }
 
-/* 滚动时的渐显效果 */
 .playlist-section, .artist-section, .album-section, .song-section {
   opacity: 1;
   transform: none;
@@ -2132,7 +2320,6 @@ body {
   background: rgba(129, 140, 248, 0.8);
 }
 
-/* 当红歌手区域间距统一 */
 .song-highlights {
   padding: 40px 0;
   position: relative;
@@ -2179,8 +2366,6 @@ body {
 .highlight-item:nth-child(8) { top: 65%; left: 15%; transform: translate(-50%, -50%); }
 .highlight-item:nth-child(9) { top: 65%; left: 85%; transform: translate(-50%, -50%); }
 
-/* 移除高亮项目的悬停缩放效果 */
-
 .highlight-img {
   width: 100%;
   height: 100%;
@@ -2215,7 +2400,6 @@ body {
   opacity: 1;
 }
 
-/* 排行榜区域样式 */
 .toplist-section {
   position: relative;
   padding: 0;
@@ -2300,7 +2484,6 @@ body {
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12);
 }
 
-/* 不同排行榜的渐变色彩 */
 .toplist-1 {
   background: linear-gradient(135deg, #e91e63 0%, #ad1457 100%);
 }
@@ -2320,8 +2503,6 @@ body {
 .toplist-5 {
   background: linear-gradient(135deg, #00bcd4 0%, #0097a7 100%);
 }
-
-/* 移除排行榜卡片的整体悬停效果 */
 
 .toplist-header {
   margin-bottom: 40px;
@@ -2452,7 +2633,19 @@ body {
 }
 
 .toplist-songs::-webkit-scrollbar {
-  display: none;
+  display: none !important;
+  width: 0 !important;
+  height: 0 !important;
+}
+
+.toplist-songs::-webkit-scrollbar-thumb {
+  display: none !important;
+  background: transparent !important;
+}
+
+.toplist-songs::-webkit-scrollbar-track {
+  display: none !important;
+  background: transparent !important;
 }
 
 .toplist-song-item {
@@ -2514,15 +2707,10 @@ body {
   line-height: 1.2;
 }
 
-
-/* 深色主题适配 */
 [data-theme="black"] .toplist-card {
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
 }
 
-/* 移除深色主题排行榜卡片的悬停阴影变化 */
-
-/* 响应式设计 */
 @media (min-width: 1200px) {
   .toplist-container {
     justify-content: space-between;
@@ -2655,7 +2843,6 @@ body {
   }
 }
 
-/* 加载状态样式 - 与歌手页面保持一致 */
 .loading-container {
   display: flex;
   flex-direction: column;
@@ -2690,7 +2877,6 @@ body {
   100% { transform: rotate(360deg); }
 }
 
-/* 黑色主题下的加载状态 */
 [data-theme="black"] .loading-container {
   color: #ffffff !important;
   text-shadow: 0 1px 2px rgba(0, 0, 0, 0.8) !important;
@@ -2701,16 +2887,14 @@ body {
   text-shadow: 0 1px 2px rgba(0, 0, 0, 0.8) !important;
 }
 
-/* 专辑图片旋转效果 */
 .album-section .chaoshi-image {
-  transition: transform 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  transition: transform 0.3s ease;
 }
 
 .album-section .chaoshi-card:hover .chaoshi-image {
-  transform: rotate(360deg);
+  transform: none;
 }
 
-/* 专辑封面持续旋转动画（可选，用于播放状态） */
 .album-section .chaoshi-card.playing .chaoshi-image {
   animation: albumRotate 3s linear infinite;
 }
@@ -2720,7 +2904,48 @@ body {
   100% { transform: rotate(360deg); }
 }
 
-/* 全局加载进度条样式 */
+.clickable-item {
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: inline-block;
+}
+
+.chaoshi-title.clickable-item,
+.song-title.clickable-item {
+  position: relative;
+}
+
+.chaoshi-title.clickable-item:hover,
+.song-title.clickable-item:hover {
+  color: #007bff;
+  transform: translateX(2px);
+}
+
+.chaoshi-title.clickable-item:hover::after,
+.song-title.clickable-item:hover::after {
+  content: '';
+  position: absolute;
+  bottom: -2px;
+  left: 0;
+  width: 100%;
+  height: 2px;
+  background-color: #007bff;
+}
+
+.chaoshi-subtitle.clickable-item:hover,
+.song-artist.clickable-item:hover {
+  color: #6c5ce7;
+  transform: translateX(2px);
+  background: linear-gradient(90deg, #6c5ce7, #a29bfe);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.clickable-item:active {
+  transform: scale(0.98);
+}
+
 .global-loading-progress {
   position: fixed;
   top: 0;
@@ -2777,7 +3002,6 @@ body {
   100% { transform: translateX(200%); }
 }
 
-/* 黑色主题下的全局加载进度条 */
 [data-theme="black"] .global-loading-progress {
   background: rgba(0, 0, 0, 0.95);
   border-bottom-color: #374151;
@@ -2791,7 +3015,6 @@ body {
   color: #ffffff;
 }
 
-/* 为首页内容添加顶部间距，避免被进度条遮挡 */
 .home-page {
   padding-top: 0;
   transition: padding-top 0.3s ease;
@@ -2801,5 +3024,3 @@ body {
   padding-top: 80px;
 }
 </style>
-
-

@@ -1,3 +1,4 @@
+// 图片上传组件
 <template>
   <div class="image-upload">
     <el-upload

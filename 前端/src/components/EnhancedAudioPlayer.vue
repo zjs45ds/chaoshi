@@ -1,3 +1,4 @@
+// 音频播放器组件
 <template>
   <div class="enhanced-audio-player" :class="{ 'mini': mini, 'loading': loading }">
     <!-- 加载状态 -->
@@ -106,9 +107,6 @@ import {
   VolumeOff,
   Loading
 } from '@element-plus/icons-vue'
-import { getAudioStreamUrl } from '@/utils/fileUpload.js'
-
-// Props
 const props = defineProps({
   // 音频源 - 可以是URL或歌曲ID
   audioUrl: {
@@ -195,7 +193,9 @@ const loadAudio = async () => {
     // 如果提供了歌曲ID，从API获取流媒体URL
     if (props.songId && !audioUrl) {
       console.log('🎵 从API获取音频流URL, songId:', props.songId)
-      const result = await getAudioStreamUrl(props.songId)
+      // 文件上传功能已移除，使用默认处理
+      console.log('⚠️ 音频流获取功能已暂时关闭')
+      const result = { success: false }
       
       if (result.success) {
         audioUrl = result.audioUrl

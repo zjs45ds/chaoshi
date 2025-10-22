@@ -1,3 +1,4 @@
+// 歌曲详情页面
 <template>
   <div class="detail-page">
     <div class="loading" v-if="loading">
@@ -9,7 +10,7 @@
       <!-- 左侧专辑封面 -->
       <div class="album-cover-section">
         <div class="album-cover">
-          <img :src="song.cover || '/src/assets/1音乐.png'" :alt="song.name" class="cover-image" />
+          <img :src="song.cover || require('@/assets/1音乐.png')" :alt="song.name" class="cover-image" />
         </div>
       </div>
       
@@ -53,7 +54,7 @@
           <button class="action-btn" @click="toggleFavorite" :class="{ 'is-favorited': isFavorited }">
             <img v-if="isFavorited" class="favorite-icon-img" src="/src/assets/已收藏.png" alt="已收藏" />
             <i v-else class="heart-icon">♡</i>
-            {{ isFavorited ? '已收藏' : '收藏' }}
+            <span v-if="isFavorited">已收藏</span>
           </button>
         </div>
       </div>
@@ -427,7 +428,7 @@ onUnmounted(() => {
 }
 
 .meta-value {
-  color: var(--text-primary);
+  color: var(--primary);
   font-weight: 600;
   transition: color var(--transition-normal);
 }
@@ -479,19 +480,118 @@ onUnmounted(() => {
   color: var(--text-primary);
   border: 1px solid var(--border);
   border-radius: 6px;
-  padding: 12px 16px;
-  font-size: 14px;
+  padding: 12px 16px !important;
+  font-size: 14px !important;
+  font-weight: 600;
   cursor: pointer;
-  transition: all 0.2s;
+  transition: color 0.2s ease, background-color 0.2s ease, border-color 0.2s ease !important;
   display: flex;
   align-items: center;
   gap: 6px;
+  width: auto !important;
+  height: auto !important;
+  line-height: 1.4 !important;
+  box-sizing: border-box !important;
+  flex-shrink: 0 !important;
+  transform: none !important;
 }
 
 .action-btn:hover {
   background: var(--background-hover);
   border-color: var(--primary);
   color: var(--primary);
+  transform: none !important;
+  padding: 12px 16px !important;
+  width: auto !important;
+  height: auto !important;
+}
+
+.action-btn:focus, .action-btn:active {
+  transform: none !important;
+  padding: 12px 16px !important;
+}
+
+.action-btn.is-favorited {
+  transform: none !important;
+  padding: 12px 16px !important;
+  width: auto !important;
+  height: auto !important;
+}
+
+/* 黑色主题下的收藏按钮样式 */
+[data-theme="black"] .action-btn {
+  background: #000000 !important;
+  color: white !important;
+  border: 1px solid white !important;
+}
+
+[data-theme="black"] .action-btn:hover {
+  background: #1a1a1a !important;
+  color: white !important;
+  border-color: white !important;
+  transform: translateY(-1px) !important;
+  box-shadow: 0 4px 12px rgba(255, 255, 255, 0.2) !important;
+}
+
+/* 黑色主题下的爱心图标样式 */
+[data-theme="black"] .action-btn.is-favorited .heart-icon {
+  color: #dc2626 !important; /* 红色爱心 */
+}
+
+[data-theme="black"] .action-btn .heart-icon {
+  color: white !important;
+}
+
+[data-theme="black"] .action-btn:hover .heart-icon {
+  color: #dc2626 !important;
+}
+
+/* 黑色主题下的页面样式 */
+[data-theme="black"] .song-detail {
+  background: var(--background);
+  color: var(--text-primary);
+}
+
+[data-theme="black"] .song-header {
+  background: var(--background-card);
+}
+
+[data-theme="black"] .song-title {
+  color: var(--text-primary);
+}
+
+[data-theme="black"] .song-artist {
+  color: var(--text-secondary);
+}
+
+[data-theme="black"] .song-album {
+  color: var(--text-tertiary);
+}
+
+[data-theme="black"] .song-meta {
+  color: var(--text-tertiary);
+}
+
+[data-theme="black"] .play-btn {
+  background: #000000 !important;
+  color: white !important;
+  border: 1px solid white !important;
+}
+
+[data-theme="black"] .play-btn:hover {
+  background: #1a1a1a !important;
+  border-color: white !important;
+  box-shadow: 0 4px 12px rgba(255, 255, 255, 0.2) !important;
+}
+
+[data-theme="black"] .section-title {
+  color: var(--text-primary);
+  border-left-color: var(--accent);
+}
+
+.action-btn.is-favorited:hover {
+  transform: none !important;
+  padding: 12px 16px !important;
 }
 
 /* 收藏按钮的PNG图片样式 */

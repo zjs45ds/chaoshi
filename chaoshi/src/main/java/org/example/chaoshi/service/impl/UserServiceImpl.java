@@ -247,6 +247,33 @@ public class UserServiceImpl implements UserService {
         return false;
     }
     
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public boolean updateUserAvatar(Long userId, String avatarUrl) {
+        log.info("[USER SERVICE] 开始更新用户头像: userId={}", userId);
+        
+        User user = userMapper.selectById(userId);
+        if (user == null) {
+            log.warn("[USER SERVICE] 用户不存在: userId={}", userId);
+            throw new RuntimeException("用户不存在");
+        }
+        
+        // 更新头像URL
+        user.setAvatar(avatarUrl);
+        user.setUpdatedAt(LocalDateTime.now());
+        
+        int result = userMapper.updateUser(user);
+        boolean success = result > 0;
+        
+        if (success) {
+            log.info("[USER SERVICE] 用户头像更新成功: userId={}", userId);
+        } else {
+            log.warn("[USER SERVICE] 用户头像更新失败: userId={}", userId);
+        }
+        
+        return success;
+    }
+    
     /**
      * 生成JWT token
      */

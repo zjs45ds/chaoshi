@@ -1,3 +1,4 @@
+// 专辑列表页面
 <template>
   <div class="album-page">
     <div v-if="loading" class="loading-container">
@@ -107,6 +108,7 @@ const goToAlbum = (id) => {
   }
 }
 
+
 onMounted(() => {
   fetchAlbums()
 })
@@ -207,6 +209,7 @@ onMounted(() => {
   color: #333;
   margin-left: 2px;
 }
+
 /* 专辑信息区域 */
 .album-info {
   padding: 15px 0 20px 0;

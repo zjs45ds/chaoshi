@@ -1,3 +1,4 @@
+// MV列表页面
 <template>
   <div class="mv-page">
     <div v-if="loading" class="loading-container">
@@ -209,26 +210,28 @@ const formatDate = (dateString) => {
 .mv-play-btn {
   width: 68px;
   height: 68px;
-  background: rgba(0, 0, 0, 0.8);
+  background: rgba(255, 255, 255, 0.95);
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
   transition: all 0.3s ease;
-  box-shadow: 0 0 20px rgba(0, 0, 0, 0.4);
+  box-shadow: 0 0 20px rgba(0, 0, 0, 0.2);
+  border: 2px solid rgba(255, 255, 255, 0.8);
 }
 
 .mv-play-btn:hover {
-  background: rgba(0, 0, 0, 0.9);
+  background: rgba(255, 255, 255, 1);
   transform: scale(1.1);
-  box-shadow: 0 0 25px rgba(0, 0, 0, 0.5);
+  box-shadow: 0 0 25px rgba(0, 0, 0, 0.3);
+  border: 2px solid rgba(255, 255, 255, 1);
 }
 
 .mv-play-icon-svg {
   width: 24px;
   height: 24px;
-  color: white;
+  color: #1f2937;
   transition: all 0.3s ease;
 }
 .mv-title {

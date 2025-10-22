@@ -1,3 +1,4 @@
+// 音乐播放器组件
 <template>
   <div class="netease-player" :class="{ 'has-song': hasSong }" v-if="hasSong">
     <!-- 进度条 -->
@@ -21,9 +22,9 @@
     </div>
     
     <!-- 播放器主体 -->
-    <div class="player-main">
+    <div class="player-main" @click="handlePlayerMainClick">
       <!-- 左侧：歌曲信息 -->
-      <div class="song-info" @click="openFullscreen">
+      <div class="song-info" @click.stop="openFullscreen">
         <div class="album-cover">
           <img 
             :src="currentSong?.cover || currentSong?.albumCover || '/src/assets/1音乐.png'" 
@@ -42,7 +43,7 @@
       </div>
       
       <!-- 中间：播放控制 -->
-      <div class="controls">
+      <div class="controls" @click.stop>
         <button class="control-btn prev" @click="playPrevious" :disabled="!hasPlaylist">
           <i class="icon-prev"></i>
         </button>
@@ -61,7 +62,7 @@
       </div>
       
       <!-- 右侧：功能按钮和音量 -->
-      <div class="player-tools">
+      <div class="player-tools" @click.stop>
         <div class="time-info" v-if="hasSong">
           <span class="current">{{ currentTimeFormatted }}</span>
           <span class="divider">/</span>
@@ -176,6 +177,28 @@ const getVolumeIcon = () => {
 // 事件处理
 const openFullscreen = () => window.dispatchEvent(new CustomEvent('openFullscreenPlayer'))
 const openPlaylist = () => window.dispatchEvent(new CustomEvent('openPlaylist'))
+
+// 处理播放器主体区域点击事件
+const handlePlayerMainClick = (event) => {
+  // 检查点击的目标元素是否是按钮或其子元素
+  const clickedElement = event.target
+  
+  // 如果点击的是按钮、输入控件或其子元素，则不执行跳转
+  if (
+    clickedElement.closest('button') ||
+    clickedElement.closest('.controls') ||
+    clickedElement.closest('.player-tools') ||
+    clickedElement.closest('.song-info') ||
+    clickedElement.closest('.progress-container') ||
+    clickedElement.classList.contains('progress-bar') ||
+    clickedElement.classList.contains('progress-handle')
+  ) {
+    return // 不执行跳转
+  }
+  
+  // 如果点击的是空白区域，跳转到全屏播放器
+  openFullscreen()
+}
 const handleImageError = (event) => { 
   // 防止循环加载错误
   if (event.target.src.includes('1音乐.png')) {
@@ -361,7 +384,7 @@ onMounted(() => {
   border-top: 1px solid #e7e7e7;
   z-index: 1000;
   transform: translateY(0);
-  transition: transform 0.3s ease;
+  transition: transform 0.3s ease, background 0.3s ease, border-color 0.3s ease;
 }
 
 .netease-player:not(.has-song) {
@@ -451,17 +474,12 @@ onMounted(() => {
   gap: 12px;
   min-width: 0;
   max-width: 350px; /* 增加最大宽度 */
-  cursor: pointer;
   padding: 6px 8px;
   border-radius: 6px;
-  transition: background-color 0.2s ease;
   /* 确保头像在最左边，歌曲信息在右边 */
   flex-direction: row;
 }
 
-.song-info:hover {
-  background: #f8f8f8;
-}
 
 .album-cover {
   width: 56px; /* 增大专辑封面尺寸 */
@@ -1077,5 +1095,1005 @@ onMounted(() => {
 @keyframes spin {
   0% { transform: rotate(0deg); }
   100% { transform: rotate(360deg); }
+}
+
+/* 黑色主题下的播放器样式 */
+[data-theme="black"] .netease-player {
+  background: #000000 !important;
+  border-top: 1px solid #333333 !important;
+}
+
+
+[data-theme="black"] .album-cover {
+  background: #1a1a1a !important;
+}
+
+[data-theme="black"] .song-title {
+  color: white !important;
+}
+
+[data-theme="black"] .artist-name {
+  color: #cccccc !important;
+}
+
+[data-theme="black"] .control-btn {
+  color: white !important;
+}
+
+[data-theme="black"] .control-btn:not(:disabled):hover {
+  background: #1a1a1a !important;
+}
+
+[data-theme="black"] .play:hover {
+  background: #1a1a1a !important;
+}
+
+[data-theme="black"] .time-info {
+  color: #cccccc !important;
+}
+
+[data-theme="black"] .tool-btn {
+  color: #cccccc !important;
+}
+
+[data-theme="black"] .tool-btn:hover {
+  color: white !important;
+  background: #1a1a1a !important;
+}
+
+[data-theme="black"] .tool-btn.love {
+  color: #cccccc !important;
+}
+
+[data-theme="black"] .tool-btn.love.loved {
+  color: #dc2626 !important;
+}
+
+[data-theme="black"] .tool-btn.love:hover {
+  background: #1a1a1a !important;
+}
+
+[data-theme="black"] .progress-bg {
+  background: #333333 !important;
+}
+
+[data-theme="black"] .progress-loaded {
+  background: #cccccc !important;
+}
+
+[data-theme="black"] .progress-handle {
+  background: #cccccc !important;
+}
+
+[data-theme="black"] .volume-bg {
+  background: #333333 !important;
+}
+
+[data-theme="black"] .volume-fill {
+  background: #cccccc !important;
+}
+
+[data-theme="black"] .volume-handle {
+  background: #cccccc !important;
+}
+
+[data-theme="black"] .volume-popup {
+  background: rgba(0, 0, 0, 0.9) !important;
+}
+
+[data-theme="black"] .volume-bg-vertical {
+  background: rgba(255, 255, 255, 0.2) !important;
+}
+
+[data-theme="black"] .volume-fill-vertical {
+  background: #cccccc !important;
+}
+
+[data-theme="black"] .volume-handle-vertical {
+  background: #cccccc !important;
+}
+
+[data-theme="black"] .volume-text-popup {
+  color: #cccccc !important;
+}
+
+/* 粉色主题下的播放器样式 */
+[data-theme="pink"] .netease-player {
+  background: #fdf2f8 !important;
+  border-top: 1px solid #ec4899 !important;
+  box-shadow: 0 -2px 10px rgba(236, 72, 153, 0.1) !important;
+}
+
+[data-theme="pink"] .album-cover {
+  background: #fce7f3 !important;
+}
+
+[data-theme="pink"] .song-title {
+  color: #831843 !important;
+}
+
+[data-theme="pink"] .artist-name {
+  color: #be185d !important;
+}
+
+[data-theme="pink"] .control-btn {
+  color: #be185d !important;
+}
+
+[data-theme="pink"] .control-btn:not(:disabled):hover {
+  background: #fce7f3 !important;
+}
+
+[data-theme="pink"] .play:hover {
+  background: #fce7f3 !important;
+}
+
+[data-theme="pink"] .time-info {
+  color: #be185d !important;
+}
+
+[data-theme="pink"] .tool-btn {
+  color: #be185d !important;
+}
+
+[data-theme="pink"] .tool-btn:hover {
+  color: #831843 !important;
+  background: #fce7f3 !important;
+}
+
+[data-theme="pink"] .tool-btn.love {
+  color: #be185d !important;
+}
+
+[data-theme="pink"] .tool-btn.love.loved {
+  color: #dc2626 !important;
+}
+
+[data-theme="pink"] .tool-btn.love:hover {
+  background: #fce7f3 !important;
+}
+
+[data-theme="pink"] .progress-bg {
+  background: #f9a8d4 !important;
+}
+
+[data-theme="pink"] .progress-loaded {
+  background: #be185d !important;
+}
+
+[data-theme="pink"] .progress-handle {
+  background: #be185d !important;
+}
+
+[data-theme="pink"] .volume-bg {
+  background: #f9a8d4 !important;
+}
+
+[data-theme="pink"] .volume-fill {
+  background: #be185d !important;
+}
+
+[data-theme="pink"] .volume-handle {
+  background: #be185d !important;
+}
+
+[data-theme="pink"] .volume-popup {
+  background: rgba(244, 114, 182, 0.9) !important;
+}
+
+[data-theme="pink"] .volume-bg-vertical {
+  background: rgba(255, 255, 255, 0.3) !important;
+}
+
+[data-theme="pink"] .volume-fill-vertical {
+  background: #ffffff !important;
+}
+
+[data-theme="pink"] .volume-handle-vertical {
+  background: #ffffff !important;
+}
+
+[data-theme="pink"] .volume-text-popup {
+  color: #ffffff !important;
+}
+
+/* 浅粉色主题下的播放器样式 */
+[data-theme="lightPink"] .netease-player.netease-player {
+  background: #fce7ed !important;
+  border-top: 1px solid #f7b9c8 !important;
+  box-shadow: 0 -2px 10px rgba(247, 185, 200, 0.15) !important;
+}
+
+[data-theme="lightPink"] .album-cover {
+  background: #fce7ed !important;
+}
+
+[data-theme="lightPink"] .song-title {
+  color: #4a1e2b !important;
+}
+
+[data-theme="lightPink"] .artist-name {
+  color: #7d4a5a !important;
+}
+
+[data-theme="lightPink"] .control-btn {
+  color: #7d4a5a !important;
+}
+
+[data-theme="lightPink"] .control-btn:not(:disabled):hover {
+  background: #fce7ed !important;
+}
+
+[data-theme="lightPink"] .play:hover {
+  background: #fce7ed !important;
+}
+
+[data-theme="lightPink"] .time-info {
+  color: #7d4a5a !important;
+}
+
+[data-theme="lightPink"] .tool-btn {
+  color: #7d4a5a !important;
+}
+
+[data-theme="lightPink"] .tool-btn:hover {
+  color: #4a1e2b !important;
+  background: #fce7ed !important;
+}
+
+[data-theme="lightPink"] .tool-btn.love {
+  color: #7d4a5a !important;
+}
+
+[data-theme="lightPink"] .tool-btn.love.loved {
+  color: #dc2626 !important;
+}
+
+[data-theme="lightPink"] .tool-btn.love:hover {
+  background: #fce7ed !important;
+}
+
+[data-theme="lightPink"] .progress-bg {
+  background: #f7d4dd !important;
+}
+
+[data-theme="lightPink"] .progress-loaded {
+  background: #f7b9c8 !important;
+}
+
+[data-theme="lightPink"] .progress-handle {
+  background: #f7b9c8 !important;
+}
+
+[data-theme="lightPink"] .volume-bg {
+  background: #f7d4dd !important;
+}
+
+[data-theme="lightPink"] .volume-fill {
+  background: #f7b9c8 !important;
+}
+
+[data-theme="lightPink"] .volume-handle {
+  background: #f7b9c8 !important;
+}
+
+[data-theme="lightPink"] .volume-popup {
+  background: rgba(247, 185, 200, 0.9) !important;
+}
+
+[data-theme="lightPink"] .volume-bg-vertical {
+  background: rgba(255, 255, 255, 0.3) !important;
+}
+
+[data-theme="lightPink"] .volume-fill-vertical {
+  background: #ffffff !important;
+}
+
+[data-theme="lightPink"] .volume-handle-vertical {
+  background: #ffffff !important;
+}
+
+[data-theme="lightPink"] .volume-text-popup {
+  color: #ffffff !important;
+}
+
+/* 蓝色主题下的播放器样式 */
+[data-theme="blue"] .netease-player {
+  background: #eff6ff !important;
+  border-top: 1px solid #3b82f6 !important;
+  box-shadow: 0 -2px 10px rgba(59, 130, 246, 0.1) !important;
+}
+
+[data-theme="blue"] .album-cover {
+  background: #dbeafe !important;
+}
+
+[data-theme="blue"] .song-title {
+  color: #1e3a8a !important;
+}
+
+[data-theme="blue"] .artist-name {
+  color: #2563eb !important;
+}
+
+[data-theme="blue"] .control-btn {
+  color: #2563eb !important;
+}
+
+[data-theme="blue"] .control-btn:not(:disabled):hover {
+  background: #dbeafe !important;
+}
+
+[data-theme="blue"] .play:hover {
+  background: #dbeafe !important;
+}
+
+[data-theme="blue"] .time-info {
+  color: #2563eb !important;
+}
+
+[data-theme="blue"] .tool-btn {
+  color: #2563eb !important;
+}
+
+[data-theme="blue"] .tool-btn:hover {
+  color: #1e3a8a !important;
+  background: #dbeafe !important;
+}
+
+[data-theme="blue"] .tool-btn.love {
+  color: #2563eb !important;
+}
+
+[data-theme="blue"] .tool-btn.love.loved {
+  color: #dc2626 !important;
+}
+
+[data-theme="blue"] .tool-btn.love:hover {
+  background: #dbeafe !important;
+}
+
+[data-theme="blue"] .progress-bg {
+  background: #93c5fd !important;
+}
+
+[data-theme="blue"] .progress-loaded {
+  background: #2563eb !important;
+}
+
+[data-theme="blue"] .progress-handle {
+  background: #2563eb !important;
+}
+
+[data-theme="blue"] .volume-bg {
+  background: #93c5fd !important;
+}
+
+[data-theme="blue"] .volume-fill {
+  background: #2563eb !important;
+}
+
+[data-theme="blue"] .volume-handle {
+  background: #2563eb !important;
+}
+
+[data-theme="blue"] .volume-popup {
+  background: rgba(59, 130, 246, 0.9) !important;
+}
+
+[data-theme="blue"] .volume-bg-vertical {
+  background: rgba(255, 255, 255, 0.3) !important;
+}
+
+[data-theme="blue"] .volume-fill-vertical {
+  background: #ffffff !important;
+}
+
+[data-theme="blue"] .volume-handle-vertical {
+  background: #ffffff !important;
+}
+
+[data-theme="blue"] .volume-text-popup {
+  color: #ffffff !important;
+}
+
+/* 绿色主题下的播放器样式 */
+[data-theme="green"] .netease-player {
+  background: #f0fdf4 !important;
+  border-top: 1px solid #10b981 !important;
+  box-shadow: 0 -2px 10px rgba(16, 185, 129, 0.1) !important;
+}
+
+[data-theme="green"] .album-cover {
+  background: #dcfce7 !important;
+}
+
+[data-theme="green"] .song-title {
+  color: #064e3b !important;
+}
+
+[data-theme="green"] .artist-name {
+  color: #059669 !important;
+}
+
+[data-theme="green"] .control-btn {
+  color: #059669 !important;
+}
+
+[data-theme="green"] .control-btn:not(:disabled):hover {
+  background: #dcfce7 !important;
+}
+
+[data-theme="green"] .play:hover {
+  background: #dcfce7 !important;
+}
+
+[data-theme="green"] .time-info {
+  color: #059669 !important;
+}
+
+[data-theme="green"] .tool-btn {
+  color: #059669 !important;
+}
+
+[data-theme="green"] .tool-btn:hover {
+  color: #064e3b !important;
+  background: #dcfce7 !important;
+}
+
+[data-theme="green"] .tool-btn.love {
+  color: #059669 !important;
+}
+
+[data-theme="green"] .tool-btn.love.loved {
+  color: #dc2626 !important;
+}
+
+[data-theme="green"] .tool-btn.love:hover {
+  background: #dcfce7 !important;
+}
+
+[data-theme="green"] .progress-bg {
+  background: #86efac !important;
+}
+
+[data-theme="green"] .progress-loaded {
+  background: #059669 !important;
+}
+
+[data-theme="green"] .progress-handle {
+  background: #059669 !important;
+}
+
+[data-theme="green"] .volume-bg {
+  background: #86efac !important;
+}
+
+[data-theme="green"] .volume-fill {
+  background: #059669 !important;
+}
+
+[data-theme="green"] .volume-handle {
+  background: #059669 !important;
+}
+
+[data-theme="green"] .volume-popup {
+  background: rgba(16, 185, 129, 0.9) !important;
+}
+
+[data-theme="green"] .volume-bg-vertical {
+  background: rgba(255, 255, 255, 0.3) !important;
+}
+
+[data-theme="green"] .volume-fill-vertical {
+  background: #ffffff !important;
+}
+
+[data-theme="green"] .volume-handle-vertical {
+  background: #ffffff !important;
+}
+
+[data-theme="green"] .volume-text-popup {
+  color: #ffffff !important;
+}
+
+/* 紫色主题下的播放器样式 */
+[data-theme="purple"] .netease-player {
+  background: #faf5ff !important;
+  border-top: 1px solid #8b5cf6 !important;
+  box-shadow: 0 -2px 10px rgba(139, 92, 246, 0.1) !important;
+}
+
+[data-theme="purple"] .album-cover {
+  background: #f3e8ff !important;
+}
+
+[data-theme="purple"] .song-title {
+  color: #4c1d95 !important;
+}
+
+[data-theme="purple"] .artist-name {
+  color: #7c3aed !important;
+}
+
+[data-theme="purple"] .control-btn {
+  color: #7c3aed !important;
+}
+
+[data-theme="purple"] .control-btn:not(:disabled):hover {
+  background: #f3e8ff !important;
+}
+
+[data-theme="purple"] .play:hover {
+  background: #f3e8ff !important;
+}
+
+[data-theme="purple"] .time-info {
+  color: #7c3aed !important;
+}
+
+[data-theme="purple"] .tool-btn {
+  color: #7c3aed !important;
+}
+
+[data-theme="purple"] .tool-btn:hover {
+  color: #4c1d95 !important;
+  background: #f3e8ff !important;
+}
+
+[data-theme="purple"] .tool-btn.love {
+  color: #7c3aed !important;
+}
+
+[data-theme="purple"] .tool-btn.love.loved {
+  color: #dc2626 !important;
+}
+
+[data-theme="purple"] .tool-btn.love:hover {
+  background: #f3e8ff !important;
+}
+
+[data-theme="purple"] .progress-bg {
+  background: #c4b5fd !important;
+}
+
+[data-theme="purple"] .progress-loaded {
+  background: #7c3aed !important;
+}
+
+[data-theme="purple"] .progress-handle {
+  background: #7c3aed !important;
+}
+
+[data-theme="purple"] .volume-bg {
+  background: #c4b5fd !important;
+}
+
+[data-theme="purple"] .volume-fill {
+  background: #7c3aed !important;
+}
+
+[data-theme="purple"] .volume-handle {
+  background: #7c3aed !important;
+}
+
+[data-theme="purple"] .volume-popup {
+  background: rgba(139, 92, 246, 0.9) !important;
+}
+
+[data-theme="purple"] .volume-bg-vertical {
+  background: rgba(255, 255, 255, 0.3) !important;
+}
+
+[data-theme="purple"] .volume-fill-vertical {
+  background: #ffffff !important;
+}
+
+[data-theme="purple"] .volume-handle-vertical {
+  background: #ffffff !important;
+}
+
+[data-theme="purple"] .volume-text-popup {
+  color: #ffffff !important;
+}
+
+/* 橙色主题下的播放器样式 */
+[data-theme="orange"] .netease-player {
+  background: #fff7ed !important;
+  border-top: 1px solid #f97316 !important;
+  box-shadow: 0 -2px 10px rgba(249, 115, 22, 0.1) !important;
+}
+
+[data-theme="orange"] .album-cover {
+  background: #fed7aa !important;
+}
+
+[data-theme="orange"] .song-title {
+  color: #7c2d12 !important;
+}
+
+[data-theme="orange"] .artist-name {
+  color: #ea580c !important;
+}
+
+[data-theme="orange"] .control-btn {
+  color: #ea580c !important;
+}
+
+[data-theme="orange"] .control-btn:not(:disabled):hover {
+  background: #fed7aa !important;
+}
+
+[data-theme="orange"] .play:hover {
+  background: #fed7aa !important;
+}
+
+[data-theme="orange"] .time-info {
+  color: #ea580c !important;
+}
+
+[data-theme="orange"] .tool-btn {
+  color: #ea580c !important;
+}
+
+[data-theme="orange"] .tool-btn:hover {
+  color: #7c2d12 !important;
+  background: #fed7aa !important;
+}
+
+[data-theme="orange"] .tool-btn.love {
+  color: #ea580c !important;
+}
+
+[data-theme="orange"] .tool-btn.love.loved {
+  color: #dc2626 !important;
+}
+
+[data-theme="orange"] .tool-btn.love:hover {
+  background: #fed7aa !important;
+}
+
+[data-theme="orange"] .progress-bg {
+  background: #fdba74 !important;
+}
+
+[data-theme="orange"] .progress-loaded {
+  background: #ea580c !important;
+}
+
+[data-theme="orange"] .progress-handle {
+  background: #ea580c !important;
+}
+
+[data-theme="orange"] .volume-bg {
+  background: #fdba74 !important;
+}
+
+[data-theme="orange"] .volume-fill {
+  background: #ea580c !important;
+}
+
+[data-theme="orange"] .volume-handle {
+  background: #ea580c !important;
+}
+
+[data-theme="orange"] .volume-popup {
+  background: rgba(249, 115, 22, 0.9) !important;
+}
+
+[data-theme="orange"] .volume-bg-vertical {
+  background: rgba(255, 255, 255, 0.3) !important;
+}
+
+[data-theme="orange"] .volume-fill-vertical {
+  background: #ffffff !important;
+}
+
+[data-theme="orange"] .volume-handle-vertical {
+  background: #ffffff !important;
+}
+
+[data-theme="orange"] .volume-text-popup {
+  color: #ffffff !important;
+}
+
+/* 红色主题下的播放器样式 */
+[data-theme="red"] .netease-player {
+  background: #fef2f2 !important;
+  border-top: 1px solid #ef4444 !important;
+  box-shadow: 0 -2px 10px rgba(239, 68, 68, 0.1) !important;
+}
+
+[data-theme="red"] .album-cover {
+  background: #fecaca !important;
+}
+
+[data-theme="red"] .song-title {
+  color: #7f1d1d !important;
+}
+
+[data-theme="red"] .artist-name {
+  color: #dc2626 !important;
+}
+
+[data-theme="red"] .control-btn {
+  color: #dc2626 !important;
+}
+
+[data-theme="red"] .control-btn:not(:disabled):hover {
+  background: #fecaca !important;
+}
+
+[data-theme="red"] .play:hover {
+  background: #fecaca !important;
+}
+
+[data-theme="red"] .time-info {
+  color: #dc2626 !important;
+}
+
+[data-theme="red"] .tool-btn {
+  color: #dc2626 !important;
+}
+
+[data-theme="red"] .tool-btn:hover {
+  color: #7f1d1d !important;
+  background: #fecaca !important;
+}
+
+[data-theme="red"] .tool-btn.love {
+  color: #dc2626 !important;
+}
+
+[data-theme="red"] .tool-btn.love.loved {
+  color: #7f1d1d !important;
+}
+
+[data-theme="red"] .tool-btn.love:hover {
+  background: #fecaca !important;
+}
+
+[data-theme="red"] .progress-bg {
+  background: #fca5a5 !important;
+}
+
+[data-theme="red"] .progress-loaded {
+  background: #dc2626 !important;
+}
+
+[data-theme="red"] .progress-handle {
+  background: #dc2626 !important;
+}
+
+[data-theme="red"] .volume-bg {
+  background: #fca5a5 !important;
+}
+
+[data-theme="red"] .volume-fill {
+  background: #dc2626 !important;
+}
+
+[data-theme="red"] .volume-handle {
+  background: #dc2626 !important;
+}
+
+[data-theme="red"] .volume-popup {
+  background: rgba(239, 68, 68, 0.9) !important;
+}
+
+[data-theme="red"] .volume-bg-vertical {
+  background: rgba(255, 255, 255, 0.3) !important;
+}
+
+[data-theme="red"] .volume-fill-vertical {
+  background: #ffffff !important;
+}
+
+[data-theme="red"] .volume-handle-vertical {
+  background: #ffffff !important;
+}
+
+[data-theme="red"] .volume-text-popup {
+  color: #ffffff !important;
+}
+
+/* 黄色主题下的播放器样式 */
+[data-theme="yellow"] .netease-player {
+  background: #fefce8 !important;
+  border-top: 1px solid #eab308 !important;
+  box-shadow: 0 -2px 10px rgba(234, 179, 8, 0.1) !important;
+}
+
+[data-theme="yellow"] .album-cover {
+  background: #fef3c7 !important;
+}
+
+[data-theme="yellow"] .song-title {
+  color: #713f12 !important;
+}
+
+[data-theme="yellow"] .artist-name {
+  color: #a16207 !important;
+}
+
+[data-theme="yellow"] .control-btn {
+  color: #a16207 !important;
+}
+
+[data-theme="yellow"] .control-btn:not(:disabled):hover {
+  background: #fef3c7 !important;
+}
+
+[data-theme="yellow"] .play:hover {
+  background: #fef3c7 !important;
+}
+
+[data-theme="yellow"] .time-info {
+  color: #a16207 !important;
+}
+
+[data-theme="yellow"] .tool-btn {
+  color: #a16207 !important;
+}
+
+[data-theme="yellow"] .tool-btn:hover {
+  color: #713f12 !important;
+  background: #fef3c7 !important;
+}
+
+[data-theme="yellow"] .tool-btn.love {
+  color: #a16207 !important;
+}
+
+[data-theme="yellow"] .tool-btn.love.loved {
+  color: #dc2626 !important;
+}
+
+[data-theme="yellow"] .tool-btn.love:hover {
+  background: #fef3c7 !important;
+}
+
+[data-theme="yellow"] .progress-bg {
+  background: #fde047 !important;
+}
+
+[data-theme="yellow"] .progress-loaded {
+  background: #a16207 !important;
+}
+
+[data-theme="yellow"] .progress-handle {
+  background: #a16207 !important;
+}
+
+[data-theme="yellow"] .volume-bg {
+  background: #fde047 !important;
+}
+
+[data-theme="yellow"] .volume-fill {
+  background: #a16207 !important;
+}
+
+[data-theme="yellow"] .volume-handle {
+  background: #a16207 !important;
+}
+
+[data-theme="yellow"] .volume-popup {
+  background: rgba(234, 179, 8, 0.9) !important;
+}
+
+[data-theme="yellow"] .volume-bg-vertical {
+  background: rgba(0, 0, 0, 0.3) !important;
+}
+
+[data-theme="yellow"] .volume-fill-vertical {
+  background: #000000 !important;
+}
+
+[data-theme="yellow"] .volume-handle-vertical {
+  background: #000000 !important;
+}
+
+[data-theme="yellow"] .volume-text-popup {
+  color: #000000 !important;
+}
+
+/* 白色主题下的播放器样式 */
+[data-theme="white"] .netease-player {
+  background: #ffffff !important;
+  border-top: 1px solid #e5e7eb !important;
+  box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.1) !important;
+}
+
+[data-theme="white"] .album-cover {
+  background: #f9fafb !important;
+}
+
+[data-theme="white"] .song-title {
+  color: #111827 !important;
+}
+
+[data-theme="white"] .artist-name {
+  color: #374151 !important;
+}
+
+[data-theme="white"] .control-btn {
+  color: #374151 !important;
+}
+
+[data-theme="white"] .control-btn:not(:disabled):hover {
+  background: #f3f4f6 !important;
+}
+
+[data-theme="white"] .play:hover {
+  background: #f3f4f6 !important;
+}
+
+[data-theme="white"] .time-info {
+  color: #6b7280 !important;
+}
+
+[data-theme="white"] .tool-btn {
+  color: #6b7280 !important;
+}
+
+[data-theme="white"] .tool-btn:hover {
+  color: #374151 !important;
+  background: #f3f4f6 !important;
+}
+
+[data-theme="white"] .tool-btn.love {
+  color: #6b7280 !important;
+}
+
+[data-theme="white"] .tool-btn.love.loved {
+  color: #dc2626 !important;
+}
+
+[data-theme="white"] .tool-btn.love:hover {
+  background: #f3f4f6 !important;
+}
+
+[data-theme="white"] .progress-bg {
+  background: #e5e7eb !important;
+}
+
+[data-theme="white"] .progress-loaded {
+  background: #374151 !important;
+}
+
+[data-theme="white"] .progress-handle {
+  background: #374151 !important;
+}
+
+[data-theme="white"] .volume-bg {
+  background: #e5e7eb !important;
+}
+
+[data-theme="white"] .volume-fill {
+  background: #374151 !important;
+}
+
+[data-theme="white"] .volume-handle {
+  background: #374151 !important;
+}
+
+[data-theme="white"] .volume-popup {
+  background: rgba(0, 0, 0, 0.8) !important;
+}
+
+[data-theme="white"] .volume-bg-vertical {
+  background: rgba(255, 255, 255, 0.3) !important;
+}
+
+[data-theme="white"] .volume-fill-vertical {
+  background: #ffffff !important;
+}
+
+[data-theme="white"] .volume-handle-vertical {
+  background: #ffffff !important;
+}
+
+[data-theme="white"] .volume-text-popup {
+  color: #ffffff !important;
 }
 </style>
