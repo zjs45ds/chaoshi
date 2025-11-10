@@ -280,7 +280,6 @@ const defaultAvatar = 'https://q1.qlogo.cn/g?b=qq&nk=10000&s=100'
 const showDropdown = ref(false)
 const showTooltip = ref(false)
 
-// 使用统一的用户信息管理，确保从数据库获取最新数据
 const userInfo = getCurrentUserInfo()
 const avatarImg = computed(() => userInfo.avatar || defaultAvatar)
 const nickname = computed(() => userInfo.username || '用户')
@@ -400,8 +399,7 @@ async function checkLogin() {
 // 用户信息更新处理函数
 function handleUserInfoUpdate() {
   console.log('🔔 HeaderNav: 接收到用户信息更新事件')
-  // userInfo是响应式的，会自动更新，这里不需要手动操作
-  // 重新加载搜索历史，因为用户登录状态可能已改变
+
   loadSearchHistory()
 }
 // 初始化主题
@@ -410,14 +408,12 @@ function initTheme() {
   if (presetColors[savedTheme]) {
     selectPresetTheme(savedTheme, false) // 初始化时不显示消息
   } else {
-    // 如果保存的主题不存在，使用默认粉色主题
     selectPresetTheme('pink', false) // 初始化时不显示消息
   }
 }
 
 // 滚动事件处理函数
 function handleScroll() {
-  // 如果搜索历史框正在显示，则在滚动时自动隐藏
   if (showSearchResults.value) {
     showSearchResults.value = false
   }
@@ -427,22 +423,18 @@ onMounted(() => {
   checkLogin()
   loadSearchHistory()
   initTheme() // 初始化主题
-  // 监听用户信息更新事件
   window.addEventListener('user-info-updated', handleUserInfoUpdate)
   document.addEventListener('click', handleClickOutside)
-  // 添加滚动事件监听器
   window.addEventListener('scroll', handleScroll)
 })
 onUnmounted(() => {
   window.removeEventListener('user-info-updated', handleUserInfoUpdate)
   document.removeEventListener('click', handleClickOutside)
-  // 移除滚动事件监听器
   window.removeEventListener('scroll', handleScroll)
 })
 watch(() => route.fullPath, checkLogin)
 
 const isHome = computed(() => {
-  // 只在首页和常规内容页高亮，不在/my-music和/0717高亮
   if (route.path === '/my-music' || route.path === '/0717') return false;
   return [
     '/', '/artist', '/album', '/toplist', '/mv', '/song', '/playlist', '/search'
@@ -453,11 +445,9 @@ const isMyMusic = computed(() => route.path === '/my-music')
 const is0717 = computed(() => route.path === '/0717')
 
 function handleLogin() {
-  // 登录逻辑（可对接API）
   dialogVisible.value = false
 }
 function handleRegister() {
-  // 注册逻辑（可对接API）
   dialogVisible.value = false
 }
 function goLogin() {
@@ -473,7 +463,6 @@ function goHome() {
 
 
 function goOpenPlatform() {
-  // 在新窗口中打开开放平台页面
   const url = router.resolve({ path: '/open-platform', query: { popup: 'true' } }).href
   window.open(url, '_blank', 'noopener,noreferrer')
 }
@@ -496,11 +485,8 @@ function selectPresetTheme(themeName, showMessage = true) {
   const theme = presetColors[themeName]
   const root = document.documentElement
   
-  // 重要：只设置data-theme属性，让App.vue中定义的CSS变量通过data-theme选择器生效
-  // 这样可以确保所有主题变量的一致性
   root.setAttribute('data-theme', themeName)
   
-  // 清除可能存在的内联CSS变量，避免覆盖App.vue中的主题定义
   root.style.removeProperty('--primary')
   root.style.removeProperty('--background')
   root.style.removeProperty('--background-card')
@@ -511,13 +497,10 @@ function selectPresetTheme(themeName, showMessage = true) {
   root.style.removeProperty('--background-light')
   root.style.removeProperty('--border')
   
-  // 清除body上可能存在的内联背景色，让CSS变量生效
   document.body.style.removeProperty('background-color')
   
-  // 触发主题变化事件，通知其他组件
   window.dispatchEvent(new CustomEvent('theme-changed', { detail: { theme: themeName, colors: theme } }))
   
-  // 只有在用户主动切换时才显示消息
   if (showMessage) {
     ElMessage.success(`已切换到${theme.name}主题`)
     showColorPicker.value = false
@@ -531,12 +514,10 @@ function showBackgroundSelector() {
 function selectBackground(url, isProcessed = false) {
   currentBackground.value = url
   
-  // 尝试保存到localStorage
   try {
     localStorage.setItem('userBannerBg', url)
     localStorage.removeItem('isCustomBackground')
     
-    // 如果是经过处理的背景，标记一下
     if (isProcessed) {
       localStorage.setItem('backgroundProcessed', 'true')
     } else {
@@ -545,14 +526,12 @@ function selectBackground(url, isProcessed = false) {
     
   } catch (error) {
     if (error.name === 'QuotaExceededError') {
-      // 存储失败时给出提示，但不阻止背景应用
       ElMessage.warning('背景过大，无法保存到本地，刷新页面后将恢复默认背景')
     }
   }
   
   showBackgroundModal.value = false
   
-  // 添加到最近使用（但不包括空背景和超大背景）
   if (url && !url.startsWith('data:') && !recentBackgrounds.value.includes(url)) {
     recentBackgrounds.value.unshift(url)
     if (recentBackgrounds.value.length > 5) {
@@ -561,17 +540,13 @@ function selectBackground(url, isProcessed = false) {
     try {
       localStorage.setItem('recentBackgrounds', JSON.stringify(recentBackgrounds.value))
     } catch (error) {
-      // 静默处理存储失败
     }
   }
   
-  // 立即应用背景（在发送事件之前）
   applyBackgroundDirectly(url)
   
-  // 立即触发全局事件，通知其他组件更新背景
   window.dispatchEvent(new CustomEvent('background-changed', { detail: { url } }))
   
-  // 根据是否有背景显示不同的提示
   const message = url ? '背景更换成功！' : '已移除背景！'
   setTimeout(() => {
     ElMessage({
@@ -580,7 +555,7 @@ function selectBackground(url, isProcessed = false) {
       duration: 2000,
       showClose: true
     })
-  }, 100) // 延迟显示提示，确保背景应用后再显示
+  }, 100) 
 }
 
 // 直接应用背景的函数
@@ -592,7 +567,6 @@ function applyBackgroundDirectly(url) {
     document.body.style.backgroundRepeat = 'no-repeat'
     document.body.style.backgroundAttachment = 'fixed'
   } else {
-    // 移除背景
     document.body.style.backgroundImage = ''
     document.body.style.backgroundSize = ''
     document.body.style.backgroundPosition = ''
@@ -630,26 +604,22 @@ async function onBackgroundUpload(e) {
 
     console.log(`图片优化完成: 原始${result.originalSize}MB -> 压缩后${result.compressedSize}MB (压缩率${result.compressionRatio}%)`)
     
-    // 使用压缩后的图片
-    selectBackground(result.dataUrl, true) // 传递true表示这是经过处理的背景
+    selectBackground(result.dataUrl, true) 
     
   } catch (error) {
     console.error('图片处理失败:', error)
     ElMessage.error('图片处理失败，请重试')
   } finally {
-    // 清空文件输入框，允许重复上传同一文件
     e.target.value = ''
   }
 }
 
 // 搜索相关方法
 function handleSearchFocus() {
-  // 聚焦时，只有当搜索历史不为空时才显示搜索下拉框
   if (searchHistory.value.length > 0) {
     showSearchResults.value = true
   }
   if (searchQuery.value.trim() === '') {
-    // 空搜索时显示历史
     searchResults.value = []
   }
 }
@@ -657,27 +627,22 @@ function handleSearchFocus() {
 async function handleSearchInput() {
   const keyword = searchQuery.value.trim()
   
-  // 清除之前的搜索定时器
   if (searchTimer.value) {
     clearTimeout(searchTimer.value)
     searchTimer.value = null
   }
   
   if (keyword === '') {
-    // 空搜索时，只有当搜索历史不为空时才显示搜索下拉框
     showSearchResults.value = searchHistory.value.length > 0
     searchResults.value = []
     return
   }
   
-  // 使用防抖技术进行实时搜索
   showSearchResults.value = true
   isSearching.value = true
   
-  // 设置新的搜索定时器，延迟300ms执行搜索建议
   searchTimer.value = setTimeout(async () => {
     try {
-      // 调用搜索建议API获取实时搜索数据
       const response = await smartSuggest(keyword)
       
       if (response && response.code === 200) {
@@ -701,20 +666,13 @@ async function performSearch(keyword) {
   try {
     isSearching.value = true
     showSearchResults.value = true
-    
     const userId = getCurrentUserId()
-    
-    // 调用真实搜索API
     const response = await searchAll(keyword, 0, 20, userId)
-    
-    // 处理搜索结果数据
     const results = []
     
     if (response && response.code === 200) {
       const data = response.data || {}
-      
-      // 合并不同类型的搜索结果
-      if (data.songs && data.songs.length > 0) {
+            if (data.songs && data.songs.length > 0) {
         results.push(...data.songs.slice(0, 5).map(song => ({
           ...song,
           type: 'song'
@@ -761,17 +719,13 @@ async function performSearch(keyword) {
   }
 }
 
-
-
 async function handleSearch() {
   const keyword = searchQuery.value.trim()
   if (!keyword) return
   
   try {
-    // 保存搜索历史
     await saveToSearchHistory(keyword)
     
-    // 执行搜索并显示结果
     await performSearch(keyword)
     
     ElMessage.success(`搜索"${keyword}"完成`)
@@ -782,17 +736,14 @@ async function handleSearch() {
 }
 
 async function selectSearchResult(result) {
-  // 如果是搜索建议，需要先将建议内容设置为搜索关键词，然后执行搜索
   if (result.type === 'suggestion') {
     searchQuery.value = result.name
     await handleSearch()
     return
   }
   
-  // 保存搜索历史
   saveToSearchHistory(searchQuery.value)
   
-  // 根据结果类型跳转到相应页面
   let targetPath = ''
   switch (result.type) {
     case 'song':
@@ -876,7 +827,6 @@ async function handleClearHistory() {
     console.log('清空搜索历史API响应:', response)
     
     if (response && response.code === 200) {
-      // API调用成功后，重新从数据库加载搜索历史（应该是空的）
       await loadSearchHistory()
       ElMessage.success('搜索历史已清空')
     } else {
@@ -906,11 +856,9 @@ async function saveToSearchHistory(keyword) {
     
     if (response && response.code === 200) {
       console.log('搜索历史保存成功，重新加载搜索历史')
-      // 保存成功后重新从数据库加载搜索历史
       await loadSearchHistory()
     } else {
       console.warn('保存搜索历史API返回异常状态:', response?.code, response?.message)
-      // 即使API返回异常，仍尝试重新加载搜索历史
       await loadSearchHistory()
     }
   } catch (error) {
@@ -918,7 +866,6 @@ async function saveToSearchHistory(keyword) {
     console.error('错误详情:', error.message)
     console.error('错误堆栈:', error.stack)
     
-    // 保存失败时仍尝试重新加载搜索历史，确保显示最新数据
     try {
       await loadSearchHistory()
     } catch (reloadError) {
@@ -934,7 +881,6 @@ async function loadSearchHistory() {
     console.log('加载搜索历史 - 用户ID:', userId)
     
     if (!userId) {
-      // 未登录用户，清空搜索历史
       searchHistory.value = []
       console.log('用户未登录，清空搜索历史')
       return
@@ -947,11 +893,8 @@ async function loadSearchHistory() {
     if (response && response.code === 200) {
       console.log('API调用成功，原始数据:', response.data)
       
-      // 增强数据处理逻辑，适配多种可能的数据格式
       if (Array.isArray(response.data)) {
-        // 处理数组类型数据
         searchHistory.value = response.data.map(item => {
-          // 处理不同格式的item
           if (typeof item === 'string') {
             return item
           } else if (typeof item === 'object' && item) {
@@ -962,7 +905,6 @@ async function loadSearchHistory() {
         
         console.log('处理后的搜索历史:', searchHistory.value)
       } else {
-        // 如果不是数组，尝试转换为数组或使用空数组
         console.warn('搜索历史数据不是数组，类型为:', typeof response.data)
         searchHistory.value = []
       }
@@ -1325,6 +1267,22 @@ function logout() {
 }
 .dropdown-item.logout-item {
   color: var(--error);
+}
+
+/* 红色主题下的退出登录按钮特定样式 */
+[data-theme="red"] .dropdown-item.logout-item {
+  color: #ffffff; /* 白色文字，与红色背景形成强烈对比 */
+  background: rgba(255, 79, 79, 0.8); /* 半透明红色背景 */
+  font-weight: 600; /* 加粗文字 */
+  border-radius: var(--border-radius); /* 保持圆角 */
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2); /* 添加文字阴影增强可读性 */
+}
+
+/* 红色主题下退出登录按钮的悬停效果 */
+[data-theme="red"] .dropdown-item.logout-item:hover {
+  background: rgba(255, 79, 79, 1); /* 不透明红色背景 */
+  transform: translateY(-1px); /* 轻微上浮效果 */
+  box-shadow: 0 4px 8px rgba(255, 79, 79, 0.3); /* 添加阴影效果 */
 }
 .menu-item {
   font-size: 18px;

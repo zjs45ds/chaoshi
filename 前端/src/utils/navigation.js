@@ -1,6 +1,6 @@
 /**
  * 安全导航工具函数
- * 解决 Vue Router 重复导航警告问题
+ * 解决 Vue Router 重复导航警告问题和导航取消问题
  */
 
 import { isNavigationFailure, NavigationFailureType } from 'vue-router'
@@ -11,6 +11,9 @@ import { isNavigationFailure, NavigationFailureType } from 'vue-router'
  * @param {Route} route - 当前路由
  */
 export const createSafeNavigation = (router, route) => {
+  let pendingNavigation = null
+  const NAVIGATION_DELAY = 50 // 导航延迟时间
+  
   return {
     /**
      * 安全的 push 导航
@@ -24,13 +27,31 @@ export const createSafeNavigation = (router, route) => {
           return Promise.resolve()
         }
         
-        await router.push(path)
-      } catch (error) {
-        if (!isNavigationFailure(error, NavigationFailureType.duplicated)) {
-          console.error('Navigation error:', error)
-          throw error
+        // 取消待处理的导航
+        if (pendingNavigation) {
+          clearTimeout(pendingNavigation)
         }
-        // 忽略重复导航错误
+        
+        // 添加导航延迟，避免快速连续导航导致的问题
+        return new Promise((resolve, reject) => {
+          pendingNavigation = setTimeout(async () => {
+            try {
+              await router.push(path)
+              resolve()
+            } catch (error) {
+              if (isNavigationFailure(error, NavigationFailureType.duplicated) || 
+                  isNavigationFailure(error, NavigationFailureType.cancelled)) {
+                resolve() // 忽略重复和取消的错误
+              } else {
+                console.error('Navigation error:', error)
+                reject(error)
+              }
+            }
+          }, NAVIGATION_DELAY)
+        })
+      } catch (error) {
+        console.error('Navigation setup error:', error)
+        throw error
       }
     },
 
@@ -46,13 +67,31 @@ export const createSafeNavigation = (router, route) => {
           return Promise.resolve()
         }
         
-        await router.replace(path)
-      } catch (error) {
-        if (!isNavigationFailure(error, NavigationFailureType.duplicated)) {
-          console.error('Navigation error:', error)
-          throw error
+        // 取消待处理的导航
+        if (pendingNavigation) {
+          clearTimeout(pendingNavigation)
         }
-        // 忽略重复导航错误
+        
+        // 添加导航延迟，避免快速连续导航导致的问题
+        return new Promise((resolve, reject) => {
+          pendingNavigation = setTimeout(async () => {
+            try {
+              await router.replace(path)
+              resolve()
+            } catch (error) {
+              if (isNavigationFailure(error, NavigationFailureType.duplicated) || 
+                  isNavigationFailure(error, NavigationFailureType.cancelled)) {
+                resolve() // 忽略重复和取消的错误
+              } else {
+                console.error('Navigation error:', error)
+                reject(error)
+              }
+            }
+          }, NAVIGATION_DELAY)
+        })
+      } catch (error) {
+        console.error('Navigation setup error:', error)
+        throw error
       }
     },
 
@@ -99,6 +138,10 @@ export const isSamePath = (currentPath, targetPath) => {
  * 快速导航函数（兼容旧代码）
  */
 export const safeNavigate = {
+  // 导航防抖：避免短时间内多次导航导致的取消问题
+  pendingNavigation: null,
+  NAVIGATION_DELAY: 50,
+  
   /**
    * 安全导航到指定路径
    * @param {Router} router - Vue Router 实例
@@ -113,16 +156,35 @@ export const safeNavigate = {
         return Promise.resolve()
       }
       
-      if (replace) {
-        await router.replace(path)
-      } else {
-        await router.push(path)
+      // 取消待处理的导航
+      if (safeNavigate.pendingNavigation) {
+        clearTimeout(safeNavigate.pendingNavigation)
       }
+      
+      // 添加导航延迟，避免快速连续导航导致的问题
+      return new Promise((resolve, reject) => {
+        safeNavigate.pendingNavigation = setTimeout(async () => {
+          try {
+            if (replace) {
+              await router.replace(path)
+            } else {
+              await router.push(path)
+            }
+            resolve()
+          } catch (error) {
+            if (isNavigationFailure(error, NavigationFailureType.duplicated) || 
+                isNavigationFailure(error, NavigationFailureType.cancelled)) {
+              resolve() // 忽略重复和取消的错误
+            } else {
+              console.error('Navigation error:', error)
+              reject(error)
+            }
+          }
+        }, safeNavigate.NAVIGATION_DELAY)
+      })
     } catch (error) {
-      if (!isNavigationFailure(error, NavigationFailureType.duplicated)) {
-        console.error('Navigation error:', error)
-        throw error
-      }
+      console.error('Navigation setup error:', error)
+      throw error
     }
   }
 }

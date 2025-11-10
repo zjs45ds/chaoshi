@@ -203,9 +203,9 @@ body {
   --primary-dark: #be185d; /* 主色调深色 */
   --secondary: #f9a8d4; /* 辅助色：浅粉色 */
   --accent: #db2777; /* 强调色：深粉色 */
-  --background: #fdf2f8; /* 背景色：浅粉色系 */
+  --background: #f9a8d4; /* 背景色：浅粉色系 */
   --background-light: #fcf7ff; /* 背景亮色 */
-  --background-card: rgba(253, 242, 248, 0.95); /* 卡片背景 */
+  --background-card: rgba(249, 168, 212, 0.95); /* 卡片背景 */
   --text-primary: #831843; /* 主要文本：深粉色 */
   --text-secondary: #be185d; /* 次要文本：粉色 */
   --text-tertiary: #ec4899; /* tertiary文本：浅粉色 */
@@ -217,14 +217,14 @@ body {
 
 /* 浅粉色主题变量 */
 [data-theme="lightPink"] {
-  --primary: #f7b9c8; /* 主色调：浅粉色 */
+  --primary: #f6406d; /* 主色调：浅粉色 */
   --primary-light: #fce7ed; /* 主色调浅色 */
   --primary-dark: #db7093; /* 主色调深色 */
   --secondary: #fce7ed; /* 辅助色：浅粉色 */
-  --accent: #f7b9c8; /* 强调色：浅粉色 */
-  --background: #fef9fa; /* 背景色：极浅粉色系 */
-  --background-light: #ffffff; /* 背景亮色 */
-  --background-card: rgba(252, 231, 237, 0.95); /* 卡片背景 */
+  --accent: #f891aa; /* 强调色：浅粉色 */
+  --background: #f7b9c8; /* 背景色：极浅粉色系 */
+  --background-light: #d9a1ab; /* 背景亮色 */
+  --background-card: rgba(247, 185, 200, 0.95); /* 卡片背景 */
   --text-primary: #4a1e2b; /* 主要文本：深粉色 */
   --text-secondary: #7d4a5a; /* 次要文本：中粉色 */
   --text-tertiary: #a66b7a; /* tertiary文本：浅粉色 */
@@ -241,9 +241,9 @@ body {
   --primary-dark: #2563eb; /* 主色调深色 */
   --secondary: #6366f1; /* 辅助色：靛蓝色 */
   --accent: #06b6d4; /* 强调色：青色 */
-  --background: #eff6ff; /* 背景色：浅蓝色系 */
+  --background: #93c5fd; /* 背景色：浅蓝色系 */
   --background-light: #f1f5f9; /* 背景亮色 */
-  --background-card: rgba(239, 246, 255, 0.95); /* 卡片背景 */
+  --background-card: rgba(147, 197, 253, 0.95); /* 卡片背景 */
   --text-primary: #1e3a8a; /* 主要文本：深蓝色 */
   --text-secondary: #2563eb; /* 次要文本：蓝色 */
   --text-tertiary: #3b82f6; /* tertiary文本：浅蓝色 */
@@ -260,9 +260,9 @@ body {
   --primary-dark: #059669; /* 主色调深色 */
   --secondary: #059669; /* 辅助色：深绿色 */
   --accent: #06b6d4; /* 强调色：青色 */
-  --background: #f0fdf4; /* 背景色：浅绿色系 */
+  --background: #8dffb6; /* 背景色：浅绿色系 */
   --background-light: #f9fafb; /* 背景亮色 */
-  --background-card: rgba(240, 253, 244, 0.95); /* 卡片背景 */
+  --background-card: rgba(141, 255, 182, 0.95); /* 卡片背景 */
   --text-primary: #064e3b; /* 主要文本：深绿色 */
   --text-secondary: #059669; /* 次要文本：绿色 */
   --text-tertiary: #10b981; /* tertiary文本：浅绿色 */
@@ -279,9 +279,9 @@ body {
   --primary-dark: #7c3aed; /* 主色调深色 */
   --secondary: #a855f7; /* 辅助色：深紫色 */
   --accent: #ec4899; /* 强调色：粉色 */
-  --background: #faf5ff; /* 背景色：浅紫色系 */
+  --background: #c2a0d9; /* 背景色：浅紫色系 */
   --background-light: #f9fafb; /* 背景亮色 */
-  --background-card: rgba(250, 245, 255, 0.95); /* 卡片背景 */
+  --background-card: rgba(202, 160, 217, 0.95); /* 卡片背景 */
   --text-primary: #4c1d95; /* 主要文本：深紫色 */
   --text-secondary: #7c3aed; /* 次要文本：紫色 */
   --text-tertiary: #8b5cf6; /* tertiary文本：浅紫色 */
@@ -298,9 +298,9 @@ body {
   --primary-dark: #ea580c; /* 主色调深色 */
   --secondary: #f59e0b; /* 辅助色：琥珀色 */
   --accent: #ef4444; /* 强调色：红色 */
-  --background: #fff7ed; /* 背景色：浅橙色系 */
+  --background: #fdba74; /* 背景色：浅橙色系 */
   --background-light: #f9fafb; /* 背景亮色 */
-  --background-card: rgba(255, 247, 237, 0.95); /* 卡片背景 */
+  --background-card: rgba(253, 186, 116, 0.95); /* 卡片背景 */
   --text-primary: #7c2d12; /* 主要文本：深橙色 */
   --text-secondary: #ea580c; /* 次要文本：橙色 */
   --text-tertiary: #f97316; /* tertiary文本：浅橙色 */
@@ -310,23 +310,23 @@ body {
   --error: #ef4444; /* 错误色：保持红色 */
 }
 
-/* 红色主题变量 */
+/* 红色主题变量 - 优雅优化版 */
 [data-theme="red"] {
-  --primary: #ef4444; /* 主色调：红色 */
-  --primary-light: #f87171; /* 主色调浅色 */
-  --primary-dark: #dc2626; /* 主色调深色 */
-  --secondary: #f97316; /* 辅助色：橙色 */
-  --accent: #ec4899; /* 强调色：粉色 */
-  --background: #fef2f2; /* 背景色：浅红色系 */
-  --background-light: #f9fafb; /* 背景亮色 */
-  --background-card: rgba(254, 242, 242, 0.95); /* 卡片背景 */
-  --text-primary: #7f1d1d; /* 主要文本：深红色 */
-  --text-secondary: #dc2626; /* 次要文本：红色 */
-  --text-tertiary: #ef4444; /* tertiary文本：浅红色 */
-  --border: rgba(239, 68, 68, 0.3); /* 边框色：红色半透明 */
+  --primary: #ff0000; /* 主色调：红色 */
+  --primary-light: #ff8080; /* 主色调浅色：浅红色 */
+  --primary-dark: #cc3333; /* 主色调深色：深红色 */
+  --secondary: #f9fafb; /* 辅助色：浅灰色 - 增加层次感 */
+  --accent: #f43f5e; /* 强调色：玫红色 - 增强视觉焦点 */
+  --background: #ff5454; /* 背景色：白色 - 简洁清爽 */
+  --background-light: #ffffff; /* 背景亮色：白色 - 提高播放器对比度 */
+  --background-card: rgba(255, 84, 84, 0.95); /* 卡片背景：白色半透明 */
+  --text-primary: #000409; /* 主要文本：深灰色 - 提高可读性 */
+  --text-secondary: #000000; /* 次要文本：中灰色 */
+  --text-tertiary: #5187f4; /* tertiary文本：浅灰色 */
+  --border: rgba(255, 255, 255, 0.603); /* 边框色：主色半透明 - 精致边框 */
   --success: #10b981; /* 成功色：保持绿色 */
   --warning: #f59e0b; /* 警告色：保持琥珀黄 */
-  --error: #ef4444; /* 错误色：保持红色 */
+  --error: #ff4f4f; /* 错误色：使用主色调 */
 }
 
 /* 黑色主题变量 */

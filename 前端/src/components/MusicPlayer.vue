@@ -1199,7 +1199,7 @@ onMounted(() => {
 
 /* 粉色主题下的播放器样式 */
 [data-theme="pink"] .netease-player {
-  background: #fdf2f8 !important;
+  background: #f9a8d4 !important;
   border-top: 1px solid #ec4899 !important;
   box-shadow: 0 -2px 10px rgba(236, 72, 153, 0.1) !important;
 }
@@ -1258,11 +1258,11 @@ onMounted(() => {
 }
 
 [data-theme="pink"] .progress-loaded {
-  background: #be185d !important;
+  background: #f66e85 !important;
 }
 
 [data-theme="pink"] .progress-handle {
-  background: #be185d !important;
+  background: #f66e85 !important;
 }
 
 [data-theme="pink"] .volume-bg {
@@ -1270,7 +1270,7 @@ onMounted(() => {
 }
 
 [data-theme="pink"] .volume-fill {
-  background: #be185d !important;
+  background: #f66e85 !important;
 }
 
 [data-theme="pink"] .volume-handle {
@@ -1299,13 +1299,13 @@ onMounted(() => {
 
 /* 浅粉色主题下的播放器样式 */
 [data-theme="lightPink"] .netease-player.netease-player {
-  background: #fce7ed !important;
-  border-top: 1px solid #f7b9c8 !important;
+  background: #f7b9c8 !important;
+  border-top: 1px solid #ff8eaa !important;
   box-shadow: 0 -2px 10px rgba(247, 185, 200, 0.15) !important;
 }
 
 [data-theme="lightPink"] .album-cover {
-  background: #fce7ed !important;
+  background: #fa7da0 !important;
 }
 
 [data-theme="lightPink"] .song-title {
@@ -1358,11 +1358,11 @@ onMounted(() => {
 }
 
 [data-theme="lightPink"] .progress-loaded {
-  background: #f7b9c8 !important;
+  background: #f66e85 !important;
 }
 
 [data-theme="lightPink"] .progress-handle {
-  background: #f7b9c8 !important;
+  background: #f66e85 !important;
 }
 
 [data-theme="lightPink"] .volume-bg {
@@ -1370,7 +1370,7 @@ onMounted(() => {
 }
 
 [data-theme="lightPink"] .volume-fill {
-  background: #f7b9c8 !important;
+  background: #f66e85 !important;
 }
 
 [data-theme="lightPink"] .volume-handle {
@@ -1399,7 +1399,7 @@ onMounted(() => {
 
 /* 蓝色主题下的播放器样式 */
 [data-theme="blue"] .netease-player {
-  background: #eff6ff !important;
+  background: #93c5fd !important;
   border-top: 1px solid #3b82f6 !important;
   box-shadow: 0 -2px 10px rgba(59, 130, 246, 0.1) !important;
 }
@@ -1499,7 +1499,7 @@ onMounted(() => {
 
 /* 绿色主题下的播放器样式 */
 [data-theme="green"] .netease-player {
-  background: #f0fdf4 !important;
+  background: #8dffb6 !important;
   border-top: 1px solid #10b981 !important;
   box-shadow: 0 -2px 10px rgba(16, 185, 129, 0.1) !important;
 }
@@ -1599,7 +1599,7 @@ onMounted(() => {
 
 /* 紫色主题下的播放器样式 */
 [data-theme="purple"] .netease-player {
-  background: #faf5ff !important;
+  background: #c2a0d9 !important;
   border-top: 1px solid #8b5cf6 !important;
   box-shadow: 0 -2px 10px rgba(139, 92, 246, 0.1) !important;
 }
@@ -1699,7 +1699,7 @@ onMounted(() => {
 
 /* 橙色主题下的播放器样式 */
 [data-theme="orange"] .netease-player {
-  background: #fff7ed !important;
+  background: #fdba74 !important;
   border-top: 1px solid #f97316 !important;
   box-shadow: 0 -2px 10px rgba(249, 115, 22, 0.1) !important;
 }
@@ -1799,102 +1799,194 @@ onMounted(() => {
 
 /* 红色主题下的播放器样式 */
 [data-theme="red"] .netease-player {
-  background: #fef2f2 !important;
-  border-top: 1px solid #ef4444 !important;
-  box-shadow: 0 -2px 10px rgba(239, 68, 68, 0.1) !important;
+  background: var(--background-light) !important;
+  border-top: 1px solid var(--border) !important;
+  box-shadow: 0 2px 16px rgba(255, 44, 44, 0.211) !important;
 }
 
 [data-theme="red"] .album-cover {
-  background: #fecaca !important;
+  background: #ff5454 !important;
+  border: 2px solid transparent !important;
+  box-shadow: 0 6px 16px rgba(255, 79, 79, 0.15) !important;
+  transition: all 0.3s ease !important;
+}
+
+[data-theme="red"] .album-cover:hover {
+  transform: translateY(-2px) !important;
+  box-shadow: 0 8px 24px rgba(255, 79, 79, 0.2) !important;
 }
 
 [data-theme="red"] .song-title {
-  color: #7f1d1d !important;
+  color: var(--text-primary) !important;
+  font-weight: 600 !important;
+  letter-spacing: 0.3px !important;
 }
 
 [data-theme="red"] .artist-name {
-  color: #dc2626 !important;
+  color: var(--text-secondary) !important;
+  font-weight: 400 !important;
 }
 
 [data-theme="red"] .control-btn {
-  color: #dc2626 !important;
+  color: var(--text-secondary) !important;
+  background: transparent !important;
+  border-radius: 4px !important;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1) !important;
 }
 
 [data-theme="red"] .control-btn:not(:disabled):hover {
-  background: #fecaca !important;
+  color: var(--primary) !important;
+  background: rgba(255, 79, 79, 0.1) !important;
+  transform: scale(1.08) !important;
+}
+
+[data-theme="red"] .play {
+  color: var(--text-secondary) !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1) !important;
+  border-radius: 4px !important;
 }
 
 [data-theme="red"] .play:hover {
-  background: #fecaca !important;
+  color: var(--primary) !important;
+  background: rgba(255, 79, 79, 0.1) !important;
+  transform: scale(1.08) !important;
+  box-shadow: none !important;
 }
 
 [data-theme="red"] .time-info {
-  color: #dc2626 !important;
+  color: var(--text-tertiary) !important;
+  font-size: 12px !important;
+  font-weight: 500 !important;
 }
 
 [data-theme="red"] .tool-btn {
-  color: #dc2626 !important;
+  color: var(--text-secondary) !important;
+  border-radius: 4px !important;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1) !important;
+  background: transparent !important;
 }
 
 [data-theme="red"] .tool-btn:hover {
-  color: #7f1d1d !important;
-  background: #fecaca !important;
+  color: var(--primary) !important;
+  background: rgba(255, 79, 79, 0.1) !important;
+  transform: scale(1.05) !important;
 }
 
 [data-theme="red"] .tool-btn.love {
-  color: #dc2626 !important;
+  color: var(--primary) !important;
 }
 
 [data-theme="red"] .tool-btn.love.loved {
-  color: #7f1d1d !important;
+  color: var(--primary) !important;
+  animation: heartBeat 0.5s ease-in-out;
+  background: rgba(255, 79, 79, 0.1) !important;
 }
 
-[data-theme="red"] .tool-btn.love:hover {
-  background: #fecaca !important;
-}
-
+/* 红色主题下的进度条样式 */
 [data-theme="red"] .progress-bg {
-  background: #fca5a5 !important;
+  background-color: rgba(0, 0, 0, 0.06) !important;
+  height: 4px !important;
+  border-radius: 2px !important;
 }
 
 [data-theme="red"] .progress-loaded {
-  background: #dc2626 !important;
+  background-color: rgba(255, 79, 79, 0.3) !important;
+  border-radius: 2px !important;
 }
 
 [data-theme="red"] .progress-handle {
-  background: #dc2626 !important;
+  background-color: var(--primary) !important;
+  border: 3px solid #ffffff !important;
+  box-shadow: 0 2px 8px rgba(255, 79, 79, 0.3) !important;
+  transform: scale(1.1) !important;
+  transition: all 0.2s ease !important;
 }
 
+[data-theme="red"] .progress-handle:hover {
+  transform: scale(1.2) !important;
+  box-shadow: 0 2px 12px rgba(255, 79, 79, 0.4) !important;
+}
+
+/* 红色主题下的音量控制样式 */
 [data-theme="red"] .volume-bg {
-  background: #fca5a5 !important;
+  background-color: rgba(0, 0, 0, 0.06) !important;
+  height: 4px !important;
+  border-radius: 2px !important;
 }
 
 [data-theme="red"] .volume-fill {
-  background: #dc2626 !important;
+  background-color: var(--primary) !important;
 }
 
 [data-theme="red"] .volume-handle {
-  background: #dc2626 !important;
+  background-color: var(--primary) !important;
+  border: 3px solid #ffffff !important;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15) !important;
 }
 
 [data-theme="red"] .volume-popup {
-  background: rgba(239, 68, 68, 0.9) !important;
+  background-color: var(--background-card) !important;
+  border: 1px solid var(--border) !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1) !important;
 }
 
 [data-theme="red"] .volume-bg-vertical {
-  background: rgba(255, 255, 255, 0.3) !important;
+  background-color: rgba(0, 0, 0, 0.08) !important;
 }
 
 [data-theme="red"] .volume-fill-vertical {
-  background: #ffffff !important;
+  background-color: var(--primary) !important;
 }
 
 [data-theme="red"] .volume-handle-vertical {
-  background: #ffffff !important;
+  background-color: var(--primary) !important;
+  border: 3px solid #ffffff !important;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15) !important;
 }
 
 [data-theme="red"] .volume-text-popup {
-  color: #ffffff !important;
+  color: var(--text-primary) !important;
+}
+
+/* 红色主题下的额外精致效果 */
+[data-theme="red"] .netease-player {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+[data-theme="red"] .album-cover {
+  transition: all 0.3s ease;
+}
+
+[data-theme="red"] .album-cover:hover {
+  transform: rotate(2deg) scale(1.02);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.12) !important;
+}
+
+[data-theme="red"] .progress-handle,
+[data-theme="red"] .volume-handle,
+[data-theme="red"] .volume-handle-vertical {
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+[data-theme="red"] .progress-handle:hover,
+[data-theme="red"] .volume-handle:hover,
+[data-theme="red"] .volume-handle-vertical:hover {
+  transform: scale(1.2);
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.2) !important;
+}
+
+@keyframes heartBeat {
+  0% { transform: scale(1); }
+  14% { transform: scale(1.2); }
+  28% { transform: scale(1); }
+  42% { transform: scale(1.2); }
+  70% { transform: scale(1); }
+}
+
+[data-theme="red"] .tool-btn.love.loved {
+  animation: heartBeat 0.5s ease-in-out;
 }
 
 /* 黄色主题下的播放器样式 */

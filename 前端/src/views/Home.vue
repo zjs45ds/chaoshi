@@ -3,21 +3,8 @@
   <div class="home-page">
     <!-- 修复背景主题和布局结构 -->
     <div class="banner-section">
-      <!-- Banner轮播区域 -->
-      <div class="banner-carousel" v-if="banners && banners.length > 0">
-        <img v-if="banners[currentBanner]?.img_url" :src="banners[currentBanner].img_url" class="banner-img" :alt="'banner'+(banners[currentBanner]?.id || '')" />
-        <img v-else src="https://via.placeholder.com/1200x300/eeeeee/999999?text=潮石音乐" class="banner-img" alt="潮石音乐" />
-        <div class="banner-dots">
-          <span v-for="(b, idx) in banners" :key="b.id" :class="['dot', {active: idx === currentBanner}]" @click="goBanner(idx)"></span>
-        </div>
-      </div>
-      <!-- 无数据时的占位 -->
-      <div class="banner-placeholder" v-else>
-        <div class="placeholder-content">
-          <h2>潮石音乐</h2>
-          <p>正在加载精彩内容...</p>
-        </div>
-      </div>
+      <!-- 使用HomeCarousel组件 -->
+      <HomeCarousel />
     </div>
 
     <div class="content-container">
@@ -272,7 +259,7 @@
               </div>
               <template v-else>
                 <div 
-                  v-for="(song, songIndex) in getToplistSongsByCache(toplist, 3)" 
+                  v-for="(song, songIndex) in getToplistSongsByCache(toplist, 5)" 
                   :key="song.id || `song_${toplist.id}_${songIndex}`" 
                   class="toplist-song-item"
                   @click.stop="playSong(song)"
@@ -290,7 +277,7 @@
                   </div>
                 </div>
                 <!-- 空状态显示 -->
-                <div v-if="getToplistSongsByCache(toplist, 3).length === 0" class="toplist-empty">
+                <div v-if="getToplistSongsByCache(toplist, 5).length === 0" class="toplist-empty">
                   暂无歌曲数据
                 </div>
               </template>
@@ -324,6 +311,7 @@ import { getBanners, getRecommendPlaylists, getHotArtists, getHotAlbums, getHotS
 import { getToplistSongs as getToplistSongsDetail } from '@/api/toplist.js'
 import { ElMessage } from 'element-plus'
 import { playSong as playMusic } from '@/utils/musicPlayer.js'
+import HomeCarousel from '@/components/HomeCarousel.vue'
 
 const router = useRouter()
 const route = useRoute()
@@ -423,7 +411,7 @@ const playSong = async (song) => {
   }
 }
 
-const getToplistSongsByCache = (toplist, limit = 3) => {
+const getToplistSongsByCache = (toplist, limit = 5) => {
   if (!toplist || !toplist.id || !toplistSongsCache.value) {
     return []
   }
@@ -457,7 +445,7 @@ onMounted(async () => {
 
     if (hotToplists.value.length > 0) {
       const loadPromises = hotToplists.value.slice(0, 5).map(toplist => 
-        loadToplistSongs(toplist, 3)
+        loadToplistSongs(toplist, 5)
       )
       await Promise.all(loadPromises)
     }
@@ -472,7 +460,7 @@ onMounted(async () => {
     ]
 
     for (const toplist of hotToplists.value) {
-      await loadToplistSongs(toplist, 3)
+      await loadToplistSongs(toplist, 5)
     }
   } finally {
     loadingStates.value.toplists = false
@@ -623,30 +611,8 @@ const hasAnyLoading = computed(() => {
 })
 
 
-const currentBanner = ref(0)
-let timer = null
-
-function nextBanner() {
-  if (banners.value && banners.value.length > 0) {
-    currentBanner.value = (currentBanner.value + 1) % banners.value.length
-  }
-}
-function prevBanner() {
-  if (banners.value && banners.value.length > 0) {
-    currentBanner.value = (currentBanner.value - 1 + banners.value.length) % banners.value.length
-  }
-}
-function goBanner(idx) {
-  currentBanner.value = idx
-}
-function startAutoPlay() {
-  timer = setInterval(() => {
-    nextBanner()
-  }, 3500)
-}
-function stopAutoPlay() {
-  if (timer) clearInterval(timer)
-}
+// banner数据仍保留，以备后续功能需要
+// 轮播逻辑已移至HomeCarousel组件
 
 async function loadHomeData() {
   try {
@@ -714,7 +680,7 @@ async function loadHomeData() {
           console.log('开始预加载排行榜歌曲数据...')
           hotToplists.value.slice(0, 5).forEach(async (toplist) => {
             try {
-              await loadToplistSongs(toplist, 3)
+              await loadToplistSongs(toplist, 5)
               console.log(`${toplist.name} 歌曲预加载完成`)
             } catch (error) {
               console.error(`${toplist.name} 歌曲预加载失败:`, error)
@@ -740,8 +706,6 @@ async function loadHomeData() {
 }
 onMounted(async () => {
   await loadHomeData()
-  
-  startAutoPlay()
 
   window.addEventListener('scroll', handleScroll)
   window.addEventListener('resize', handleScroll)
@@ -752,7 +716,6 @@ onMounted(async () => {
   }, 100)
 })
 onUnmounted(() => {
-  stopAutoPlay()
   window.removeEventListener('scroll', handleScroll)
   window.removeEventListener('resize', handleScroll)
 })
@@ -1757,7 +1720,7 @@ body {
   gap: 24px;
   flex-wrap: nowrap;
   justify-content: flex-start;
-  overflow-x: auto;
+  overflow-x: hidden; /* 去除滚动条 */
   scrollbar-width: none; /* Firefox */
   -ms-overflow-style: none; /* IE/Edge */
   padding: 0;
@@ -2505,7 +2468,7 @@ body {
 }
 
 .toplist-header {
-  margin-bottom: 40px;
+  margin-bottom: 16px;
   text-align: center;
 }
 
@@ -2627,7 +2590,7 @@ body {
   display: flex;
   flex-direction: column;
   gap: 12px;
-  overflow-y: auto;
+  overflow-y: hidden;
   scrollbar-width: none;
   -ms-overflow-style: none;
 }

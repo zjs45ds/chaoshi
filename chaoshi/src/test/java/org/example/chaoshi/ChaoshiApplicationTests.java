@@ -3,7 +3,7 @@ package org.example.chaoshi;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
 
-@SpringBootTest
+@SpringBootTest(classes = ChaoshiApplication.class)
 class ChaoshiApplicationTests {
 
 	@Test

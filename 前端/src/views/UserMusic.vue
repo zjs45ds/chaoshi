@@ -132,7 +132,7 @@
                       <i class="item-icon">💿</i>
                       <span>专辑详情</span>
                     </button>
-                    <button class="dropdown-item" @click.stop="addToPlayNext(song)">
+                    <button class="dropdown-item" @click.stop="handleAddToPlayNext(song)">
                       <i class="item-icon">⏭️</i>
                       <span>下一首播放</span>
                     </button>
@@ -761,10 +761,10 @@ export default {
     }
     
     // 添加到下一首播放
-    const addToPlayNext = (song) => {
+    const handleAddToPlayNext = (song) => {
       closeDropdown()
       if (song && song.id) {
-        const success = addToPlaylistFirst({
+        const success = addToPlayNext({
           id: song.id,
           name: song.name,
           artist: song.artist || '未知歌手',
@@ -1814,7 +1814,7 @@ export default {
       goToSongDetail,
       goToArtistDetail,
       goToAlbumDetail,
-      addToPlayNext,
+      handleAddToPlayNext,
     }
   }
 }

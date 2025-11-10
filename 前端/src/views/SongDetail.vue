@@ -60,6 +60,29 @@
       </div>
     </div>
     
+    <!-- 歌词显示区域 -->
+    <div v-if="song && !loading" class="lyrics-section">
+      <h3 class="section-title">歌词</h3>
+      <div v-if="isLoadingLyrics" class="lyrics-loading">
+        <i class="el-icon-loading"></i>
+        <span>正在加载歌词...</span>
+      </div>
+      <div v-else-if="lyrics.length > 0" ref="lyricsContainer" class="lyrics-container">
+        <div 
+          v-for="(line, index) in lyrics" 
+          :key="index" 
+          :class="['lyric-line', { active: currentLyricIndex === index }]"
+          @click="seekToLyricTime(line.time)"
+        >
+          {{ line.text }}
+        </div>
+      </div>
+      <div v-else class="no-lyrics">
+        <i class="el-icon-info"></i>
+        <span>暂无歌词</span>
+      </div>
+    </div>
+    
     <div v-else class="error-message">
       <i class="el-icon-warning"></i>
       <span>歌曲不存在或已被删除</span>
@@ -67,13 +90,13 @@
   </div>
 </template>
 <script setup>
-import { ref, onMounted, computed, onUnmounted, nextTick } from 'vue'
+import { ref, onMounted, computed, onUnmounted, nextTick, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { getSongById } from '@/api/song.js'
+import { getSongById, getSongLyrics } from '@/api/song.js'
 import { getArtistById } from '@/api/artist.js'
 import { getAlbumById } from '@/api/album.js'
 import { ElMessage } from 'element-plus'
-import { addToPlaylist } from '@/utils/musicPlayer.js'
+import { addToPlaylist, loadLyrics, parseLyrics } from '@/utils/musicPlayer.js'
 import { isSongLiked, toggleSongLike, checkSongLikeStatus } from '@/utils/favoriteManager.js'
 import { isSongFavorited } from '@/api/song.js'
 
@@ -84,6 +107,13 @@ const artist = ref(null)
 const album = ref(null)
 const loading = ref(true)
 
+// 歌词相关状态
+const lyrics = ref([])
+const isLoadingLyrics = ref(false)
+const currentLyricIndex = ref(-1)
+const lyricsContainer = ref(null)
+const currentTime = ref(0)
+
 // 收藏状态计算属性
 const isFavorited = computed(() => {
   return song.value ? isSongLiked(song.value.id) : false
@@ -91,6 +121,8 @@ const isFavorited = computed(() => {
 
 // 监听收藏状态变化
 let songLikeListener = null
+// 监听播放时间变化
+let playTimeListener = null
 
 // 获取歌曲详情
 const fetchSongDetail = async () => {
@@ -127,6 +159,9 @@ const fetchSongDetail = async () => {
         }
       }
       
+      // 获取歌词
+      await fetchLyrics(songId)
+      
       console.log('🎵 歌曲详情加载完成:')
       console.log('歌曲信息:', song.value)
       console.log('歌手信息:', artist.value)
@@ -143,6 +178,80 @@ const fetchSongDetail = async () => {
     ElMessage.error('获取歌曲详情失败: ' + error.message)
   } finally {
     loading.value = false
+  }
+}
+
+// 获取歌词
+const fetchLyrics = async (songId) => {
+  try {
+    isLoadingLyrics.value = true
+    const response = await getSongLyrics(songId)
+    
+    if (response && (response.success || response.code === 200)) {
+      // 从响应数据中获取歌词
+      const lrcText = response.data?.lyrics || ''
+      // 解析歌词
+      lyrics.value = parseLyrics(lrcText)
+      console.log('🎵 歌词加载完成:', lyrics.value)
+    } else {
+      lyrics.value = []
+    }
+  } catch (error) {
+    console.error('获取歌词失败:', error)
+    lyrics.value = []
+  } finally {
+    isLoadingLyrics.value = false
+  }
+}
+
+// 根据播放时间更新当前歌词
+const updateCurrentLyric = (currentTimeInSeconds) => {
+  if (!lyrics.value || lyrics.value.length === 0) {
+    currentLyricIndex.value = -1
+    return
+  }
+  
+  let index = -1
+  for (let i = 0; i < lyrics.value.length; i++) {
+    if (currentTimeInSeconds >= lyrics.value[i].time) {
+      index = i
+    } else {
+      break
+    }
+  }
+  
+  if (index !== currentLyricIndex.value) {
+    currentLyricIndex.value = index
+    // 滚动到当前歌词
+    scrollToCurrentLyric()
+  }
+}
+
+// 滚动到当前歌词
+const scrollToCurrentLyric = () => {
+  if (!lyricsContainer.value || currentLyricIndex.value === -1) return
+  
+  const currentLine = lyricsContainer.value.children[currentLyricIndex.value]
+  if (currentLine) {
+    const container = lyricsContainer.value
+    const containerHeight = container.clientHeight
+    const lineHeight = currentLine.clientHeight
+    const scrollTop = currentLine.offsetTop - containerHeight / 2 + lineHeight / 2
+    
+    container.scrollTo({
+      top: scrollTop,
+      behavior: 'smooth'
+    })
+  }
+}
+
+// 点击歌词跳转到对应时间
+const seekToLyricTime = (time) => {
+  // 触发全局事件，让音乐播放器跳转到指定时间
+  if (typeof window !== 'undefined') {
+    window.dispatchEvent(new CustomEvent('seek-to-time', {
+      detail: { time }
+    }))
   }
 }
 
@@ -276,11 +385,23 @@ onMounted(async () => {
     }
   }
   window.addEventListener('songLikeChanged', songLikeListener)
+  
+  // 监听播放时间变化，用于更新歌词显示
+  playTimeListener = (event) => {
+    if (event.detail && typeof event.detail.currentTime === 'number') {
+      updateCurrentLyric(event.detail.currentTime)
+    }
+  }
+  window.addEventListener('player-time-update', playTimeListener)
 })
 
 onUnmounted(() => {
   if (songLikeListener) {
     window.removeEventListener('songLikeChanged', songLikeListener)
+  }
+  
+  if (playTimeListener) {
+    window.removeEventListener('player-time-update', playTimeListener)
   }
 })
 </script>
@@ -611,6 +732,105 @@ onUnmounted(() => {
   color: #d33a31 !important; /* 收藏成功的红色 */
 }
 
+/* 歌词区域样式 */
+.lyrics-section {
+  margin-top: 40px;
+  padding: 24px;
+  background: var(--background-card);
+  border-radius: var(--border-radius-lg);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+}
+
+.section-title {
+  font-size: 20px;
+  font-weight: bold;
+  color: var(--text-primary);
+  margin: 0 0 20px 0;
+  border-left: 4px solid var(--primary);
+  padding-left: 12px;
+}
+
+.lyrics-loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 200px;
+  color: var(--text-secondary);
+  font-size: 16px;
+  gap: 16px;
+}
+
+.lyrics-loading i {
+  font-size: 24px;
+  animation: rotate 1s linear infinite;
+}
+
+.no-lyrics {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 200px;
+  color: var(--text-secondary);
+  font-size: 16px;
+  gap: 16px;
+}
+
+.lyrics-container {
+  max-height: 400px;
+  overflow-y: auto;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+}
+
+.lyric-line {
+  font-size: 16px;
+  line-height: 1.8;
+  color: var(--text-secondary);
+  text-align: center;
+  padding: 4px 12px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  min-height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.lyric-line:hover {
+  color: var(--primary);
+  transform: translateX(4px);
+}
+
+.lyric-line.active {
+  color: var(--primary);
+  font-weight: 600;
+  font-size: 18px;
+  transition: all 0.3s ease;
+}
+
+/* 黑色主题下的歌词样式 */
+[data-theme="black"] .lyrics-section {
+  background: var(--background-card);
+  border: 1px solid var(--border);
+}
+
+[data-theme="black"] .lyric-line {
+  color: var(--text-secondary);
+}
+
+[data-theme="black"] .lyric-line:hover {
+  color: var(--primary);
+}
+
+[data-theme="black"] .lyric-line.active {
+  color: var(--primary);
+}
+
 /* 响应式设计 */
 @media (max-width: 768px) {
   .detail-page {
@@ -640,6 +860,26 @@ onUnmounted(() => {
   
   .action-buttons {
     justify-content: center;
+  }
+  
+  .lyrics-section {
+    padding: 16px;
+    margin-top: 24px;
+  }
+  
+  .lyrics-container {
+    max-height: 300px;
+    padding: 12px;
+    gap: 8px;
+  }
+  
+  .lyric-line {
+    font-size: 14px;
+    line-height: 1.6;
+  }
+  
+  .lyric-line.active {
+    font-size: 16px;
   }
 }
 </style>

@@ -853,6 +853,248 @@ const formatDuration = (seconds) => formatTime(seconds)
   }
 }
 
+/* 粉色主题下的播放列表样式 */
+[data-theme="pink"] .panel-content {
+  background: #f9a8d4 !important;
+  border-left: 1px solid rgba(236, 72, 153, 0.3) !important;
+  box-shadow: -4px 0 20px rgba(236, 72, 153, 0.2) !important;
+}
+
+[data-theme="pink"] .panel-title {
+  color: var(--text-primary) !important;
+}
+
+[data-theme="pink"] .playlist-count {
+  color: var(--text-secondary) !important;
+}
+
+[data-theme="pink"] .song-item:hover {
+  background: rgba(255, 255, 255, 0.2) !important;
+}
+
+[data-theme="pink"] .song-item.is-current {
+  background: rgba(255, 255, 255, 0.3) !important;
+}
+
+[data-theme="pink"] .song-item.is-playing {
+  background: rgba(255, 255, 255, 0.3) !important;
+}
+
+/* 浅粉色主题下的播放列表样式 */
+[data-theme="lightPink"] .panel-content {
+  background: #f7b9c8 !important;
+  border-left: 1px solid rgba(247, 185, 200, 0.8) !important;
+  box-shadow: -4px 0 20px rgba(247, 185, 200, 0.5) !important;
+}
+
+[data-theme="lightPink"] .panel-title {
+  color: var(--text-primary) !important;
+}
+
+[data-theme="lightPink"] .playlist-count {
+  color: var(--text-secondary) !important;
+}
+
+[data-theme="lightPink"] .song-item:hover {
+  background: rgba(255, 255, 255, 0.2) !important;
+}
+
+[data-theme="lightPink"] .song-item.is-current {
+  background: rgba(255, 255, 255, 0.3) !important;
+}
+
+[data-theme="lightPink"] .song-item.is-playing {
+  background: rgba(255, 255, 255, 0.3) !important;
+}
+
+/* 绿色主题下的播放列表样式 */
+[data-theme="green"] .panel-content {
+  background: #8dffb6 !important;
+  border-left: 1px solid rgba(74, 222, 128, 0.3) !important;
+  box-shadow: -4px 0 20px rgba(74, 222, 128, 0.2) !important;
+}
+
+[data-theme="green"] .panel-title {
+  color: var(--text-primary) !important;
+}
+
+[data-theme="green"] .playlist-count {
+  color: var(--text-secondary) !important;
+}
+
+[data-theme="green"] .song-item:hover {
+  background: rgba(255, 255, 255, 0.2) !important;
+}
+
+[data-theme="green"] .song-item.is-current {
+  background: rgba(255, 255, 255, 0.3) !important;
+}
+
+[data-theme="green"] .song-item.is-playing {
+  background: rgba(255, 255, 255, 0.3) !important;
+}
+
+/* 橙色主题下的播放列表样式 */
+[data-theme="orange"] .panel-content {
+  background: #fdba74 !important;
+  border-left: 1px solid rgba(249, 115, 22, 0.3) !important;
+  box-shadow: -4px 0 20px rgba(249, 115, 22, 0.2) !important;
+}
+
+[data-theme="orange"] .panel-title {
+  color: var(--text-primary) !important;
+}
+
+[data-theme="orange"] .playlist-count {
+  color: var(--text-secondary) !important;
+}
+
+[data-theme="orange"] .song-item:hover {
+  background: rgba(255, 255, 255, 0.2) !important;
+}
+
+[data-theme="orange"] .song-item.is-current {
+  background: rgba(255, 255, 255, 0.3) !important;
+}
+
+[data-theme="orange"] .song-item.is-playing {
+  background: rgba(255, 255, 255, 0.3) !important;
+}
+
+/* 蓝色主题下的播放列表样式 */
+[data-theme="blue"] .panel-content {
+  background: #93c5fd !important;
+  border-left: 1px solid rgba(59, 130, 246, 0.3) !important;
+  box-shadow: -4px 0 20px rgba(59, 130, 246, 0.2) !important;
+}
+
+[data-theme="blue"] .panel-title {
+  color: var(--text-primary) !important;
+}
+
+[data-theme="blue"] .playlist-count {
+  color: var(--text-secondary) !important;
+}
+
+[data-theme="blue"] .song-item:hover {
+  background: rgba(255, 255, 255, 0.2) !important;
+}
+
+[data-theme="blue"] .song-item.is-current {
+  background: rgba(255, 255, 255, 0.3) !important;
+}
+
+[data-theme="blue"] .song-item.is-playing {
+  background: rgba(255, 255, 255, 0.3) !important;
+}
+
+/* 紫色主题下的播放列表样式 */
+[data-theme="purple"] .panel-content {
+  background: #c2a0d9 !important;
+  border-left: 1px solid rgba(139, 92, 246, 0.3) !important;
+  box-shadow: -4px 0 20px rgba(139, 92, 246, 0.2) !important;
+}
+
+[data-theme="purple"] .panel-title {
+  color: var(--text-primary) !important;
+}
+
+[data-theme="purple"] .playlist-count {
+  color: var(--text-secondary) !important;
+}
+
+[data-theme="purple"] .song-item:hover {
+  background: rgba(255, 255, 255, 0.2) !important;
+}
+
+[data-theme="purple"] .song-item.is-current {
+  background: rgba(255, 255, 255, 0.3) !important;
+}
+
+[data-theme="purple"] .song-item.is-playing {
+  background: rgba(255, 255, 255, 0.3) !important;
+}
+
+/* 红色主题下的播放列表样式 - 优雅优化版 */
+[data-theme="red"] .panel-content {
+  background-color: var(--background-light) !important;
+  border: 1px solid var(--border) !important;
+  box-shadow: 0 0 24px rgba(255, 79, 79, 0.12) !important;
+  border-radius: 12px 12px 0 0 !important;
+}
+
+[data-theme="red"] .panel-header {
+  border-bottom: 1px solid var(--border) !important;
+  background: linear-gradient(to bottom, rgba(255, 79, 79, 0.05), transparent) !important;
+}
+
+[data-theme="red"] .panel-title {
+  color: var(--text-primary) !important;
+  font-weight: 600 !important;
+  letter-spacing: 0.3px !important;
+}
+
+[data-theme="red"] .playlist-count {
+  color: var(--text-tertiary) !important;
+  font-size: 14px !important;
+}
+
+[data-theme="red"] .song-item {
+  color: var(--text-secondary) !important;
+  border-bottom: 1px solid var(--border) !important;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1) !important;
+}
+
+[data-theme="red"] .song-item:hover {
+  background-color: rgba(255, 79, 79, 0.1) !important;
+  transform: translateX(4px) !important;
+}
+
+[data-theme="red"] .song-item.is-current {
+  background-color: rgba(255, 79, 79, 0.15) !important;
+  border-left: 3px solid var(--primary) !important;
+}
+
+[data-theme="red"] .song-item.is-playing {
+  background-color: rgba(255, 79, 79, 0.08) !important;
+}
+
+[data-theme="red"] .song-item.is-playing .song-name {
+  color: var(--primary) !important;
+  font-weight: 600 !important;
+}
+
+[data-theme="red"] .track-number {
+  color: var(--text-tertiary) !important;
+}
+
+[data-theme="red"] .track-number.playing {
+  color: var(--primary) !important;
+}
+
+[data-theme="red"] .song-name {
+  color: var(--text-primary) !important;
+  font-weight: 500 !important;
+}
+
+[data-theme="red"] .song-artist {
+  color: var(--text-secondary) !important;
+}
+
+[data-theme="red"] .song-duration {
+  color: var(--text-tertiary) !important;
+  font-size: 12px !important;
+  font-weight: 500 !important;
+}
+
+[data-theme="red"] .close-btn {
+  color: var(--text-tertiary) !important;
+}
+
+[data-theme="red"] .close-btn:hover {
+  color: var(--primary) !important;
+}
+
 /* 黑色主题下的播放列表样式 */
 [data-theme="black"] .panel-content {
   background: #000000 !important;

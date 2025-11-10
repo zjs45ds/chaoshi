@@ -16,35 +16,12 @@
            <div class="playing-text">正在播放</div>
            <div class="source-text">{{ getSourceInfo() }}</div>
          </div>
-         
-         <!-- 播放器样式选择器 -->
-         <div class="style-selector">
-           <button class="header-btn style" @click="toggleStyleSelector" ref="styleSelectorRef">
-             <i class="icon-style"></i>
-           </button>
-           
-           <!-- 样式选择面板 -->
-           <div class="style-panel" v-if="showStylePanel" :style="stylePanelStyle">
-             <div class="style-option" 
-                  :class="{ 'active': playerStyle === 'classic' }"
-                  @click="setPlayerStyle('classic')">
-               <div class="style-preview classic-preview"></div>
-               <span class="style-name">经典模式</span>
-             </div>
-             <div class="style-option" 
-                  :class="{ 'active': playerStyle === 'visualizer' }"
-                  @click="setPlayerStyle('visualizer')">
-               <div class="style-preview visualizer-preview"></div>
-               <span class="style-name">音效模式</span>
-             </div>
-           </div>
-         </div>
        </div>
       
        <!-- 主要内容区域 -->
-       <div class="player-main" :class="{ 'visualizer-mode': playerStyle === 'visualizer' }">
+       <div class="player-main">
          <!-- 经典模式 -->
-         <div v-if="playerStyle === 'classic'" class="classic-layout">
+         <div class="classic-layout">
            <!-- 专辑封面 -->
            <div class="album-section">
              <div class="album-cover" :class="{ 'playing': isPlaying }">
@@ -61,33 +38,12 @@
 
            </div>
          </div>
-         
-         <!-- 音效模式 -->
-         <div v-else-if="playerStyle === 'visualizer'" class="visualizer-layout">
-           <!-- 左侧音效可视化 -->
-           <div class="audio-visualizer left-visualizer">
-             <canvas ref="leftVisualizerCanvas" class="visualizer-canvas"></canvas>
-           </div>
-           
-           <!-- 中间歌曲信息区域 -->
-           <div class="lyrics-section">
-             <div class="song-info-mini">
-               <h2 class="song-title-mini">{{ currentSong?.name || '未知歌曲' }}</h2>
-               <p class="song-artist-mini">{{ currentSong?.artist || '未知艺术家' }}</p>
-             </div>
-           </div>
-           
-           <!-- 右侧音效可视化 -->
-           <div class="audio-visualizer right-visualizer">
-             <canvas ref="rightVisualizerCanvas" class="visualizer-canvas"></canvas>
-           </div>
-         </div>
        </div>
       
       <!-- 底部单行歌词显示 -->
       <div class="bottom-single-lyric">
         <div class="bottom-lyric-content">
-          <div class="bottom-lyric-text" v-if="currentLyricText">
+          <div class="bottom-lyric-text" v-if="currentLyricText" @click="toggleFullLyrics">
             {{ currentLyricText }}
           </div>
           <div class="bottom-lyric-text" v-else-if="!isLoadingLyrics">
@@ -98,6 +54,43 @@
           </div>
         </div>
       </div>
+      
+      <!-- 完整歌词显示模态框 -->
+      <transition name="lyrics-modal">
+        <div class="full-lyrics-modal" v-if="showFullLyrics" @click.self="toggleFullLyrics">
+          <div class="full-lyrics-content">
+            <div class="lyrics-header">
+              <h3>{{ currentSong?.name || '未知歌曲' }}</h3>
+              <p>{{ currentSong?.artist || '未知艺术家' }}</p>
+              <button class="close-lyrics-btn" @click="toggleFullLyrics">
+                <i class="icon-close"></i>
+              </button>
+            </div>
+            <div class="full-lyrics-container" ref="fullLyricsContainer">
+              <div v-if="isLoadingLyrics" class="lyrics-loading">
+                加载歌词中...
+              </div>
+              <div v-else-if="currentSongLyrics.length === 0" class="no-lyrics">
+                <div class="lyrics-placeholder">
+                  <i class="icon-music-note"></i>
+                  <p>暂无歌词</p>
+                </div>
+              </div>
+              <div v-else class="lyrics-list">
+                <div 
+                  v-for="(lyric, index) in currentSongLyrics" 
+                  :key="index"
+                  class="full-lyrics-line"
+                  :class="{ 'active': index === currentLyricIndex }"
+                  @click="handleLyricClick(index)"
+                >
+                  {{ lyric.text }}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </transition>
       
       <!-- 播放控制区域 -->
       <div class="player-controls-section">
@@ -205,15 +198,7 @@ const emit = defineEmits(['close', 'toggle-playlist'])
  const isTransitioning = ref(false)
  const showVolumePanel = ref(false)
  const showStylePanel = ref(false)
- const playerStyle = ref('classic') // 'classic' 或 'visualizer'
- 
- // 音效可视化相关状态
- const audioContext = ref(null)
- const analyser = ref(null)
- const dataArray = ref(null)
- const animationId = ref(null)
- 
- // 歌词相关状态已从musicPlayer.js导入
+ const showFullLyrics = ref(false) // 控制完整歌词显示 
 
 // 计算属性
 const backgroundStyle = computed(() => {
@@ -280,6 +265,16 @@ const closePlayer = () => {
 }
 
 const togglePlaylist = () => emit('toggle-playlist')
+
+const toggleFullLyrics = () => {
+  showFullLyrics.value = !showFullLyrics.value
+}
+
+const handleLyricClick = (index) => {
+  if (currentSongLyrics.value[index]) {
+    seekToProgress(currentSongLyrics.value[index].time / duration.value)
+  }
+}
  const toggleLove = async () => {
    if (!currentSong.value) return
    
@@ -295,23 +290,7 @@ const togglePlaylist = () => emit('toggle-playlist')
    showStylePanel.value = !showStylePanel.value
  }
  
- const setPlayerStyle = (style) => {
-   playerStyle.value = style
-   showStylePanel.value = false
-   
-   // 如果切换到音效模式，初始化音效可视化
-     if (style === 'visualizer') {
-       nextTick(() => {
-         initAudioVisualizer()
-         loadSongLyrics()
-       })
-     } else {
-     // 清理音效可视化
-     cleanupAudioVisualizer()
-     // 经典模式下也加载歌词
-     loadSongLyrics()
-   }
- }
+ // 音效模式已移除，使用loadSongLyrics加载歌词
  
  // 音效可视化相关方法
  const initAudioVisualizer = () => {
@@ -327,14 +306,11 @@ const togglePlaylist = () => emit('toggle-playlist')
        const bufferLength = analyser.value.frequencyBinCount
        dataArray.value = new Uint8Array(bufferLength)
        
-       // 尝试连接音频源
        connectAudioSource()
      }
      
-     startVisualization()
    } catch (error) {
      console.error('初始化音效可视化失败:', error)
-     // 如果真实音频连接失败，使用模拟数据
      startSimulatedVisualization()
    }
  }
@@ -367,7 +343,6 @@ const togglePlaylist = () => emit('toggle-playlist')
    const simulateAudioData = () => {
      if (!isPlaying.value) return
      
-     // 生成模拟的音频频谱数据
      for (let i = 0; i < dataArray.value.length; i++) {
        const baseValue = Math.sin(Date.now() * 0.001 + i * 0.1) * 50 + 80
        const randomValue = Math.random() * 50
@@ -403,7 +378,7 @@ const togglePlaylist = () => emit('toggle-playlist')
        
        ctx.clearRect(0, 0, canvasWidth, canvasHeight)
        
-       // QQ音乐风格的细腻频谱条
+      
        const barCount = 60 // 更多的频谱条，更细腻
        const barWidth = 2.5 // 更细的条
        const barSpacing = 1.5 // 更小的间距
@@ -414,24 +389,20 @@ const togglePlaylist = () => emit('toggle-playlist')
          const dataIndex = Math.floor((i / barCount) * dataArray.value.length)
          let barHeight = (dataArray.value[dataIndex] / 255) * canvasHeight * 0.85
          
-         // 添加一些随机性，让频谱更自然
          barHeight += Math.sin(Date.now() * 0.01 + i * 0.5) * 3
          barHeight = Math.max(2, barHeight) // 最小高度
          
          const x = startX + i * (barWidth + barSpacing)
          const y = canvasHeight - barHeight
          
-         // QQ音乐风格的渐变色
          const gradient = ctx.createLinearGradient(0, canvasHeight, 0, y)
          
          if (isLeft) {
-           // 左侧：青蓝色系（QQ音乐经典色）
            gradient.addColorStop(0, '#00d4ff')
            gradient.addColorStop(0.3, '#0099ff')
            gradient.addColorStop(0.7, '#0066ff')
            gradient.addColorStop(1, '#0033ff')
          } else {
-           // 右侧：绿青色系
            gradient.addColorStop(0, '#00ff88')
            gradient.addColorStop(0.3, '#00cc99')
            gradient.addColorStop(0.7, '#0099aa')
@@ -445,12 +416,10 @@ const togglePlaylist = () => emit('toggle-playlist')
          ctx.shadowBlur = 8
          ctx.shadowOffsetY = 0
          
-         // 绘制细腻的圆角条
          ctx.beginPath()
          if (ctx.roundRect) {
            ctx.roundRect(x, y, barWidth, barHeight, [1.5, 1.5, 0, 0])
          } else {
-           // 手动绘制圆角矩形
            const radius = 1.5
            ctx.moveTo(x + radius, y)
            ctx.lineTo(x + barWidth - radius, y)
@@ -462,7 +431,6 @@ const togglePlaylist = () => emit('toggle-playlist')
          }
          ctx.fill()
          
-         // 添加高光效果
          if (barHeight > canvasHeight * 0.3) {
            ctx.shadowBlur = 0
            const highlightGradient = ctx.createLinearGradient(0, y, 0, y + 20)
@@ -474,8 +442,6 @@ const togglePlaylist = () => emit('toggle-playlist')
              ctx.fillRect(x, y, barWidth, Math.min(20, barHeight))
            }
          }
-         
-         // 重置阴影
          ctx.shadowBlur = 0
        }
        
@@ -514,21 +480,8 @@ const togglePlaylist = () => emit('toggle-playlist')
    if (newIndex !== -1 && newIndex !== currentLyricIndex.value) {
      currentLyricIndex.value = newIndex
      
-     // 滚动到当前歌词
      nextTick(() => {
-       // 音效模式下的歌词滚动
-       if (playerStyle.value === 'visualizer' && lyricsContainer.value) {
-         const activeElement = lyricsContainer.value.querySelector('.lyrics-line.active')
-         if (activeElement) {
-           activeElement.scrollIntoView({
-             behavior: 'smooth',
-             block: 'center'
-           })
-         }
-       }
-       
-       // 经典模式下的歌词滚动
-       else if (playerStyle.value === 'classic' && classicLyricsContainer.value) {
+       if (classicLyricsContainer.value) {
          const activeElement = classicLyricsContainer.value.querySelector('.lyrics-line-classic.active')
          if (activeElement) {
            activeElement.scrollIntoView({
@@ -541,7 +494,6 @@ const togglePlaylist = () => emit('toggle-playlist')
    }
  }
 const handleImageError = (event) => { 
-  // 防止循环加载错误
   if (event.target.src.includes('1音乐.png')) {
     event.target.style.display = 'none'
     return
@@ -560,7 +512,6 @@ const toggleVolumePanel = () => {
 const setVolumeVertical = (event) => {
   if (!volumeSliderRef.value || isDraggingVolume.value) return
   const rect = volumeSliderRef.value.getBoundingClientRect()
-  // 垂直滑块，从底部开始计算
   const percentage = Math.max(0, Math.min(1, (rect.bottom - event.clientY) / rect.height))
   setVolumeLevel(percentage)
 }
@@ -607,7 +558,6 @@ const startVolumeDrag = (event) => {
   const handleMouseMove = (e) => {
     if (!volumeSliderRef.value) return
     const rect = volumeSliderRef.value.getBoundingClientRect()
-    // 垂直滑块，从底部开始计算
     const percentage = Math.max(0, Math.min(1, (rect.bottom - e.clientY) / rect.height))
     setVolumeLevel(percentage)
   }
@@ -622,11 +572,24 @@ const startVolumeDrag = (event) => {
   document.addEventListener('mouseup', handleMouseUp)
 }
 
- // 监听器和生命周期
+watch(currentLyricIndex, () => {
+  if (showFullLyrics.value && currentLyricIndex.value !== -1) {
+    nextTick(() => {
+      const container = document.querySelector('.full-lyrics-container')
+      const activeLine = container?.querySelector('.full-lyrics-line.active')
+      if (container && activeLine) {
+        const containerHeight = container.clientHeight
+        const lineTop = activeLine.offsetTop
+        container.scrollTop = lineTop - containerHeight / 2 + activeLine.clientHeight / 2
+      }
+    })
+  }
+})
+
+// 监听器和生命周期
  watch(() => props.visible, (newVisible) => {
    if (newVisible) {
      isTransitioning.value = true
-     // 强制禁用页面滚动和隐藏其他元素
      document.body.classList.add('fullscreen-player-active')
      document.body.style.overflow = 'hidden'
      document.documentElement.style.overflow = 'hidden'
@@ -637,15 +600,10 @@ const startVolumeDrag = (event) => {
      document.body.style.height = '100%'
      nextTick(() => setTimeout(() => { isTransitioning.value = false }, 300))
      
-     // 如果是音效模式，初始化可视化
-     if (playerStyle.value === 'visualizer') {
-       nextTick(() => {
-         initAudioVisualizer()
-         loadSongLyrics()
-       })
-     }
+     nextTick(() => {
+       loadSongLyrics()
+     })
    } else {
-     // 恢复页面滚动和显示其他元素
      document.body.classList.remove('fullscreen-player-active')
      document.body.style.overflow = ''
      document.documentElement.style.overflow = ''
@@ -654,17 +612,10 @@ const startVolumeDrag = (event) => {
      document.body.style.position = ''
      document.body.style.width = ''
      document.body.style.height = ''
-     
-     // 清理音效可视化
-     cleanupAudioVisualizer()
    }
  })
  
- // 监听播放状态变化
  watch(isPlaying, (playing) => {
-   if (playing && playerStyle.value === 'visualizer') {
-     startVisualization()
-   }
  })
  
  // 监听时间变化更新歌词
@@ -676,7 +627,6 @@ const startVolumeDrag = (event) => {
  watch(currentSong, async (newSong) => {
    if (newSong?.id) {
      await loadSongLyrics(newSong.id)
-     // 不需要重置歌词索引，让自动根据当前播放时间更新
    }
  })
 
@@ -699,16 +649,8 @@ onMounted(() => {
          !event.target.closest('.volume-popup')) {
        showVolumePanel.value = false
      }
-     
-     // 关闭样式选择面板
-     if (showStylePanel.value && styleSelectorRef.value && 
-         !styleSelectorRef.value.contains(event.target) &&
-         !event.target.closest('.style-panel')) {
-       showStylePanel.value = false
-     }
    }
   
-  // 禁用触摸滚动
   const handleTouchMove = (event) => {
     if (props.visible) {
       event.preventDefault()
@@ -723,7 +665,6 @@ onMounted(() => {
     document.removeEventListener('keydown', handleKeydown)
     document.removeEventListener('click', handleClickOutside)
     document.removeEventListener('touchmove', handleTouchMove)
-    // 组件卸载时强制恢复滚动和移除类
     document.body.classList.remove('fullscreen-player-active')
     document.body.style.overflow = ''
     document.documentElement.style.overflow = ''
@@ -1314,6 +1255,13 @@ onMounted(() => {
   text-align: center;
   z-index: 99998;
   opacity: 0.8; /* 设置透明度 */
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.bottom-single-lyric:hover {
+  opacity: 1;
+  transform: scale(1.02);
 }
 
 .bottom-lyric-content {
@@ -2110,6 +2058,260 @@ body.fullscreen-player-active > *:not(.fullscreen-player) [style*="position:fixe
 
 [data-theme="black"] .song-artist {
   color: #cccccc !important;
+}
+
+/* 完整歌词模态框样式 */
+.full-lyrics-modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.8);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 100002;
+  backdrop-filter: blur(10px);
+}
+
+.full-lyrics-content {
+  background: rgba(0, 0, 0, 0.9);
+  border-radius: 20px;
+  width: 90%;
+  max-width: 500px;
+  max-height: 80vh;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5);
+  overflow: hidden;
+  animation: lyricsFadeIn 0.3s ease;
+}
+
+.lyrics-header {
+  padding: 20px;
+  text-align: center;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  position: relative;
+}
+
+.lyrics-header h3 {
+  font-size: 18px;
+  margin: 0 0 5px 0;
+  font-weight: 600;
+}
+
+.lyrics-header p {
+  font-size: 14px;
+  margin: 0;
+  opacity: 0.8;
+}
+
+.close-lyrics-btn {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  background: none;
+  border: none;
+  color: #fff;
+  font-size: 20px;
+  cursor: pointer;
+  width: 30px;
+  height: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  transition: all 0.2s ease;
+}
+
+.close-lyrics-btn:hover {
+  background: rgba(255, 255, 255, 0.1);
+  transform: scale(1.1);
+}
+
+.full-lyrics-container {
+  flex: 1;
+  padding: 20px;
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+.lyrics-list {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 20px 0;
+}
+
+.full-lyrics-line {
+  padding: 8px 20px;
+  margin: 4px 0;
+  font-size: 16px;
+  line-height: 1.8;
+  color: rgba(255, 255, 255, 0.7);
+  text-align: center;
+  width: 100%;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border-radius: 10px;
+}
+
+.full-lyrics-line:hover {
+  color: rgba(255, 255, 255, 0.9);
+  background: rgba(255, 255, 255, 0.05);
+  transform: translateX(5px);
+}
+
+.full-lyrics-line.active {
+  font-size: 18px;
+  font-weight: 600;
+  color: #fff;
+  transform: scale(1.05);
+  background: rgba(255, 255, 255, 0.1);
+  box-shadow: 0 2px 10px rgba(255, 255, 255, 0.1);
+}
+
+/* 歌词加载状态 */
+.lyrics-loading {
+  text-align: center;
+  padding: 40px 0;
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 14px;
+}
+
+/* 无歌词状态 */
+.no-lyrics .lyrics-placeholder {
+  text-align: center;
+  padding: 60px 0;
+  color: rgba(255, 255, 255, 0.5);
+}
+
+.no-lyrics .lyrics-placeholder i {
+  font-size: 48px;
+  display: block;
+  margin-bottom: 15px;
+  opacity: 0.3;
+}
+
+.no-lyrics .lyrics-placeholder p {
+  font-size: 16px;
+  margin: 0;
+}
+
+/* 过渡动画 */
+.lyrics-modal-enter-active,
+.lyrics-modal-leave-active {
+  transition: opacity 0.3s ease;
+}
+
+.lyrics-modal-enter-from,
+.lyrics-modal-leave-to {
+  opacity: 0;
+}
+
+.lyrics-modal-enter-active .full-lyrics-content,
+.lyrics-modal-leave-active .full-lyrics-content {
+  transition: transform 0.3s ease;
+}
+
+.lyrics-modal-enter-from .full-lyrics-content {
+  transform: scale(0.9) translateY(20px);
+}
+
+.lyrics-modal-leave-to .full-lyrics-content {
+  transform: scale(0.9) translateY(20px);
+}
+
+@keyframes lyricsFadeIn {
+  from {
+    opacity: 0;
+    transform: scale(0.9) translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+/* 自定义滚动条 */
+.full-lyrics-container::-webkit-scrollbar {
+  width: 6px;
+}
+
+.full-lyrics-container::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 3px;
+}
+
+.full-lyrics-container::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.3);
+  border-radius: 3px;
+}
+
+.full-lyrics-container::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.5);
+}
+
+/* 响应式设计 */
+@media (max-width: 768px) {
+  .full-lyrics-content {
+    width: 95%;
+    max-height: 90vh;
+  }
+  
+  .lyrics-header {
+    padding: 15px;
+  }
+  
+  .lyrics-header h3 {
+    font-size: 16px;
+  }
+  
+  .lyrics-header p {
+    font-size: 13px;
+  }
+  
+  .full-lyrics-container {
+    padding: 15px;
+  }
+  
+  .full-lyrics-line {
+    font-size: 15px;
+    padding: 6px 15px;
+  }
+  
+  .full-lyrics-line.active {
+    font-size: 17px;
+  }
+}
+
+/* 黑色主题适配 */
+[data-theme="black"] .full-lyrics-modal {
+  background: rgba(0, 0, 0, 0.9);
+}
+
+[data-theme="black"] .full-lyrics-content {
+  background: rgba(0, 0, 0, 0.95);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+[data-theme="black"] .lyrics-header {
+  border-bottom-color: rgba(255, 255, 255, 0.1);
+}
+
+[data-theme="black"] .full-lyrics-line {
+  color: #cccccc;
+}
+
+[data-theme="black"] .full-lyrics-line:hover {
+  color: #ffffff;
+  background: rgba(255, 255, 255, 0.05);
+}
+
+[data-theme="black"] .full-lyrics-line.active {
+  color: #ffffff;
+  background: rgba(255, 255, 255, 0.1);
 }
 
 [data-theme="black"] .progress-bar {

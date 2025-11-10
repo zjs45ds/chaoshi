@@ -264,13 +264,14 @@ const router = createRouter({
   }
 })
 
-// ====== 修复重复导航警告 ======
+// ====== 修复路由导航警告和导航取消问题 ======
 // 保存原始的 push 方法
 const originalPush = router.push
 router.push = function push(location) {
   return originalPush.call(this, location).catch(err => {
-    // 忽略导航重复的警告
-    if (isNavigationFailure(err, NavigationFailureType.duplicated)) {
+    // 忽略导航重复和导航取消的警告
+    if (isNavigationFailure(err, NavigationFailureType.duplicated) || 
+        isNavigationFailure(err, NavigationFailureType.cancelled)) {
       return Promise.resolve()
     }
     return Promise.reject(err)
@@ -281,7 +282,8 @@ router.push = function push(location) {
 const originalReplace = router.replace
 router.replace = function replace(location) {
   return originalReplace.call(this, location).catch(err => {
-    if (isNavigationFailure(err, NavigationFailureType.duplicated)) {
+    if (isNavigationFailure(err, NavigationFailureType.duplicated) || 
+        isNavigationFailure(err, NavigationFailureType.cancelled)) {
       return Promise.resolve()
     }
     return Promise.reject(err)
