@@ -107,7 +107,6 @@ function applyBackground(url) {
 // 关闭播放列表
 function closePlaylist() {
   showPlaylist.value = false
-  // 通知BackToTop组件播放列表状态变化
   window.dispatchEvent(new CustomEvent('playlistToggle', { detail: { isOpen: false } }))
 }
 </script>
@@ -123,9 +122,8 @@ body {
   font-family: var(--font-sans);
 }
 
-/* 重新定义CSS变量 - 网易云音乐风格 */
 :root {
-  /* 网易云红色系配色方案 */
+  /* 红色系配色方案 */
   --primary: #d33a31; /* 主色调：网易云红 */
   --primary-light: #e5443a; /* 主色调浅色 */
   --primary-dark: #b8302a; /* 主色调深色 */
@@ -380,10 +378,6 @@ body {
   --warning: #f59e0b; /* 警告色：保持琥珀黄 */
   --error: #ef4444; /* 错误色：保持红色 */
 }
-
-/* 所有主题变量已定义完成 */
-
-
 /* 基础样式重置与设置 */
 * {
   margin: 0;
