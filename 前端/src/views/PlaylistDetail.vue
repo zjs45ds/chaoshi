@@ -185,7 +185,7 @@ const fetchPlaylistDetail = async function() {
     }
   } catch (error) {
     ElMessage.error('获取歌单详情失败: ' + error.message);
-    console.error('获取歌单详情时的错误:', error);
+    // CONSOLE LOG REMOVED: console.error('获取歌单详情时的错误:', error);
     playlist.value = null;
     songs.value = [];
   } finally {
@@ -200,7 +200,7 @@ const fetchSongsFavoriteStatus = async () => {
   try {
     // 先清空收藏集合，确保初始状态为空
     favorites.value.clear();
-    console.log('已清空收藏状态，开始获取新的收藏状态...');
+    // CONSOLE LOG REMOVED: console.log('已清空收藏状态，开始获取新的收藏状态...');
     
     // 从全局的favoriteManager获取用户已收藏的歌曲状态
     const favoriteSongsList = getFavoriteSongs();
@@ -210,14 +210,14 @@ const fetchSongsFavoriteStatus = async () => {
       // 确保这个歌曲ID在当前歌单中存在
       if (songs.value.some(song => song.id === favoriteSong.id)) {
         favorites.value.add(favoriteSong.id);
-        console.log(`添加已收藏歌曲: ID=${favoriteSong.id}, 名称=${favoriteSong.name}`);
+        // CONSOLE LOG REMOVED: console.log(`添加已收藏歌曲: ID=${favoriteSong.id}, 名称=${favoriteSong.name}`);
       }
     });
     
-    console.log('当前收藏数:', favorites.value.size)
-    console.log('当前收藏列表:', Array.from(favorites.value))
+    // CONSOLE LOG REMOVED: console.log('当前收藏数:', favorites.value.size)
+    // CONSOLE LOG REMOVED: console.log('当前收藏列表:', Array.from(favorites.value))
   } catch (error) {
-    console.error('获取歌曲收藏状态失败:', error)
+    // CONSOLE LOG REMOVED: console.error('获取歌曲收藏状态失败:', error)
     // 发生错误时清空收藏集合
     favorites.value.clear();
   }
@@ -226,7 +226,7 @@ const fetchSongsFavoriteStatus = async () => {
 // 跳转到歌曲详情页
 const goToSongDetail = (song) => {
   if (!song || !song.id) {
-    console.warn('歌曲ID不存在');
+    // CONSOLE LOG REMOVED: console.warn('歌曲ID不存在');
     return;
   }
   const songId = song.id;
@@ -239,7 +239,7 @@ const goToSongDetail = (song) => {
 // 跳转到歌手详情页
 const goToArtistDetail = (song) => {
   if (!song) {
-    console.warn('歌曲信息不存在');
+    // CONSOLE LOG REMOVED: console.warn('歌曲信息不存在');
     return;
   }
   
@@ -248,7 +248,7 @@ const goToArtistDetail = (song) => {
   
   // 如果没有直接的歌手ID，尝试从歌曲名称中提取（作为备选方案）
   if (!artistId && (song.artistName || song.artist)) {
-    console.warn('歌曲中未找到歌手ID，无法跳转到歌手详情页');
+    // CONSOLE LOG REMOVED: console.warn('歌曲中未找到歌手ID，无法跳转到歌手详情页');
     return;
   }
   
@@ -263,7 +263,7 @@ const goToArtistDetail = (song) => {
 // 跳转到专辑详情页
 const goToAlbumDetail = (song) => {
   if (!song) {
-    console.warn('歌曲信息不存在');
+    // CONSOLE LOG REMOVED: console.warn('歌曲信息不存在');
     return;
   }
   
@@ -272,7 +272,7 @@ const goToAlbumDetail = (song) => {
   
   // 如果没有直接的专辑ID，尝试从歌曲名称中提取（作为备选方案）
   if (!albumId && (song.albumName || song.album)) {
-    console.warn('歌曲中未找到专辑ID，无法跳转到专辑详情页');
+    // CONSOLE LOG REMOVED: console.warn('歌曲中未找到专辑ID，无法跳转到专辑详情页');
     return;
   }
   
@@ -287,7 +287,7 @@ const goToAlbumDetail = (song) => {
 // 保持原有功能，支持直接通过ID跳转歌曲
 const goToSong = (songId) => {
   if (!songId) {
-    console.warn('歌曲ID不存在');
+    // CONSOLE LOG REMOVED: console.warn('歌曲ID不存在');
     return;
   }
   const targetPath = `/song/${songId}`;
@@ -308,7 +308,7 @@ const playSong = async (song, index) => {
       ElMessage.warning('歌曲播放失败，请尝试其他歌曲')
     }
   } catch (error) {
-    console.error('播放歌曲失败:', error)
+    // CONSOLE LOG REMOVED: console.error('播放歌曲失败:', error)
     ElMessage.error('播放歌曲时发生错误')
   }
 }
@@ -323,9 +323,9 @@ const toggleFavorite = async (songId) => {
       return
     }
     
-    console.log(`尝试切换歌曲收藏状态: 歌曲ID=${songId}, 歌曲名称=${song.name}`)
-    console.log(`切换前本地收藏状态: ${favorites.value.has(songId)}`)
-    console.log(`切换前全局收藏状态: ${isSongLiked(songId)}`)
+    // CONSOLE LOG REMOVED: console.log(`尝试切换歌曲收藏状态: 歌曲ID=${songId}, 歌曲名称=${song.name}`)
+    // CONSOLE LOG REMOVED: console.log(`切换前本地收藏状态: ${favorites.value.has(songId)}`)
+    // CONSOLE LOG REMOVED: console.log(`切换前全局收藏状态: ${isSongLiked(songId)}`)
     
     // 调用toggleSongLike函数来更新收藏状态，只有成功添加到后端我喜欢的列表才会返回true
     const newFavoriteState = await toggleSongLike({
@@ -349,12 +349,12 @@ const toggleFavorite = async (songId) => {
       ElMessage.success(`已取消收藏: ${song.name}`)
     }
     
-    console.log(`切换后本地收藏状态: ${favorites.value.has(songId)}`)
-    console.log(`切换后全局收藏状态: ${isSongLiked(songId)}`)
-    console.log(`当前收藏列表: ${Array.from(favorites.value).join(', ')}`)
-    console.log(`全局收藏列表数量: ${getFavoriteSongs().length}`)
+    // CONSOLE LOG REMOVED: console.log(`切换后本地收藏状态: ${favorites.value.has(songId)}`)
+    // CONSOLE LOG REMOVED: console.log(`切换后全局收藏状态: ${isSongLiked(songId)}`)
+    // CONSOLE LOG REMOVED: console.log(`当前收藏列表: ${Array.from(favorites.value).join(', ')}`)
+    // CONSOLE LOG REMOVED: console.log(`全局收藏列表数量: ${getFavoriteSongs().length}`)
   } catch (error) {
-    console.error('切换收藏状态失败:', error)
+    // CONSOLE LOG REMOVED: console.error('切换收藏状态失败:', error)
     ElMessage.error('网络错误，请重试')
   }
 }
@@ -369,7 +369,7 @@ const addToPlaylistHandler = (song) => {
       ElMessage.error('添加失败，请重试')
     }
   } catch (error) {
-    console.error('添加到播放列表失败:', error)
+    // CONSOLE LOG REMOVED: console.error('添加到播放列表失败:', error)
     ElMessage.error('网络错误，请重试')
   }
 }
@@ -471,7 +471,7 @@ const getPlaylistSampleSongs = () => {
 onMounted(async () => {
   // 先初始化用户的收藏列表
   await initFavoriteSongs();
-  console.log('已初始化用户收藏列表，开始获取歌单详情...');
+  // CONSOLE LOG REMOVED: console.log('已初始化用户收藏列表，开始获取歌单详情...');
   // 然后获取歌单详情
   fetchPlaylistDetail();
 })

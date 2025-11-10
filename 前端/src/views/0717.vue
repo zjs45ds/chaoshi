@@ -1466,7 +1466,7 @@ export default {
       } else {
         this.expandedConcert = itemName;
       }
-      console.log('Expanded concert:', this.expandedConcert);
+      // CONSOLE LOG REMOVED: console.log('Expanded concert:', this.expandedConcert);
     },
     // 计算演唱会总场次
     calculateTotal(concertName) {

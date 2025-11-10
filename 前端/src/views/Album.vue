@@ -80,11 +80,11 @@ const fetchAlbums = async () => {
       error.value = response?.message || '获取专辑数据失败'
     }
     
-    console.log('🎵 专辑数据加载完成:', albums.value.length, albums.value)
+    // CONSOLE LOG REMOVED: console.log('🎵 专辑数据加载完成:', albums.value.length, albums.value)
     
   } catch (err) {
     error.value = '获取专辑列表失败，请重试'
-    console.error('Failed to fetch albums:', err)
+    // CONSOLE LOG REMOVED: console.error('Failed to fetch albums:', err)
     
     // 根据项目规范，网络错误已在httpUtils.js中处理
     let shouldShowError = true

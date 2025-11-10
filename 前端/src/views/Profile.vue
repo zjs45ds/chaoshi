@@ -238,7 +238,7 @@ const loadUserProfile = async () => {
     loading.value = true
     // 获取并设置当前用户ID
     userId.value = getCurrentUserId()
-    console.log('正在从数据库加载用户个人资料...')
+    // CONSOLE LOG REMOVED: console.log('正在从数据库加载用户个人资料...')
     
     // 使用统一的用户信息管理系统
     const userData = await fetchUserInfo()
@@ -257,15 +257,15 @@ const loadUserProfile = async () => {
       // 保存原始数据用于重置
       originalProfile.value = { ...profile }
       
-      console.log('用户个人资料加载成功，用户名来自数据库:', profile.username)
+      // CONSOLE LOG REMOVED: console.log('用户个人资料加载成功，用户名来自数据库:', profile.username)
       
     } else {
-      console.warn('无法获取用户数据，使用默认数据')
+      // CONSOLE LOG REMOVED: console.warn('无法获取用户数据，使用默认数据')
       setDefaultProfile()
     }
     
   } catch (error) {
-    console.error('❌ 加载用户个人资料失败:', error)
+    // CONSOLE LOG REMOVED: console.error('❌ 加载用户个人资料失败:', error)
     ElMessage.error('加载个人资料失败，请刷新页面重试')
     setDefaultProfile()
   } finally {
@@ -338,7 +338,7 @@ async function onAvatarChange(e) {
       throw new Error(uploadResponse?.message || '头像上传失败')
     }
   } catch (error) {
-    console.error('头像上传失败:', error)
+    // CONSOLE LOG REMOVED: console.error('头像上传失败:', error)
     ElMessage.error(`上传失败: ${error.message || '未知错误'}`)
   } finally {
     saving.value = false
@@ -396,11 +396,11 @@ const checkUsernameAvailabilityDebounced = async (username) => {
     usernameStatus.checking = true
     usernameStatus.lastCheckedUsername = username
     
-    console.log('检查用户名可用性:', username)
+    // CONSOLE LOG REMOVED: console.log('检查用户名可用性:', username)
     const currentUserId = getCurrentUserId()
     const response = await checkUsernameAvailability(username, currentUserId)
     
-    console.log('用户名检查响应:', response)
+    // CONSOLE LOG REMOVED: console.log('用户名检查响应:', response)
     
     if (response && response.code === 200) {
       usernameStatus.isAvailable = response.data
@@ -410,7 +410,7 @@ const checkUsernameAvailabilityDebounced = async (username) => {
       usernameStatus.message = response?.message || '检查失败'
     }
   } catch (error) {
-    console.error('检查用户名失败:', error)
+    // CONSOLE LOG REMOVED: console.error('检查用户名失败:', error)
     usernameStatus.isAvailable = null
     usernameStatus.message = '检查失败，请稍后重试'
   } finally {
@@ -492,7 +492,7 @@ async function saveProfile() {
       // 更新原始数据
       originalProfile.value = { ...profile }
       
-      console.log('个人资料保存成功，用户名已同步更新:', profile.username)
+      // CONSOLE LOG REMOVED: console.log('个人资料保存成功，用户名已同步更新:', profile.username)
       ElMessage.success('个人资料保存成功！')
       
     } else {
@@ -500,7 +500,7 @@ async function saveProfile() {
     }
     
   } catch (error) {
-    console.error('保存个人资料失败:', error)
+    // CONSOLE LOG REMOVED: console.error('保存个人资料失败:', error)
     
     // 处理不同类型的错误
     let errorMessage = '保存失败，请重试'
@@ -589,7 +589,7 @@ async function savePassword() {
     
     const userId = getCurrentUserId()
     
-    console.log('正在修改密码...', { userId })
+    // CONSOLE LOG REMOVED: console.log('正在修改密码...', { userId })
     
     // 调用实际的修改密码API
     const response = await changePassword(
@@ -603,14 +603,14 @@ async function savePassword() {
       passwordStatus.type = 'success'
       passwordStatus.message = '密码修改成功！'
       
-      console.log('密码修改成功')
+      // CONSOLE LOG REMOVED: console.log('密码修改成功')
       ElMessage.success('密码修改成功！')
     } else {
       throw new Error(response?.message || '密码修改失败')
     }
     
   } catch (error) {
-    console.error('修改密码失败:', error)
+    // CONSOLE LOG REMOVED: console.error('修改密码失败:', error)
     passwordStatus.type = 'error'
     passwordStatus.message = error.message || '修改密码失败，请重试'
     ElMessage.error(`密码修改失败: ${error.message || '未知错误'}`)

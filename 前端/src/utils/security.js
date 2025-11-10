@@ -426,7 +426,7 @@ export function secureStore(key, data, secret) {
     localStorage.setItem(key, dataToStore)
     return true
   } catch (error) {
-    console.warn('Secure store failed:', error)
+    // CONSOLE LOG REMOVED: console.warn('Secure store failed:', error)
     return false
   }
 }
@@ -452,7 +452,7 @@ export function secureRetrieve(key, secret) {
     
     return JSON.parse(storedData)
   } catch (error) {
-    console.warn('Secure retrieve failed:', error)
+    // CONSOLE LOG REMOVED: console.warn('Secure retrieve failed:', error)
     return null
   }
 }

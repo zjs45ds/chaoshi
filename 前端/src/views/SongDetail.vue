@@ -162,15 +162,11 @@ const fetchSongDetail = async () => {
       // 获取歌词
       await fetchLyrics(songId)
       
-      console.log('🎵 歌曲详情加载完成:')
-      console.log('歌曲信息:', song.value)
-      console.log('歌手信息:', artist.value)
-      console.log('专辑信息:', album.value)
-      console.log('🎵 音频字段检查:', {
-        audioUrl: song.value.audioUrl,
-        filePath: song.value.filePath,
-        file_path: song.value.file_path
-      })
+      // CONSOLE LOG REMOVED: console.log('🎵 歌曲详情加载完成:')
+      // CONSOLE LOG REMOVED: console.log('歌曲信息:', song.value)
+      // CONSOLE LOG REMOVED: console.log('歌手信息:', artist.value)
+      // CONSOLE LOG REMOVED: console.log('专辑信息:', album.value)
+      // CONSOLE LOG REMOVED: console.log('🎵 音频字段检查:', { audioUrl: song.value.audioUrl, filePath: song.value.filePath, file_path: song.value.file_path });
     } else {
       ElMessage.error('歌曲不存在')
     }
@@ -192,12 +188,12 @@ const fetchLyrics = async (songId) => {
       const lrcText = response.data?.lyrics || ''
       // 解析歌词
       lyrics.value = parseLyrics(lrcText)
-      console.log('🎵 歌词加载完成:', lyrics.value)
+      // CONSOLE LOG REMOVED: console.log('🎵 歌词加载完成:', lyrics.value)
     } else {
       lyrics.value = []
     }
   } catch (error) {
-    console.error('获取歌词失败:', error)
+    // CONSOLE LOG REMOVED: console.error('获取歌词失败:', error)
     lyrics.value = []
   } finally {
     isLoadingLyrics.value = false
@@ -273,17 +269,11 @@ const playSong = () => {
   // 检查音频链接 - 优先使用后端返回的字段
   const audioUrl = song.value.filePath || song.value.audioUrl || song.value.file_path || song.value.url
   
-  console.log('🎵 歌曲音频信息检查:', {
-    filePath: song.value.filePath,
-    audioUrl: song.value.audioUrl,
-    file_path: song.value.file_path,
-    url: song.value.url,
-    finalAudioUrl: audioUrl
-  })
+  // CONSOLE LOG REMOVED: console.log('🎵 歌曲音频信息检查:', { filePath: song.value.filePath, audioUrl: song.value.audioUrl, file_path: song.value.file_path, url: song.value.url, finalAudioUrl: audioUrl });
   
   if (!audioUrl) {
     ElMessage.error('歌曲音频文件不存在，无法播放')
-    console.error('❌ 歌曲数据缺少音频链接:', song.value)
+    // CONSOLE LOG REMOVED: console.error('❌ 歌曲数据缺少音频链接:', song.value)
     return
   }
 
@@ -300,7 +290,7 @@ const playSong = () => {
     albumId: song.value.albumId
   }
   
-  console.log('尝试播放歌曲:', playData)
+  // CONSOLE LOG REMOVED: console.log('尝试播放歌曲:', playData)
   
   // 添加到播放列表并立即播放
   const success = addToPlaylist(playData, true)
@@ -341,7 +331,7 @@ const toggleFavorite = async () => {
       ElMessage.success('已从我喜欢中移除')
     }
   } catch (error) {
-    console.error('收藏操作失败:', error)
+    // CONSOLE LOG REMOVED: console.error('收藏操作失败:', error)
     ElMessage.error('收藏操作失败，请稍后重试')
   }
 }

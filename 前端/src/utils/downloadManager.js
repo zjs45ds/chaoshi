@@ -75,8 +75,8 @@ export const generateFilename = (song) => {
  */
 export const downloadFile = async (url, filename, onProgress = null) => {
   try {
-    console.log(`开始下载文件: ${filename}`)
-    console.log(`文件URL: ${url}`)
+    // CONSOLE LOG REMOVED: console.log(`开始下载文件: ${filename}`)
+    // CONSOLE LOG REMOVED: console.log(`文件URL: ${url}`)
     
     // 处理相对路径URL
     let downloadUrl = url
@@ -132,9 +132,7 @@ export const downloadFile = async (url, filename, onProgress = null) => {
     setTimeout(() => {
       URL.revokeObjectURL(blobUrl)
     }, 1000)
-    
-    console.log(`文件下载完成: ${filename}`)
-    
+
     return {
       success: true,
       filename: filename,
@@ -142,8 +140,6 @@ export const downloadFile = async (url, filename, onProgress = null) => {
     }
     
   } catch (error) {
-    console.error(`下载文件失败 (${filename}):`, error)
-    
     return {
       success: false,
       filename: filename,
@@ -163,9 +159,7 @@ export const downloadSongs = async (songs, onTotalProgress = null, onFileProgres
   if (!Array.isArray(songs) || songs.length === 0) {
     throw new Error('歌曲列表为空')
   }
-  
-  console.log(`开始批量下载 ${songs.length} 首歌曲`)
-  
+
   const results = {
     total: songs.length,
     success: 0,
@@ -181,9 +175,7 @@ export const downloadSongs = async (songs, onTotalProgress = null, onFileProgres
   if (downloadableSongs.length === 0) {
     throw new Error('没有可下载的歌曲')
   }
-  
-  console.log(`实际可下载 ${downloadableSongs.length} 首歌曲`)
-  
+
   // 逐个下载歌曲
   for (let i = 0; i < downloadableSongs.length; i++) {
     const song = downloadableSongs[i]
@@ -221,7 +213,7 @@ export const downloadSongs = async (songs, onTotalProgress = null, onFileProgres
       results.details.push(result)
       
     } catch (error) {
-      console.error(`下载歌曲失败: ${song.name}`, error)
+      // CONSOLE LOG REMOVED: console.error(`下载歌曲失败: ${song.name}`, error)
       results.failed++
       results.details.push({
         success: false,
@@ -245,8 +237,6 @@ export const downloadSongs = async (songs, onTotalProgress = null, onFileProgres
       await new Promise(resolve => setTimeout(resolve, 200))
     }
   }
-  
-  console.log('批量下载完成:', results)
   return results
 }
 
@@ -266,26 +256,15 @@ export const showDownloadSummary = (results) => {
   } else {
     ElMessage.error(`❌ 下载失败，没有歌曲下载成功`)
   }
-  
-  // 在控制台输出详细信息
-  console.log('=== 下载结果详情 ===')
-  console.log(`总计: ${total} 首`)
-  console.log(`成功: ${success} 首`)
-  console.log(`失败: ${failed} 首`) 
-  console.log(`跳过: ${skipped} 首`)
-  
+
   if (results.details && results.details.length > 0) {
-    console.log('详细结果:')
     results.details.forEach((detail, index) => {
       if (detail.success) {
-        console.log(`✅ ${index + 1}. ${detail.filename} (${detail.size ? `${Math.round(detail.size / 1024)}KB` : '未知大小'})`)
+
       } else {
-        console.log(`❌ ${index + 1}. ${detail.filename} - ${detail.error}`)
       }
     })
   }
-  
-  console.log('===================')
 }
 
 /**
@@ -318,7 +297,7 @@ export const getFileSize = async (url) => {
     const contentLength = response.headers.get('content-length')
     return contentLength ? parseInt(contentLength, 10) : 0
   } catch (error) {
-    console.warn('获取文件大小失败:', error)
+    // CONSOLE LOG REMOVED: console.warn('获取文件大小失败:', error)
     return 0
   }
 }

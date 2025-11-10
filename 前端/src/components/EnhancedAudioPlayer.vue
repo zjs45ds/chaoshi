@@ -192,15 +192,15 @@ const loadAudio = async () => {
     
     // 如果提供了歌曲ID，从API获取流媒体URL
     if (props.songId && !audioUrl) {
-      console.log('🎵 从API获取音频流URL, songId:', props.songId)
+      // CONSOLE LOG REMOVED: console.log('🎵 从API获取音频流URL, songId:', props.songId)
       // 文件上传功能已移除，使用默认处理
-      console.log('⚠️ 音频流获取功能已暂时关闭')
+      // CONSOLE LOG REMOVED: console.log('⚠️ 音频流获取功能已暂时关闭')
       const result = { success: false }
       
       if (result.success) {
         audioUrl = result.audioUrl
         trackInfo = { ...trackInfo, ...result.metadata }
-        console.log('✅ 获取音频URL成功:', audioUrl)
+        // CONSOLE LOG REMOVED: console.log('✅ 获取音频URL成功:', audioUrl)
       } else {
         throw new Error(result.error || '获取音频流失败')
       }
@@ -221,7 +221,7 @@ const loadAudio = async () => {
     }
     
   } catch (err) {
-    console.error('🚨 加载音频失败:', err)
+    // CONSOLE LOG REMOVED: console.error('🚨 加载音频失败:', err)
     error.value = err.message || '音频加载失败'
     ElMessage.error(error.value)
     emit('error', err)
@@ -240,7 +240,7 @@ const togglePlay = async () => {
       await audioRef.value.play()
     }
   } catch (err) {
-    console.error('播放控制失败:', err)
+    // CONSOLE LOG REMOVED: console.error('播放控制失败:', err)
     ElMessage.error('播放失败')
   }
 }
@@ -325,7 +325,7 @@ const handleAudioError = (event) => {
   }
   
   error.value = errorMessage
-  console.error('🚨 音频播放错误:', errorMessage, event)
+  // CONSOLE LOG REMOVED: console.error('🚨 音频播放错误:', errorMessage, event)
   emit('error', new Error(errorMessage))
 }
 

@@ -5,10 +5,8 @@
 import { ref, computed, reactive, watch, nextTick } from 'vue'
 import { ElMessage } from 'element-plus'
 import { getSongStreamUrl, getSongLyrics } from '@/api/song.js'
+import { getArtistById } from '@/api/artist.js'
 
-// ==================== 核心状态 ====================
-
-// 播放器状态
 export const isPlaying = ref(false)
 export const isPaused = ref(false)
 export const isLoading = ref(false)
@@ -20,7 +18,7 @@ export const isMuted = ref(false)
 // 歌词相关状态
 export const currentSongLyrics = ref([])
 export const isLoadingLyrics = ref(false)
-export const currentLyricIndex = ref(-1) // 当前显示的歌词索引
+export const currentLyricIndex = ref(-1) 
 
 // 当前歌曲信息
 export const currentSong = ref(null)
@@ -36,7 +34,6 @@ export const playMode = ref('sequence')
 // 音频元素
 export const audioElement = ref(null)
 
-// 魔法色彩系统 - QQ音乐特色
 export const magicColors = ref({
   primary: '#ec4899',
   secondary: '#f472b6', 
@@ -44,18 +41,13 @@ export const magicColors = ref({
   isDark: false
 })
 
-// 播放器主题模式
-export const playerTheme = ref('magic') // magic, simple, dynamic
+export const playerTheme = ref('magic') 
 
-// ==================== 计算属性 ====================
-
-// 播放进度百分比
 export const progress = computed(() => {
   if (!duration.value) return 0
   return (currentTime.value / duration.value) * 100
 })
 
-// 格式化时间
 export const formatTime = (seconds) => {
   if (!seconds || isNaN(seconds)) return '00:00'
   const mins = Math.floor(seconds / 60)
@@ -72,7 +64,7 @@ export const durationFormatted = computed(() => formatTime(duration.value))
 // 当前显示的歌词文本
 export const currentLyricText = computed(() => {
   if (currentLyricIndex.value >= 0 && currentSongLyrics.value && currentSongLyrics.value.length > 0) {
-    return currentSongLyrics.value[currentLyricIndex.value].text
+    return currentSongLyrics.value[currentLyricIndex.value]?.text || ''
   }
   return ''
 })
@@ -104,8 +96,7 @@ export const initAudioElement = () => {
   const audio = document.createElement('audio')
   audio.preload = 'metadata'
   audio.crossOrigin = 'anonymous'
-  
-  // 音频事件监听
+
   audio.addEventListener('loadstart', () => {
     isLoading.value = true
   })
@@ -123,8 +114,7 @@ export const initAudioElement = () => {
       const index = getCurrentLyricIndex(currentTime.value, currentSongLyrics.value)
       if (index !== currentLyricIndex.value) {
         currentLyricIndex.value = index
-        
-        // 触发歌词更新事件，可用于UI更新
+
         if (typeof window !== 'undefined') {
           window.dispatchEvent(new CustomEvent('lyric-updated', {
             detail: {
@@ -153,27 +143,8 @@ export const initAudioElement = () => {
   })
   
   audio.addEventListener('error', (e) => {
-    console.error('🚨 音频播放错误:', {
-      error: e,
-      currentSrc: audio.src,
-      song: currentSong.value?.name,
-      errorCode: audio.error?.code,
-      errorMessage: audio.error?.message
-    })
-    
     isLoading.value = false
     isPlaying.value = false
-    
-    // 显示用户友好的错误信息
-    if (audio.error?.code === 4) {
-      console.error('音频文件格式不支持')
-    } else if (audio.error?.code === 3) {
-      console.error('音频文件解码失败')
-    } else if (audio.error?.code === 2) {
-      console.error('网络错误，无法加载音频')
-    } else {
-      console.error('音频文件不存在或无法播放')
-    }
   })
 
   // 音量变化
@@ -188,75 +159,83 @@ export const initAudioElement = () => {
   audio.volume = volume.value
 }
 
-/**
- * 加载歌曲 - 增强MinIO支持
- */
+
 export const loadSong = async (song) => {
   if (!song) {
-    console.log('🔇 loadSong: 歌曲对象为空')
     return false
   }
   
   // 确保音频元素已初始化
   if (!audioElement.value) {
-    console.log('🔧 loadSong: 初始化音频元素')
     initAudioElement()
-    
-    // 如果仍然没有音频元素，无法播放
+
     if (!audioElement.value) {
-      console.error('❌ loadSong: 无法初始化音频元素')
       return false
     }
   }
   
   try {
-    // 完全重置播放状态
-    console.log('🔄 loadSong: 重置播放状态')
-    
-    // 先暂停当前播放（如果有的话）
     if (isPlaying.value) {
       try {
         await audioElement.value.pause()
-      } catch (pauseError) {
-        console.warn('⚠️ loadSong: 暂停当前播放失败:', pauseError)
+0      } catch (pauseError) {
       }
     }
-    
-    // 重置播放状态变量
     isPlaying.value = false
     isPaused.value = true
     isLoading.value = true
     currentTime.value = 0
-    
-    // 设置当前歌曲信息
+
     currentSong.value = song
-    currentLyricIndex.value = -1 // 重置歌词索引
+
+    if (currentSong.value) {
+      if (!currentSong.value.artist) {
+        currentSong.value.artist = currentSong.value.artistName || 
+                                  currentSong.value.singer || 
+                                  currentSong.value.singerName || 
+                                  currentSong.value.artists?.join('、') || 
+                                  '未知艺术家'
+      }
+
+      checkAndFetchArtistName(currentSong.value)
+    }
+    currentLyricIndex.value = -1 
     
-    console.log('🎵 开始加载歌曲:', song.name, 'ID:', song.id)
-    
+    if (song.id) {
+      loadLyrics(song.id).catch(() => {
+     
+      })
+    }
+
     let audioUrl = null
     let metadata = {}
     
-    // 首先尝试从API获取流媒体URL
+   
     if (song.id) {
       try {
-        console.log('🔍 从API获取音频流URL...')
         const streamResponse = await getSongStreamUrl(song.id)
         
         if (streamResponse && (streamResponse.success || streamResponse.code === 200)) {
           const responseData = streamResponse.data || streamResponse
           audioUrl = responseData.audioUrl || responseData.streamUrl || responseData.filePath
+
+          const artistInfo = responseData.artist || 
+                            responseData.artistName || 
+                            responseData.singer || 
+                            responseData.singerName || 
+                            responseData.artists?.join('、')
           
-          // 更新歌曲元数据
-          if (responseData.artist) {
-            metadata.artist = responseData.artist
-            currentSong.value.artist = responseData.artist
+          if (artistInfo) {
+            metadata.artist = artistInfo
+            currentSong.value.artist = artistInfo
           }
           if (responseData.cover) {
             metadata.cover = responseData.cover
             currentSong.value.cover = responseData.cover
             currentSong.value.albumCover = responseData.cover
           }
+
+          checkAndFetchArtistName(currentSong.value)
           if (responseData.duration) {
             metadata.duration = responseData.duration
             currentSong.value.duration = responseData.duration
@@ -265,19 +244,13 @@ export const loadSong = async (song) => {
             metadata.title = responseData.title || responseData.name
             currentSong.value.name = responseData.title || responseData.name
           }
-          
-          console.log('✅ 从API获取音频URL成功:', audioUrl)
-          console.log('📝 获取到的元数据:', metadata)
+
         }
       } catch (apiError) {
-        console.warn('⚠️ 从API获取音频URL失败:', apiError)
-        // 继续尝试其他方式
       }
     }
     
-    // 尝试使用歌曲对象中的各种可能的音频URL字段，支持更多后端可能返回的字段名
     if (!audioUrl) {
-      // 检查多种可能的音频URL字段名，确保能够找到后端返回的真实音频链接
       audioUrl = song.filePath || 
                 song.audioUrl || 
                 song.file_path || 
@@ -292,51 +265,31 @@ export const loadSong = async (song) => {
                 song.mp3_url ||
                 song.src ||
                 song.source
-      console.log('🔄 使用歌曲对象中的音频URL:', audioUrl)
     }
     
-    // 验证音频URL的有效性
-    if (audioUrl) {
-      if (!isValidAudioUrl(audioUrl)) {
-        console.warn('⚠️ 音频URL格式可能无效:', audioUrl)
-      } else {
-        console.log('✅ 音频URL格式有效')
-      }
-    } else {
-      console.warn('⚠️ 未找到有效的音频URL，无法播放歌曲')
+    if (audioUrl && !isValidAudioUrl(audioUrl)) {
     }
     
-    console.log('🎵 最终音频URL:', audioUrl)
-    
     if (audioUrl) {
-      // 设置CORS和缓存策略
       audioElement.value.crossOrigin = 'anonymous'
       audioElement.value.preload = 'metadata'
-      
-      // 处理MinIO URL的特殊情况
       if (audioUrl.includes('minio') || audioUrl.includes('9000')) {
-        console.log('🗄️ 检测到MinIO音频源，优化加载策略')
-        audioElement.value.preload = 'none' // MinIO可能需要特殊处理
+        audioElement.value.preload = 'none' 
       }
       
       audioElement.value.src = audioUrl
-      
-      // 监听加载事件
       const loadPromise = new Promise((resolve, reject) => {
         const handleLoadedData = () => {
-          console.log('✅ 音频数据加载完成')
           cleanup()
           resolve()
         }
         
         const handleError = (error) => {
-          console.error('❌ 音频加载错误:', error)
           cleanup()
           reject(error)
         }
         
         const handleTimeout = () => {
-          console.error('⏰ 音频加载超时')
           cleanup()
           reject(new Error('音频加载超时'))
         }
@@ -350,17 +303,17 @@ export const loadSong = async (song) => {
         audioElement.value.addEventListener('loadeddata', handleLoadedData)
         audioElement.value.addEventListener('error', handleError)
         
-        // 设置加载超时
-        const timeoutId = setTimeout(handleTimeout, 10000) // 10秒超时
+        const timeoutId = setTimeout(handleTimeout, 10000) 
       })
       
       audioElement.value.load()
       await loadPromise
-      
-      // 提取专辑封面色彩生成魔法色
-      await extractMagicColors(currentSong.value.cover || currentSong.value.albumCover)
-      
-      // 触发歌曲加载完成事件
+
+      try {
+        await extractMagicColors(currentSong.value.cover || currentSong.value.albumCover)
+      } catch (colorError) {
+      }
+
       window.dispatchEvent(new CustomEvent('song-loaded', {
         detail: { 
           song: currentSong.value, 
@@ -368,29 +321,13 @@ export const loadSong = async (song) => {
           metadata 
         }
       }))
-      
-      console.log('✅ 歌曲加载成功:', song.name)
+
       isLoading.value = false
       return true
     } else {
-      console.error('❌ 无法获取歌曲音频URL:', song)
-      ElMessage.error('歌曲音频文件不存在或无法获取')
       return false
     }
   } catch (error) {
-    console.error('💥 加载歌曲失败:', error)
-    
-    // 根据错误类型提供更具体的错误信息
-    let errorMessage = '歌曲加载失败'
-    if (error.message.includes('超时')) {
-      errorMessage = '音频加载超时，请检查网络连接'
-    } else if (error.message.includes('CORS')) {
-      errorMessage = '音频资源跨域访问受限'
-    } else if (error.message.includes('网络')) {
-      errorMessage = '网络错误，无法加载音频'
-    }
-    
-    ElMessage.error(errorMessage)
     isLoading.value = false
     return false
   }
@@ -401,15 +338,13 @@ export const loadSong = async (song) => {
  */
 const isValidAudioUrl = (url) => {
   if (!url || typeof url !== 'string') return false
-  
-  // 检查是否是有效的URL
+
   try {
     new URL(url)
   } catch {
     return false
   }
-  
-  // 检查是否包含音频文件扩展名或是MinIO路径
+
   const audioExtensions = ['.mp3', '.wav', '.ogg', '.m4a', '.flac', '.aac']
   const hasAudioExtension = audioExtensions.some(ext => url.toLowerCase().includes(ext))
   const isMinIOPath = url.includes('minio') || url.includes('/audio/')
@@ -422,34 +357,19 @@ const isValidAudioUrl = (url) => {
  */
 export const togglePlay = async () => {
   if (!audioElement.value) {
-    console.log('🔇 togglePlay: 音频元素不存在')
     return
   }
-  
-  console.log(`🔄 togglePlay: 当前状态: isPlaying=${isPlaying.value}, isPaused=${isPaused.value}, isLoading=${isLoading.value}`)
-  
+
   try {
     if (isPlaying.value) {
-      console.log('⏸️ 暂停播放')
       await audioElement.value.pause()
     } else {
-      console.log('▶️ 开始播放')
       await audioElement.value.play()
     }
   } catch (error) {
-    console.error('播放控制失败:', error)
-    console.error('🚨 错误详情:', error.message)
-    console.error('🚨 错误堆栈:', error.stack)
-    
-    // 处理浏览器自动播放策略限制
     if (error.name === 'NotAllowedError' || error.message.includes('autoplay')) {
-      console.warn('⚠️ 浏览器自动播放限制，需要用户交互才能播放音频')
-      
-      // 手动更新播放状态
       isPlaying.value = false
       isPaused.value = true
-      
-      // 提示用户需要点击播放按钮
       ElMessage.warning('请点击播放按钮开始播放音乐')
     }
   }
@@ -460,47 +380,30 @@ export const togglePlay = async () => {
  */
 export const playSong = async (song) => {
   if (!song) {
-    console.log('🔇 playSong: 歌曲对象为空')
     return false
   }
-  
-  // 确保音频元素已初始化
+
   if (!audioElement.value) {
-    console.log('🔧 playSong: 初始化音频元素')
     initAudioElement()
-    
-    // 如果仍然没有音频元素，无法播放
+
     if (!audioElement.value) {
-      console.error('❌ playSong: 无法初始化音频元素')
       return false
     }
   }
-  
-  console.log(`🎯 playSong: 尝试播放歌曲 "${song.name}", 当前播放列表长度: ${playlist.value.length}`)
-  console.log(`🎯 playSong: 当前状态: isPlaying=${isPlaying.value}, isPaused=${isPaused.value}, isLoading=${isLoading.value}`)
-  
+
   const loaded = await loadSong(song)
   if (loaded) {
-    console.log(`✅ playSong: 歌曲 "${song.name}" 加载成功，准备播放`)
-    
+
     try {
-      // 首先确保audio元素处于可播放状态
-      if (audioElement.value.readyState >= 2) { // HAVE_CURRENT_DATA
-        console.log('▶️ playSong: 音频已准备就绪，尝试播放')
-        
-        // 直接调用audio元素的play方法，而不是通过togglePlay
+
+      if (audioElement.value.readyState >= 2) {
         const playPromise = audioElement.value.play()
         
         if (playPromise !== undefined) {
           playPromise.then(() => {
-            console.log(`✅ playSong: 歌曲 "${song.name}" 播放成功`)
             isPlaying.value = true
             isPaused.value = false
           }).catch(playError => {
-            console.error('❌ playSong: 播放失败，可能受限于浏览器自动播放策略:', playError)
-            console.error('🚨 错误详情:', playError.message)
-            
-            // 即使播放失败，也确保状态正确更新
             isPlaying.value = false
             isPaused.value = true
           })
@@ -508,9 +411,6 @@ export const playSong = async (song) => {
         
         return true
       } else {
-        console.warn('⚠️ playSong: 音频尚未准备就绪，等待数据加载...')
-        
-        // 等待音频数据加载
         const playWhenReady = new Promise((resolve) => {
           const handleCanPlay = () => {
             audioElement.value.removeEventListener('canplay', handleCanPlay)
@@ -524,12 +424,10 @@ export const playSong = async (song) => {
           
           audioElement.value.addEventListener('canplay', handleCanPlay)
           audioElement.value.addEventListener('error', handleError)
-          
-          // 超时处理
+
           setTimeout(() => {
             audioElement.value.removeEventListener('canplay', handleCanPlay)
             audioElement.value.removeEventListener('error', handleError)
-            console.warn('⚠️ playSong: 音频加载超时')
             resolve(false)
           }, 5000)
         })
@@ -539,29 +437,24 @@ export const playSong = async (song) => {
         if (readyToPlay) {
           try {
             await audioElement.value.play()
-            console.log(`✅ playSong: 歌曲 "${song.name}" 播放成功`)
             isPlaying.value = true
             isPaused.value = false
             return true
           } catch (playError) {
-            console.error('❌ playSong: 播放失败:', playError)
-            isPlaying.value = false
-            isPaused.value = true
-            return false
-          }
+              isPlaying.value = false
+              isPaused.value = true
+              return false
+            }
         } else {
-          console.error('❌ playSong: 音频无法准备就绪')
           return false
         }
       }
     } catch (playError) {
-      console.error('❌ playSong: 播放过程中发生错误:', playError)
       isPlaying.value = false
       isPaused.value = true
       return false
     }
   }
-  console.log(`❌ playSong: 歌曲 "${song.name}" 加载失败`)
   return false
 }
 
@@ -658,13 +551,10 @@ export const addToPlaylist = (song, playNow = false) => {
  */
 export const addToPlayNext = (song) => {
   if (!song || !song.id) return false
-  
-  // 检查是否已存在
+
   const existingIndex = playlist.value.findIndex(item => item.id === song.id)
   if (existingIndex !== -1) {
-    // 如果已存在，先移除
     playlist.value.splice(existingIndex, 1)
-    // 如果移除的歌曲在当前播放位置之前，需要调整当前索引
     if (existingIndex <= currentIndex.value) {
       currentIndex.value--
     }
@@ -683,21 +573,15 @@ export const addToPlayNext = (song) => {
  */
 const addToPlaylistFirst = (song) => {
   if (!song || !song.id) return false
-  
-  // 检查是否已存在
+
   const existingIndex = playlist.value.findIndex(item => item.id === song.id)
   
   if (existingIndex !== -1) {
-    // 如果歌曲已存在
-    console.log('🔄 歌曲已在播放列表中，移动到第一位:', song.name)
-    
+
     if (existingIndex === 0) {
-      // 如果已经在第一位，直接播放
-      console.log('✅ 歌曲已在第一位，直接播放')
       return playByIndex(0)
     }
-    
-    // 移除原位置的歌曲
+
     const [removedSong] = playlist.value.splice(existingIndex, 1)
     
     // 调整当前播放索引
@@ -712,12 +596,8 @@ const addToPlaylistFirst = (song) => {
     if (currentIndex.value >= 0) {
       currentIndex.value++
     }
-    
-    console.log('✅ 歌曲已移动到第一位，其他歌曲顺序保持不变')
+  
   } else {
-    // 如果歌曲不存在，添加到第一位
-    console.log('➕ 歌曲不在播放列表中，添加到第一位:', song.name)
-    
     // 插入到播放列表第一位
     playlist.value.unshift(song)
     
@@ -725,11 +605,8 @@ const addToPlaylistFirst = (song) => {
     if (currentIndex.value >= 0) {
       currentIndex.value++
     }
-    
-    console.log('✅ 新歌曲已添加到第一位')
   }
-  
-  // 立即播放第一位的歌曲（索引为0）
+
   return playByIndex(0)
 }
 
@@ -739,11 +616,31 @@ const addToPlaylistFirst = (song) => {
 export const addMultipleToPlaylist = (songs, playFirst = false) => {
   if (!Array.isArray(songs) || songs.length === 0) return false
   
+  // 当需要立即播放第一首时（播放全部功能），清空现有播放列表
+  if (playFirst) {
+    playlist.value = []
+    currentIndex.value = 0
+    // CONSOLE LOG REMOVED: console.log('播放全部：已清空现有播放列表')
+  }
+  
+  // 添加新歌曲，同时预处理每首歌曲的艺术家信息
   songs.forEach(song => {
     if (song && song.id) {
-      const existingIndex = playlist.value.findIndex(item => item.id === song.id)
+      // 预处理艺术家信息
+      const processedSong = { ...song }
+      
+      // 确保艺术家信息正确设置
+      if (!processedSong.artist) {
+        processedSong.artist = processedSong.artistName || 
+                              processedSong.singer || 
+                              processedSong.singerName || 
+                              processedSong.artists?.join('、') || 
+                              '未知艺术家'
+      }
+      
+      const existingIndex = playlist.value.findIndex(item => item.id === processedSong.id)
       if (existingIndex === -1) {
-        playlist.value.push(song)
+        playlist.value.push(processedSong)
       }
     }
   })
@@ -760,12 +657,9 @@ export const addMultipleToPlaylist = (songs, playFirst = false) => {
  */
 export const playByIndex = async (index) => {
   if (index < 0 || index >= playlist.value.length) {
-    console.error(`❌ playByIndex: 索引无效 [${index}]，播放列表长度: ${playlist.value.length}`)
     return false
   }
-  
-  console.log(`🎯 playByIndex: 播放索引 ${index} 的歌曲`)
-  
+
   currentIndex.value = index
   const song = playlist.value[index]
   
@@ -773,24 +667,16 @@ export const playByIndex = async (index) => {
     const result = await playSong(song)
     
     if (result) {
-      console.log(`✅ playByIndex: 成功播放歌曲 "${song.name}"`)
-      
-      // 检查播放状态，如果没有真正开始播放，提供一个用户交互的备用方案
       setTimeout(() => {
         if (!isPlaying.value && audioElement.value) {
-          console.log('⚠️ playByIndex: 歌曲已加载但未自动播放，提示用户手动播放')
-          
-          // 如果有需要，可以在这里触发一个UI更新，提示用户点击播放按钮
         }
       }, 1000)
       
       return true
     } else {
-      console.error(`❌ playByIndex: 播放歌曲 "${song.name}" 失败`)
       return false
     }
   } catch (error) {
-    console.error('❌ playByIndex: 播放过程中发生错误:', error)
     return false
   }
 }
@@ -835,53 +721,34 @@ export const playNext = () => {
   return playByIndex(nextIndex)
 }
 
-/**
- * 歌曲结束处理 - 增强版，确保连续播放稳定性
- */
 const onSongEnded = async () => {
-  console.log('🎵 歌曲播放结束，处理下一首...')
-  console.log(`🎯 当前播放模式: ${playMode.value}, 当前歌曲索引: ${currentIndex.value}`)
-  
+
   try {
     if (playMode.value === 'loop') {
-      // 单曲循环
       if (audioElement.value) {
-        console.log('🔄 单曲循环模式，重新开始播放当前歌曲')
-        
-        // 重置播放状态
+
         isPlaying.value = false
         isPaused.value = true
-        
-        // 重置播放时间
+
         audioElement.value.currentTime = 0
         
         try {
-          // 尝试直接播放
           const playPromise = audioElement.value.play()
           
           if (playPromise !== undefined) {
             await playPromise
-            console.log('✅ 单曲循环播放成功')
             isPlaying.value = true
             isPaused.value = false
           }
         } catch (loopError) {
-          console.error('⚠️ 单曲循环播放失败:', loopError)
-          
-          // 如果单曲循环失败，尝试播放下一首
-          console.log('🔄 单曲循环失败，尝试播放下一首')
           await playNextWithRetry()
         }
       }
     } else {
-      // 播放下一首
-      console.log('⏭️ 顺序/随机模式，播放下一首')
+
       await playNextWithRetry()
     }
   } catch (error) {
-    console.error('❌ 歌曲结束处理失败:', error)
-    
-    // 确保状态正确
     isPlaying.value = false
     isPaused.value = true
   }
@@ -892,38 +759,24 @@ const onSongEnded = async () => {
  */
 const playNextWithRetry = async (retryCount = 0, maxRetries = 2) => {
   try {
-    // 防止立即连续调用导致的问题
     await new Promise(resolve => setTimeout(resolve, 100))
     
     const result = await playNext()
     
     if (result) {
-      console.log('✅ 播放下一首成功')
       return true
     } else {
-      console.warn('⚠️ 播放下一首失败')
-      
-      // 重试逻辑
+
       if (retryCount < maxRetries) {
-        console.log(`🔄 尝试重试播放下一首 (${retryCount + 1}/${maxRetries})`)
-        
-        // 等待一小段时间后重试
         await new Promise(resolve => setTimeout(resolve, 300))
         return playNextWithRetry(retryCount + 1, maxRetries)
       } else {
-        console.error('❌ 多次尝试播放下一首失败')
-        
-        // 重置播放状态
         isPlaying.value = false
         isPaused.value = true
-        
-        // 可以在这里添加用户提示
-        ElMessage.warning('播放下一首失败，请尝试手动播放')
         return false
       }
     }
   } catch (error) {
-    console.error('❌ 播放下一首时发生错误:', error)
     return false
   }
 }
@@ -989,8 +842,6 @@ export const extractMagicColors = async (coverUrl) => {
           
           resolve(magic)
         } catch (error) {
-          console.error('提取色彩失败:', error)
-          // 使用默认魔法色
           setDefaultMagicColors()
           resolve(magicColors.value)
         }
@@ -1004,7 +855,6 @@ export const extractMagicColors = async (coverUrl) => {
       img.src = coverUrl
     })
   } catch (error) {
-    console.error('加载封面失败:', error)
     setDefaultMagicColors()
   }
 }
@@ -1017,14 +867,13 @@ const extractDominantColors = (ctx, width, height) => {
   const data = imageData.data
   const colorMap = {}
   
-  // 采样像素（每4个像素采样一次以提高性能）
   for (let i = 0; i < data.length; i += 16) {
     const r = data[i]
     const g = data[i + 1]
     const b = data[i + 2]
     const alpha = data[i + 3]
     
-    if (alpha > 125) { // 忽略透明像素
+    if (alpha > 125) { 
       const color = `${r},${g},${b}`
       colorMap[color] = (colorMap[color] || 0) + 1
     }
@@ -1052,12 +901,10 @@ const generateMagicColors = (dominantColors) => {
   
   const primaryColor = dominantColors[0]
   const secondaryColor = dominantColors[1] || primaryColor
-  
-  // 转换为HSL进行色彩调整
+
   const primaryHsl = rgbToHsl(primaryColor.r, primaryColor.g, primaryColor.b)
   const secondaryHsl = rgbToHsl(secondaryColor.r, secondaryColor.g, secondaryColor.b)
-  
-  // 增强饱和度和亮度，创造QQ音乐风格的鲜艳效果
+
   const enhancedPrimary = {
     h: primaryHsl.h,
     s: Math.min(100, primaryHsl.s + 20),
@@ -1180,28 +1027,82 @@ export const parseLyrics = (lrcText) => {
   }
   
   const lyrics = []
-  // 匹配[mm:ss.xx]格式的时间标签
-  const timeRegex = /\[(\d+):(\d+\.\d+)\](.+)/g
-  let match
   
-  while ((match = timeRegex.exec(lrcText)) !== null) {
-    const minutes = parseInt(match[1], 10)
-    const seconds = parseFloat(match[2])
-    const timeInSeconds = minutes * 60 + seconds
-    const text = match[3].trim()
+  try {
+    const timeRegex = /\[(\d+):(\d+(?:\.\d+)?)\]([^\n\r]+)/g
+    let match
     
-    if (text) {
-      lyrics.push({
-        time: timeInSeconds,
-        text: text
-      })
+    while ((match = timeRegex.exec(lrcText)) !== null) {
+      try {
+        const minutes = parseInt(match[1], 10)
+        const seconds = parseFloat(match[2])
+        const timeInSeconds = minutes * 60 + seconds
+        const text = match[3].trim()
+        
+        if (text) {
+          lyrics.push({
+            time: timeInSeconds,
+            text: text
+          })
+        }
+      } catch (error) {
+      }
     }
+    
+    if (lyrics.length === 0) {
+      const lines = lrcText.split(/[\n\r]+/)
+      
+      for (const line of lines) {
+        if (!line.trim()) continue
+
+        const timeMatch = line.match(/\[(\d+):(\d+(?:\.\d+)?)\]/)
+        if (timeMatch) {
+          try {
+            const minutes = parseInt(timeMatch[1], 10)
+            const seconds = parseFloat(timeMatch[2])
+            const timeInSeconds = minutes * 60 + seconds
+            const text = line.replace(/\[(\d+):(\d+(?:\.\d+)?)\]/g, '').trim()
+            
+            if (text) {
+              lyrics.push({
+                time: timeInSeconds,
+                text: text
+              })
+            }
+          } catch (error) {
+          }
+        }
+      }
+    }
+ 
+    if (lyrics.length === 0) {
+    }
+
+    if (lyrics.length > 0) {
+      lyrics.sort((a, b) => a.time - b.time)
+      const uniqueLyrics = []
+      const seen = new Set()
+      for (const lyric of lyrics) {
+        const key = `${lyric.time}-${lyric.text}`
+        if (!seen.has(key)) {
+          seen.add(key)
+          uniqueLyrics.push(lyric)
+        }
+      }
+      
+      return uniqueLyrics
+    } else {
+      if (lrcText.trim()) {
+        return [{
+          time: 0,
+          text: lrcText.trim().split(/[\n\r]+/)[0] 
+        }]
+      }
+      return []
+    }
+  } catch (error) {
+    return []
   }
-  
-  // 按时间排序
-  lyrics.sort((a, b) => a.time - b.time)
-  
-  return lyrics
 }
 
 /**
@@ -1219,60 +1120,90 @@ export const loadLyrics = async (songId) => {
     isLoadingLyrics.value = true
     const response = await getSongLyrics(songId)
     
-    if (response && (response.success || response.code === 200)) {
-      // 现在我们获取的是完整的歌曲对象，所以直接从response.data中获取lyrics
-      const song = response.data || response
-      const lrcText = song.lyrics || ''
-      const parsedLyrics = parseLyrics(lrcText)
-      currentSongLyrics.value = parsedLyrics
-      
-      // 触发歌词加载完成事件
-      if (typeof window !== 'undefined') {
-        window.dispatchEvent(new CustomEvent('lyrics-loaded', {
-          detail: {
-            songId,
-            lyrics: parsedLyrics
-          }
-        }))
-      }
-      
-      return parsedLyrics
-    } else {
-      console.warn('获取歌词失败，返回空歌词')
-      currentSongLyrics.value = []
-      return []
+    let lrcText = ''
+    
+    if (response && response.lyrics) {
+      lrcText = response.lyrics
+    } else if (response && response.data && response.data.lyrics) {
+      lrcText = response.data.lyrics
     }
+
+    const parsedLyrics = parseLyrics(lrcText)
+
+    currentSongLyrics.value = parsedLyrics
+    currentLyricIndex.value = -1 
+
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new CustomEvent('lyrics-loaded', {
+        detail: {
+          songId,
+          lyrics: parsedLyrics
+        }
+      }))
+    }
+    
+    return parsedLyrics
   } catch (error) {
-    console.error('加载歌词时发生错误:', error)
     currentSongLyrics.value = []
+    currentLyricIndex.value = -1
+    
     return []
   } finally {
     isLoadingLyrics.value = false
   }
 }
-
-/**
- * 根据当前播放时间获取当前歌词索引
- * @param {number} currentTimeInSeconds - 当前播放时间（秒）
- * @param {Array} lyrics - 歌词数组
- * @returns {number} 当前歌词的索引
- */
 export const getCurrentLyricIndex = (currentTimeInSeconds, lyrics) => {
-  if (!lyrics || lyrics.length === 0) {
+  if (!lyrics || lyrics.length === 0 || 
+      typeof currentTimeInSeconds !== 'number' || 
+      isNaN(currentTimeInSeconds)) {
     return -1
   }
   
+  let left = 0
+  let right = lyrics.length - 1
   let index = -1
-  for (let i = 0; i < lyrics.length; i++) {
-    if (currentTimeInSeconds >= lyrics[i].time) {
-      index = i
-    } else {
-      break
+  
+  if (lyrics.length > 50) {
+    while (left <= right) {
+      const mid = Math.floor((left + right) / 2)
+      if (lyrics[mid] && typeof lyrics[mid].time === 'number' && 
+          lyrics[mid].time <= currentTimeInSeconds) {
+        index = mid
+        left = mid + 1
+      } else {
+        right = mid - 1
+      }
+    }
+  } else {
+    for (let i = 0; i < lyrics.length; i++) {
+      if (lyrics[i] && typeof lyrics[i].time === 'number' && 
+          currentTimeInSeconds >= lyrics[i].time) {
+        index = i
+      } else {
+        break
+      }
     }
   }
   
   return index
 }
 
-// 导出函数
+// 检查并获取艺术家名称的函数
+const checkAndFetchArtistName = (song) => {
+  if (song.artistId && (song.artist === '未知艺术家' || song.artist.includes('艺术家'))) {
+    fetchArtistName(song)
+  }
+}
+
+// 从后端获取艺术家名称的函数
+const fetchArtistName = (song) => {
+  if (!song.artistId) return
+  
+  getArtistById(song.artistId).then(response => {
+    if (response && response.success && response.data && response.data.name) {
+      song.artist = response.data.name
+    }
+  }).catch(() => {
+  })
+}
 export { addToPlaylistFirst }

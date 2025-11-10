@@ -44,7 +44,7 @@ export default defineConfig(({ command, mode }) => {
 
     // 开发服务器配置
     server: {
-      port: 3000,
+      port: isProduction ? 3000 : 3001,
       open: true,
       cors: true,
       // 代理配置
@@ -53,7 +53,6 @@ export default defineConfig(({ command, mode }) => {
           target: 'http://localhost:8081',
           changeOrigin: true,
           secure: false,
-          // 保持 /api 前缀，不进行路径重写
           rewrite: (path) => path
         }
       },

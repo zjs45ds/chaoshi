@@ -64,7 +64,7 @@ export const fetchAlbums = async () => {
     const response = await request.get('/api/artists/xuezhiqian/albums')
     return response.data
   } catch (error) {
-    console.error('获取专辑数据失败:', error)
+    // CONSOLE LOG REMOVED: console.error('获取专辑数据失败:', error)
     throw error
   }
 }
@@ -78,7 +78,7 @@ export const fetchTimeline = async () => {
     const response = await request.get('/api/artists/xuezhiqian/timeline')
     return response.data
   } catch (error) {
-    console.error('获取时间线数据失败:', error)
+    // CONSOLE LOG REMOVED: console.error('获取时间线数据失败:', error)
     throw error
   }
 }
@@ -92,7 +92,7 @@ export const fetchSongs = async () => {
     const response = await request.get('/api/artists/xuezhiqian/hotsongs')
     return response.data
   } catch (error) {
-    console.error('获取歌曲数据失败:', error)
+    // CONSOLE LOG REMOVED: console.error('获取歌曲数据失败:', error)
     throw error
   }
 }
@@ -106,7 +106,7 @@ export const fetchStats = async () => {
     const response = await request.get('/api/artists/xuezhiqian/stats')
     return response.data
   } catch (error) {
-    console.error('获取统计数据失败:', error)
+    // CONSOLE LOG REMOVED: console.error('获取统计数据失败:', error)
     throw error
   }
 }

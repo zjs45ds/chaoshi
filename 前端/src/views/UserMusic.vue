@@ -595,11 +595,7 @@ export default {
       const userId = localStorage.getItem('userId') || localStorage.getItem('currentUserId') || 
                      sessionStorage.getItem('userId') || sessionStorage.getItem('currentUserId')
       isLoggedIn.value = loginStatus === '1' && userId
-      console.log('🔍 用户登录状态检查:', { 
-        loginStatus, 
-        userId, 
-        isLoggedIn: isLoggedIn.value 
-      })
+      // CONSOLE LOG REMOVED: console.log('🔍 用户登录状态检查:', { loginStatus, userId, isLoggedIn: isLoggedIn.value });
       return isLoggedIn.value
     }
     
@@ -892,7 +888,7 @@ export default {
         showBatchModal.value = false
         
       } catch (error) {
-        console.error('批量删除收藏歌曲失败:', error)
+        // CONSOLE LOG REMOVED: console.error('批量删除收藏歌曲失败:', error)
         ElMessage.error('批量删除失败')
       }
     }
@@ -922,7 +918,7 @@ export default {
               return null
             }
           } catch (error) {
-            console.error('取消收藏专辑失败:', error)
+            // CONSOLE LOG REMOVED: console.error('取消收藏专辑失败:', error)
             return null
           }
         })
@@ -943,7 +939,7 @@ export default {
         showAlbumBatchModal.value = false
         
       } catch (error) {
-        console.error('批量取消收藏专辑失败:', error)
+        // CONSOLE LOG REMOVED: console.error('批量取消收藏专辑失败:', error)
         ElMessage.error('批量取消收藏失败')
       }
     }
@@ -973,7 +969,7 @@ export default {
               return null
             }
           } catch (error) {
-            console.error('取消收藏视频失败:', error)
+            // CONSOLE LOG REMOVED: console.error('取消收藏视频失败:', error)
             return null
           }
         })
@@ -1002,7 +998,7 @@ export default {
         showVideoBatchModal.value = false
         
       } catch (error) {
-        console.error('批量取消收藏视频失败:', error)
+        // CONSOLE LOG REMOVED: console.error('批量取消收藏视频失败:', error)
         ElMessage.error('批量取消收藏失败')
       }
     }
@@ -1103,7 +1099,7 @@ export default {
                     artistName = artistResponse.data.name
                   }
                 } catch (error) {
-                  console.warn('获取歌手信息失败:', error)
+                  // CONSOLE LOG REMOVED: console.warn('获取歌手信息失败:', error)
                 }
               }
               return {
@@ -1117,7 +1113,7 @@ export default {
           favoriteAlbums.value = []
         }
       } catch (error) {
-        console.error('加载收藏专辑失败:', error)
+        // CONSOLE LOG REMOVED: console.error('加载收藏专辑失败:', error)
         ElMessage.error('加载收藏专辑失败')
         favoriteAlbums.value = []
       } finally {
@@ -1152,7 +1148,7 @@ export default {
                     artistName = artistResponse.data.name
                   }
                 } catch (error) {
-                  console.warn('获取歌手信息失败:', error)
+                  // CONSOLE LOG REMOVED: console.warn('获取歌手信息失败:', error)
                 }
               }
               return {
@@ -1170,7 +1166,7 @@ export default {
           favoriteVideos.value = []
         }
       } catch (error) {
-        console.error('加载收藏视频失败:', error)
+        // CONSOLE LOG REMOVED: console.error('加载收藏视频失败:', error)
         ElMessage.error('加载收藏视频失败')
         favoriteVideos.value = []
       } finally {
@@ -1255,7 +1251,7 @@ export default {
           throw new Error(uploadResponse?.message || '头像上传失败')
         }
       } catch (error) {
-        console.error('头像上传失败:', error)
+        // CONSOLE LOG REMOVED: console.error('头像上传失败:', error)
         ElMessage.error(`上传失败: ${error.message || '未知错误'}`)
       } finally {
         saving.value = false
@@ -1266,14 +1262,14 @@ export default {
 
     // 用户信息更新处理函数
     const handleUserInfoUpdate = async () => {
-      console.log('🔔 UserMusic: 接收到用户信息更新事件')
+      // CONSOLE LOG REMOVED: console.log('🔔 UserMusic: 接收到用户信息更新事件')
       // globalUserInfo是响应式的，会自动更新显示
       // 但我们需要重新初始化用户信息以确保最新数据
       try {
         await initUserInfo()
-        console.log('✅ UserMusic: 用户信息已从数据库更新')
+        // CONSOLE LOG REMOVED: console.log('✅ UserMusic: 用户信息已从数据库更新')
       } catch (error) {
-        console.warn('⚠️ UserMusic: 无法从数据库获取最新用户信息')
+        // CONSOLE LOG REMOVED: console.warn('⚠️ UserMusic: 无法从数据库获取最新用户信息')
       }
     }
 
@@ -1284,7 +1280,7 @@ export default {
     const playSong = (song, index) => {
       closeDropdown() // 播放歌曲时关闭下拉框
       if (song && song.id) {
-        console.log('🎵 准备播放歌曲:', song.name, '来自我的音乐 - 将移动/添加到播放列表第一位')
+        // CONSOLE LOG REMOVED: console.log('🎵 准备播放歌曲:', song.name, '来自我的音乐 - 将移动/添加到播放列表第一位')
         
         // 添加到播放列表第一位并立即播放
         const success = addToPlaylistFirst({
@@ -1298,14 +1294,14 @@ export default {
         })
         
         if (success) {
-          console.log('✅ 歌曲已添加到播放列表第一位并开始播放:', song.name)
+          // CONSOLE LOG REMOVED: console.log('✅ 歌曲已添加到播放列表第一位并开始播放:', song.name)
           ElMessage.success(`开始播放：${song.name}`)
         } else {
-          console.error('❌ 添加歌曲到播放列表失败')
+          // CONSOLE LOG REMOVED: console.error('❌ 添加歌曲到播放列表失败')
           ElMessage.error('播放失败，请稍后重试')
         }
       } else {
-        console.warn('⚠️ 歌曲信息不完整:', song)
+        // CONSOLE LOG REMOVED: console.warn('⚠️ 歌曲信息不完整:', song)
         ElMessage.warning('歌曲信息不完整')
       }
     }
@@ -1385,7 +1381,7 @@ export default {
           ElMessage.error('移除失败：' + (response?.message || '请重试'))
         }
       } catch (error) {
-        console.error('移除收藏失败:', error)
+        // CONSOLE LOG REMOVED: console.error('移除收藏失败:', error)
         ElMessage.error('移除失败，请检查网络连接')
       }
     }
@@ -1466,7 +1462,7 @@ export default {
         isDownloading.value = true
         resetDownloadProgress()
         
-        console.log('🇝 开始下载歌曲:', downloadSongs_list.value.length, '首')
+        // CONSOLE LOG REMOVED: console.log('🇝 开始下载歌曲:', downloadSongs_list.value.length, '首')
         
         // 调用下载管理器
         const results = await downloadSongs(
@@ -1479,7 +1475,7 @@ export default {
           // 单个文件进度回调
           (index, song, status, progress = 0) => {
             currentDownloadIndex.value = index
-            console.log(`下载进度: ${song.name} - ${status} (${progress}%)`)
+            // CONSOLE LOG REMOVED: console.log(`下载进度: ${song.name} - ${status} (${progress}%)`)
           }
         )
         
@@ -1492,7 +1488,7 @@ export default {
         }, 2000)
         
       } catch (error) {
-        console.error('下载歌曲失败:', error)
+        // CONSOLE LOG REMOVED: console.error('下载歌曲失败:', error)
         ElMessage.error('下载失败，请稍后重试')
       } finally {
         isDownloading.value = false
@@ -1510,7 +1506,7 @@ export default {
     // 播放专辑
     const playAlbum = async (album) => {
       try {
-        console.log('🎵 准备播放专辑:', album.name, '专辑ID:', album.id)
+        // CONSOLE LOG REMOVED: console.log('🎵 准备播放专辑:', album.name, '专辑ID:', album.id)
         
         // 跳转到专辑详情页，并传递自动播放参数
         router.push({
@@ -1520,7 +1516,7 @@ export default {
         
         ElMessage.success(`正在跳转到专辑《${album.name}》`)
       } catch (error) {
-        console.error('播放专辑失败:', error)
+        // CONSOLE LOG REMOVED: console.error('播放专辑失败:', error)
         ElMessage.error('播放失败')
       }
     }
@@ -1528,7 +1524,7 @@ export default {
     // 播放视频
     const playVideo = async (video) => {
       try {
-        console.log('🎬 准备播放视频:', video.title, '视频ID:', video.id)
+        // CONSOLE LOG REMOVED: console.log('🎬 准备播放视频:', video.title, '视频ID:', video.id)
         
         // 跳转到视频详情页，并传递自动播放参数
         router.push({
@@ -1538,7 +1534,7 @@ export default {
         
         ElMessage.success(`正在跳转到视频《${video.title}》`)
       } catch (error) {
-        console.error('播放视频失败:', error)
+        // CONSOLE LOG REMOVED: console.error('播放视频失败:', error)
         ElMessage.error('播放失败')
       }
     }
@@ -1627,7 +1623,7 @@ export default {
       const loginStatus = checkLoginStatus()
       
       if (!loginStatus) {
-        console.log('👤 用户未登录，显示登录提示页面')
+        // CONSOLE LOG REMOVED: console.log('👤 用户未登录，显示登录提示页面')
         
         // 强制禁用页面滚动 - 多重保险
         document.body.style.overflow = 'hidden !important'
@@ -1703,7 +1699,7 @@ export default {
         return // 未登录则不继续初始化其他数据
       }
       
-      console.log('✅ 用户已登录，初始化我的音乐数据')
+      // CONSOLE LOG REMOVED: console.log('✅ 用户已登录，初始化我的音乐数据')
       
       // 初始化用户喜欢的歌曲
       await initFavoriteSongs()

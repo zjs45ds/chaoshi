@@ -192,16 +192,16 @@ const fetchArtistDetail = async () => {
       }
     }
     
-    console.log('🎤 歌手详情加载完成:')
-    console.log('歌手信息:', artist.value)
-    console.log('专辑数量:', albums.value?.length || 0)
-    console.log('歌曲数量:', songs.value?.length || 0)
+    // CONSOLE LOG REMOVED: console.log('🎤 歌手详情加载完成:')
+    // CONSOLE LOG REMOVED: console.log('歌手信息:', artist.value)
+    // CONSOLE LOG REMOVED: console.log('专辑数量:', albums.value?.length || 0)
+    // CONSOLE LOG REMOVED: console.log('歌曲数量:', songs.value?.length || 0)
     
     if (!artist.value) {
       ElMessage.error('歌手不存在')
     }
   } catch (error) {
-    console.error('获取歌手详情失败:', error)
+    // CONSOLE LOG REMOVED: console.error('获取歌手详情失败:', error)
     ElMessage.error('获取歌手详情失败: ' + error.message)
   } finally {
     loading.value = false
@@ -227,21 +227,21 @@ const goToSong = (songId) => {
 // 播放歌曲
 const playCurrentSong = async (song) => {
   try {
-    console.log('🎵 准备播放歌曲:', song.name)
+    // CONSOLE LOG REMOVED: console.log('🎵 准备播放歌曲:', song.name)
     
     // 先添加到播放列表
     const added = addToPlaylist(song, true) // playNow = true 表示立即播放
     
     if (added) {
-      console.log('✅ 歌曲已添加到播放列表:', song.name)
-      console.log('📋 当前播放列表长度:', playlist.value.length)
+      // CONSOLE LOG REMOVED: console.log('✅ 歌曲已添加到播放列表:', song.name)
+      // CONSOLE LOG REMOVED: console.log('📋 当前播放列表长度:', playlist.value.length)
       ElMessage.success(`开始播放: ${song.name}`)
     } else {
-      console.warn('⚠️ 歌曲添加到播放列表失败')
+      // CONSOLE LOG REMOVED: console.warn('⚠️ 歌曲添加到播放列表失败')
       ElMessage.error('添加到播放列表失败')
     }
   } catch (error) {
-    console.error('播放歌曲失败:', error)
+    // CONSOLE LOG REMOVED: console.error('播放歌曲失败:', error)
     ElMessage.error('播放失败，请稍后重试')
   }
 }
@@ -254,7 +254,7 @@ const playAllSongs = async () => {
       return
     }
     
-    console.log('🎵 准备播放全部歌曲:', songs.value.length, '首')
+    // CONSOLE LOG REMOVED: console.log('🎵 准备播放全部歌曲:', songs.value.length, '首')
     
     // 将所有歌曲添加到播放列表并播放第一首
     const added = addMultipleToPlaylist(songs.value, true) // playFirst = true
@@ -263,11 +263,11 @@ const playAllSongs = async () => {
     
       ElMessage.success(`开始播放全部 ${songs.value.length} 首歌曲`)
     } else {
-      console.warn('⚠️ 歌曲添加到播放列表失败')
+      // CONSOLE LOG REMOVED: console.warn('⚠️ 歌曲添加到播放列表失败')
       ElMessage.error('添加到播放列表失败')
     }
   } catch (error) {
-    console.error('播放全部歌曲失败:', error)
+    // CONSOLE LOG REMOVED: console.error('播放全部歌曲失败:', error)
     ElMessage.error('播放失败，请稍后重试')
   }
 }
@@ -275,20 +275,20 @@ const playAllSongs = async () => {
 // 添加歌曲到下一首播放
 const addSongToPlayNext = async (song) => {
   try {
-    console.log('⏭️ 准备将歌曲添加到下一首播放:', song.name)
+    // CONSOLE LOG REMOVED: console.log('⏭️ 准备将歌曲添加到下一首播放:', song.name)
     
     const added = addToPlayNext(song)
     
     if (added) {
-      console.log('✅ 歌曲已添加到下一首播放:', song.name)
-      console.log('📋 当前播放列表长度:', playlist.value.length)
+      // CONSOLE LOG REMOVED: console.log('✅ 歌曲已添加到下一首播放:', song.name)
+      // CONSOLE LOG REMOVED: console.log('📋 当前播放列表长度:', playlist.value.length)
       ElMessage.success(`${song.name} 已添加到下一首播放`)
     } else {
-      console.warn('⚠️ 歌曲添加到下一首播放失败')
+      // CONSOLE LOG REMOVED: console.warn('⚠️ 歌曲添加到下一首播放失败')
       ElMessage.error('添加失败')
     }
   } catch (error) {
-    console.error('添加歌曲到下一首播放失败:', error)
+    // CONSOLE LOG REMOVED: console.error('添加歌曲到下一首播放失败:', error)
     ElMessage.error('添加失败，请稍后重试')
   }
 }

@@ -320,7 +320,7 @@ onMounted(async () => {
   
   // 检查是否需要自动播放
   if (route.query.autoPlay === 'true') {
-    console.log('🎵 检测到自动播放参数，准备播放专辑')
+    // CONSOLE LOG REMOVED: console.log('🎵 检测到自动播放参数，准备播放专辑')
     // 延迟一下确保数据加载完成
     setTimeout(() => {
       playAll()
@@ -348,7 +348,7 @@ const fetchAlbumDetail = async () => {
             artist.value = artistResponse.data
           }
         } catch (error) {
-          console.warn('获取歌手信息失败:', error)
+          // CONSOLE LOG REMOVED: console.warn('获取歌手信息失败:', error)
         }
       }
       
@@ -366,10 +366,10 @@ const fetchAlbumDetail = async () => {
         songs.value = []
       }
       
-      console.log('💿 专辑详情加载完成:')
-      console.log('专辑信息:', album.value)
-      console.log('歌手信息:', artist.value)
-      console.log('歌曲数量:', songs.value?.length || 0)
+      // CONSOLE LOG REMOVED: console.log('💿 专辑详情加载完成:')
+      // CONSOLE LOG REMOVED: console.log('专辑信息:', album.value)
+      // CONSOLE LOG REMOVED: console.log('歌手信息:', artist.value)
+      // CONSOLE LOG REMOVED: console.log('歌曲数量:', songs.value?.length || 0)
     } else {
       ElMessage.error('专辑不存在')
     }
@@ -403,20 +403,20 @@ const playAll = async () => {
       return
     }
     
-    console.log('🎵 准备播放专辑:', album.value.name, songs.value.length, '首歌曲')
+    // CONSOLE LOG REMOVED: console.log('🎵 准备播放专辑:', album.value.name, songs.value.length, '首歌曲')
     
     
     const added = addMultipleToPlaylist(songs.value, true)
     
     if (added) {
     
-      console.log('📋 当前播放列表长度:', playlist.value.length)
+      // CONSOLE LOG REMOVED: console.log('📋 当前播放列表长度:', playlist.value.length)
       ElMessage.success(`开始播放专辑《${album.value.name}》`)
     } else {
       ElMessage.error('播放失败，请稍后重试')
     }
   } catch (error) {
-    console.error('播放专辑失败:', error)
+    // CONSOLE LOG REMOVED: console.error('播放专辑失败:', error)
     ElMessage.error('播放失败，请稍后重试')
   }
 }
@@ -424,12 +424,12 @@ const playAll = async () => {
 // 播放单首歌曲
 const playCurrentSong = async (song) => {
   try {
-    console.log('🎵 准备播放歌曲:', song.name)
+    // CONSOLE LOG REMOVED: console.log('🎵 准备播放歌曲:', song.name)
     
     const added = addToPlaylist(song, true)
     
     if (added) {
-      console.log('✅ 歌曲已添加到播放列表:', song.name)
+      // CONSOLE LOG REMOVED: console.log('✅ 歌曲已添加到播放列表:', song.name)
       ElMessage.success(`开始播放: ${song.name}`)
     } else {
       ElMessage.error('播放失败')
@@ -443,7 +443,7 @@ const playCurrentSong = async (song) => {
 // 添加歌曲到下一首播放
 const addSongToPlayNext = async (song) => {
   try {
-    console.log('⏭️ 准备将歌曲添加到下一首播放:', song.name)
+    // CONSOLE LOG REMOVED: console.log('⏭️ 准备将歌曲添加到下一首播放:', song.name)
     
     const added = addToPlayNext(song)
     
@@ -470,7 +470,7 @@ const loadFavoriteStatus = async () => {
       isFavorited.value = response.data.isFavorited || false
     }
   } catch (error) {
-    console.error('获取专辑收藏状态失败:', error)
+    // CONSOLE LOG REMOVED: console.error('获取专辑收藏状态失败:', error)
   }
 }
 
@@ -493,7 +493,7 @@ const toggleFavorite = async () => {
       ElMessage.error(response.message || '操作失败')
     }
   } catch (error) {
-    console.error('专辑收藏操作失败:', error)
+    // CONSOLE LOG REMOVED: console.error('专辑收藏操作失败:', error)
     ElMessage.error('操作失败，请稍后重试')
   }
 }

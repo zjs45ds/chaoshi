@@ -20,7 +20,7 @@ import playlists from '@/assets/mock/playlists.js'
 
 // 页面变化回调
 function handlePageChange(pageInfo) {
-  console.log('播放列表轮播页面变化:', pageInfo)
+  // CONSOLE LOG REMOVED: console.log('播放列表轮播页面变化:', pageInfo)
 }
 </script>
 

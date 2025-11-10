@@ -38,11 +38,11 @@ const fetchBanners = async () => {
     if (Array.isArray(banners)) {
       carouselItems.value = banners.map(banner => ({ src: banner.imgUrl }))
     } else {
-      console.warn('轮播图数据不是数组格式:', banners)
+      // CONSOLE LOG REMOVED: console.warn('轮播图数据不是数组格式:', banners)
       carouselItems.value = []
     }
   } catch (error) {
-    console.error('获取轮播图失败:', error)
+    // CONSOLE LOG REMOVED: console.error('获取轮播图失败:', error)
     carouselItems.value = []
   }
 }
@@ -56,7 +56,8 @@ onMounted(() => {
 .carousel-container {
   width: 100%;
   max-width: 1200px;
-  margin: 0 auto;
+  margin: -40px auto 0;
+ 
 }
 
 .custom-carousel {

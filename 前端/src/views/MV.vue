@@ -68,11 +68,11 @@ const fetchMVs = async () => {
       error.value = response?.message || '获取MV数据失败'
     }
     
-    console.log('🎥 MV数据加载完成:', mvs.value.length, mvs.value)
+    // CONSOLE LOG REMOVED: console.log('🎥 MV数据加载完成:', mvs.value.length, mvs.value)
     
   } catch (err) {
     error.value = '获取MV列表失败，请重试'
-    console.error('获取MV列表失败:', err)
+    // CONSOLE LOG REMOVED: console.error('获取MV列表失败:', err)
     
     // 网络错误已在httpUtils.js中处理
     let shouldShowError = true
@@ -102,7 +102,7 @@ function goToMVDetail(id) {
     router.push(targetPath).catch(err => {
       // 忽略导航重复错误
       if (err.name !== 'NavigationDuplicated') {
-        console.error('路由导航错误:', err)
+        // CONSOLE LOG REMOVED: console.error('路由导航错误:', err)
       }
     })
   }
@@ -111,11 +111,11 @@ function goToMVDetail(id) {
 // 播放MV
 const playMV = async (mv) => {
   try {
-    console.log('📺 准备播放MV:', mv.name)
+    // CONSOLE LOG REMOVED: console.log('📺 准备播放MV:', mv.name)
     ElMessage.success(`开始播放MV: ${mv.name}`)
     // 这里可以添加实际的播放逻辑
   } catch (error) {
-    console.error('播放MV错误:', error)
+    // CONSOLE LOG REMOVED: console.error('播放MV错误:', error)
     ElMessage.error('播放失败: ' + error.message)
   }
 }

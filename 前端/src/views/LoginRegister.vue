@@ -659,7 +659,7 @@ export default {
           loginForm.value.remember = true
         }
       } catch (error) {
-        console.error('初始化失败:', error)
+        // CONSOLE LOG REMOVED: console.error('初始化失败:', error)
       }
     })
 

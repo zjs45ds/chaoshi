@@ -209,7 +209,7 @@ const handleFavoriteAll = async () => {
     const favoritedSongs = playlist.value.filter(song => isSongLiked(song.id))
     
     if (favoritedSongs.length === 0) {
-      console.log('没有已收藏的歌曲')
+      // CONSOLE LOG REMOVED: console.log('没有已收藏的歌曲')
       return
     }
     
@@ -217,7 +217,7 @@ const handleFavoriteAll = async () => {
       let successCount = 0
       let failCount = 0
       
-      console.log(`开始取消收藏 ${favoritedSongs.length} 首歌曲...`)
+      // CONSOLE LOG REMOVED: console.log(`开始取消收藏 ${favoritedSongs.length} 首歌曲...`)
       
       // 逐个取消收藏歌曲
       for (let i = 0; i < favoritedSongs.length; i++) {
@@ -227,14 +227,14 @@ const handleFavoriteAll = async () => {
           const result = await toggleSongLike(song)
           if (!result) {
             successCount++
-            console.log(`✓ 已取消收藏：${song.name} - ${song.artist} (${i + 1}/${favoritedSongs.length})`)
+            // CONSOLE LOG REMOVED: console.log(`✓ 已取消收藏：${song.name} - ${song.artist} (${i + 1}/${favoritedSongs.length})`)
           } else {
             failCount++
-            console.log(`✗ 取消收藏失败：${song.name} - ${song.artist}`)
+            // CONSOLE LOG REMOVED: console.log(`✗ 取消收藏失败：${song.name} - ${song.artist}`)
           }
         } catch (error) {
           failCount++
-          console.error(`取消收藏失败：${song.name}`, error)
+          // CONSOLE LOG REMOVED: console.error(`取消收藏失败：${song.name}`, error)
         }
         
         // 添加小延迟避免请求过于频繁
@@ -246,17 +246,17 @@ const handleFavoriteAll = async () => {
       // 清空批量收藏记录
       lastBatchFavoritedSongs.value = []
       
-      console.log(`取消收藏操作完成：成功 ${successCount} 首，失败 ${failCount} 首`)
+      // CONSOLE LOG REMOVED: console.log(`取消收藏操作完成：成功 ${successCount} 首，失败 ${failCount} 首`)
       
     } catch (error) {
-      console.error('取消收藏全部歌曲失败:', error)
+      // CONSOLE LOG REMOVED: console.error('取消收藏全部歌曲失败:', error)
     }
   } else {
     // 如果有未收藏的歌曲，则收藏所有未收藏的歌曲
     const unlovedSongs = playlist.value.filter(song => !isSongLiked(song.id))
     
     if (unlovedSongs.length === 0) {
-      console.log('全部已收藏')
+      // CONSOLE LOG REMOVED: console.log('全部已收藏')
       return
     }
     
@@ -265,7 +265,7 @@ const handleFavoriteAll = async () => {
       let failCount = 0
       const newlyFavoritedSongs = []
       
-      console.log(`开始收藏 ${unlovedSongs.length} 首歌曲...`)
+      // CONSOLE LOG REMOVED: console.log(`开始收藏 ${unlovedSongs.length} 首歌曲...`)
       
       // 逐个收藏歌曲
       for (let i = 0; i < unlovedSongs.length; i++) {
@@ -276,14 +276,14 @@ const handleFavoriteAll = async () => {
           if (result) {
             successCount++
             newlyFavoritedSongs.push(song.id)
-            console.log(`✓ 已收藏：${song.name} - ${song.artist} (${i + 1}/${unlovedSongs.length})`)
+            // CONSOLE LOG REMOVED: console.log(`✓ 已收藏：${song.name} - ${song.artist} (${i + 1}/${unlovedSongs.length})`)
           } else {
             failCount++
-            console.log(`✗ 收藏失败：${song.name} - ${song.artist}`)
+            // CONSOLE LOG REMOVED: console.log(`✗ 收藏失败：${song.name} - ${song.artist}`)
           }
         } catch (error) {
           failCount++
-          console.error(`收藏失败：${song.name}`, error)
+          // CONSOLE LOG REMOVED: console.error(`收藏失败：${song.name}`, error)
         }
         
         // 添加小延迟避免请求过于频繁
@@ -295,10 +295,10 @@ const handleFavoriteAll = async () => {
       // 记录本次批量收藏的歌曲ID
       lastBatchFavoritedSongs.value = newlyFavoritedSongs
       
-      console.log(`收藏操作完成：成功 ${successCount} 首，失败 ${failCount} 首`)
+      // CONSOLE LOG REMOVED: console.log(`收藏操作完成：成功 ${successCount} 首，失败 ${failCount} 首`)
       
     } catch (error) {
-      console.error('收藏全部歌曲失败:', error)
+      // CONSOLE LOG REMOVED: console.error('收藏全部歌曲失败:', error)
     }
   }
 }
@@ -310,7 +310,7 @@ const handleClearPlaylist = () => {
   // 确认清空操作
   if (confirm(`确定要清空播放列表吗？将移除所有 ${playlist.value.length} 首歌曲。`)) {
     clearPlaylist()
-    console.log('播放列表已清空')
+    // CONSOLE LOG REMOVED: console.log('播放列表已清空')
   }
 }
 
@@ -318,7 +318,7 @@ const toggleLove = async (song) => {
   try {
     await toggleSongLike(song)
   } catch (error) {
-    console.error('切换收藏状态失败:', error)
+    // CONSOLE LOG REMOVED: console.error('切换收藏状态失败:', error)
   }
 }
 
@@ -357,7 +357,7 @@ const removeFromPlaylist = (index) => {
       currentIndex.value--
     }
     
-    console.log(`已从播放列表中移除「${song.name}」`)
+    // CONSOLE LOG REMOVED: console.log(`已从播放列表中移除「${song.name}」`)
   }
 }
 const handleImageError = (event) => { event.target.src = '/src/assets/1音乐.png' }

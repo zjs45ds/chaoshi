@@ -56,6 +56,22 @@ export const isSongFavorited = (userId, songId) =>
 export const getSongStreamUrl = (songId) => 
   request.get(`/api/songs/${songId}/stream-url`) 
 
-// 获取歌曲歌词
-export const getSongLyrics = (songId) => 
-  request.get(`/api/songs/${songId}`)
+/**
+ * 获取歌曲歌词
+ * @param {number} songId - 歌曲ID
+ * @returns {Promise<Object>} 歌词数据
+ */
+export const getSongLyrics = async (songId) => {
+  
+  try {
+    const response = await request.get(`/api/songs/${songId}`)
+    return response
+  } catch (error) {
+   
+    if (error.response) {
+      // CONSOLE LOG REMOVED: console.error('响应状态:', error.response.status)
+      // CONSOLE LOG REMOVED: console.error('响应数据:', error.response.data)
+    }
+    throw error
+  }
+}

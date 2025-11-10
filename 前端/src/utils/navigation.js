@@ -43,14 +43,14 @@ export const createSafeNavigation = (router, route) => {
                   isNavigationFailure(error, NavigationFailureType.cancelled)) {
                 resolve() // 忽略重复和取消的错误
               } else {
-                console.error('Navigation error:', error)
+                // CONSOLE LOG REMOVED: console.error('Navigation error:', error)
                 reject(error)
               }
             }
           }, NAVIGATION_DELAY)
         })
       } catch (error) {
-        console.error('Navigation setup error:', error)
+        // CONSOLE LOG REMOVED: console.error('Navigation setup error:', error)
         throw error
       }
     },
@@ -83,14 +83,14 @@ export const createSafeNavigation = (router, route) => {
                   isNavigationFailure(error, NavigationFailureType.cancelled)) {
                 resolve() // 忽略重复和取消的错误
               } else {
-                console.error('Navigation error:', error)
+                // CONSOLE LOG REMOVED: console.error('Navigation error:', error)
                 reject(error)
               }
             }
           }, NAVIGATION_DELAY)
         })
       } catch (error) {
-        console.error('Navigation setup error:', error)
+        // CONSOLE LOG REMOVED: console.error('Navigation setup error:', error)
         throw error
       }
     },
@@ -106,7 +106,7 @@ export const createSafeNavigation = (router, route) => {
           router.push('/')
         }
       } catch (error) {
-        console.error('Back navigation error:', error)
+        // CONSOLE LOG REMOVED: console.error('Back navigation error:', error)
         router.push('/')
       }
     },
@@ -118,7 +118,7 @@ export const createSafeNavigation = (router, route) => {
       try {
         router.go(1)
       } catch (error) {
-        console.error('Forward navigation error:', error)
+        // CONSOLE LOG REMOVED: console.error('Forward navigation error:', error)
       }
     }
   }
@@ -176,14 +176,14 @@ export const safeNavigate = {
                 isNavigationFailure(error, NavigationFailureType.cancelled)) {
               resolve() // 忽略重复和取消的错误
             } else {
-              console.error('Navigation error:', error)
+              // CONSOLE LOG REMOVED: console.error('Navigation error:', error)
               reject(error)
             }
           }
         }, safeNavigate.NAVIGATION_DELAY)
       })
     } catch (error) {
-      console.error('Navigation setup error:', error)
+      // CONSOLE LOG REMOVED: console.error('Navigation setup error:', error)
       throw error
     }
   }

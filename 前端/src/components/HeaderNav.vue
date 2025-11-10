@@ -389,16 +389,16 @@ async function checkLogin() {
   if (isLogin.value) {
     try {
       await initUserInfo()
-      console.log('✅ HeaderNav: 用户信息已从数据库更新')
+      // CONSOLE LOG REMOVED: console.log('✅ HeaderNav: 用户信息已从数据库更新')
     } catch (error) {
-      console.warn('⚠️ HeaderNav: 无法从数据库获取用户信息，使用本地缓存')
+      // CONSOLE LOG REMOVED: console.warn('⚠️ HeaderNav: 无法从数据库获取用户信息，使用本地缓存')
     }
   }
 }
 
 // 用户信息更新处理函数
 function handleUserInfoUpdate() {
-  console.log('🔔 HeaderNav: 接收到用户信息更新事件')
+  // CONSOLE LOG REMOVED: console.log('🔔 HeaderNav: 接收到用户信息更新事件')
 
   loadSearchHistory()
 }
@@ -602,12 +602,12 @@ async function onBackgroundUpload(e) {
       ElMessage.warning('图片较大，建议使用更小的图片以获得更好的性能')
     }
 
-    console.log(`图片优化完成: 原始${result.originalSize}MB -> 压缩后${result.compressedSize}MB (压缩率${result.compressionRatio}%)`)
+    // CONSOLE LOG REMOVED: console.log(`图片优化完成: 原始${result.originalSize}MB -> 压缩后${result.compressedSize}MB (压缩率${result.compressionRatio}%)`)
     
     selectBackground(result.dataUrl, true) 
     
   } catch (error) {
-    console.error('图片处理失败:', error)
+    // CONSOLE LOG REMOVED: console.error('图片处理失败:', error)
     ElMessage.error('图片处理失败，请重试')
   } finally {
     e.target.value = ''
@@ -648,11 +648,11 @@ async function handleSearchInput() {
       if (response && response.code === 200) {
         searchResults.value = response.data || []
       } else {
-        console.warn('搜索建议API返回异常状态:', response?.code, response?.message)
+        // CONSOLE LOG REMOVED: console.warn('搜索建议API返回异常状态:', response?.code, response?.message)
         searchResults.value = []
       }
     } catch (error) {
-      console.error('获取搜索建议失败:', error)
+      // CONSOLE LOG REMOVED: console.error('获取搜索建议失败:', error)
       searchResults.value = []
     } finally {
       isSearching.value = false
@@ -707,12 +707,12 @@ async function performSearch(keyword) {
         })))
       }
     } else {
-      console.warn('搜索API返回异常状态:', response?.code, response?.message)
+      // CONSOLE LOG REMOVED: console.warn('搜索API返回异常状态:', response?.code, response?.message)
     }
     
     searchResults.value = results
   } catch (error) {
-    console.error('搜索失败:', error)
+    // CONSOLE LOG REMOVED: console.error('搜索失败:', error)
     searchResults.value = []
   } finally {
     isSearching.value = false
@@ -730,7 +730,7 @@ async function handleSearch() {
     
     ElMessage.success(`搜索"${keyword}"完成`)
   } catch (error) {
-    console.error('搜索过程中发生错误:', error)
+    // CONSOLE LOG REMOVED: console.error('搜索过程中发生错误:', error)
     ElMessage.error('搜索失败，请重试')
   }
 }
@@ -790,7 +790,7 @@ function clearSearch() {
 async function deleteHistoryItem(keyword) {
   try {
     const userId = getCurrentUserId()
-    console.log('准备删除搜索历史:', { keyword, userId })
+    // CONSOLE LOG REMOVED: console.log('准备删除搜索历史:', { keyword, userId })
     
     if (!userId) {
       ElMessage.error('请先登录')
@@ -798,7 +798,7 @@ async function deleteHistoryItem(keyword) {
     }
     
     const response = await deleteSearchHistoryItem(keyword, userId)
-    console.log('删除搜索历史API响应:', response)
+    // CONSOLE LOG REMOVED: console.log('删除搜索历史API响应:', response)
     
     if (response && response.code === 200) {
       // API调用成功后，重新从数据库加载搜索历史
@@ -808,7 +808,7 @@ async function deleteHistoryItem(keyword) {
       ElMessage.error(response?.message || '删除失败')
     }
   } catch (error) {
-    console.error('删除搜索历史项失败:', error)
+    // CONSOLE LOG REMOVED: console.error('删除搜索历史项失败:', error)
     ElMessage.error('删除失败，请重试')
   }
 }
@@ -816,7 +816,7 @@ async function deleteHistoryItem(keyword) {
 async function handleClearHistory() {
   try {
     const userId = getCurrentUserId()
-    console.log('准备清空搜索历史:', { userId })
+    // CONSOLE LOG REMOVED: console.log('准备清空搜索历史:', { userId })
     
     if (!userId) {
       ElMessage.error('请先登录')
@@ -824,7 +824,7 @@ async function handleClearHistory() {
     }
     
     const response = await clearSearchHistory(userId)
-    console.log('清空搜索历史API响应:', response)
+    // CONSOLE LOG REMOVED: console.log('清空搜索历史API响应:', response)
     
     if (response && response.code === 200) {
       await loadSearchHistory()
@@ -833,7 +833,7 @@ async function handleClearHistory() {
       ElMessage.error(response?.message || '清空失败')
     }
   } catch (error) {
-    console.error('清空搜索历史失败:', error)
+    // CONSOLE LOG REMOVED: console.error('清空搜索历史失败:', error)
     ElMessage.error('清空失败，请重试')
   }
 }
@@ -843,33 +843,33 @@ async function saveToSearchHistory(keyword) {
   
   try {
     const userId = getCurrentUserId()
-    console.log('保存搜索历史 - 用户ID:', userId)
+    // CONSOLE LOG REMOVED: console.log('保存搜索历史 - 用户ID:', userId)
     
     if (!userId) {
-      console.log('用户未登录，跳过搜索历史保存')
+      // CONSOLE LOG REMOVED: console.log('用户未登录，跳过搜索历史保存')
       return
     }
     
-    console.log('保存搜索历史到数据库:', { keyword, userId })
+    // CONSOLE LOG REMOVED: console.log('保存搜索历史到数据库:', { keyword, userId })
     const response = await saveSearchHistory(keyword, userId)
-    console.log('保存搜索历史API响应:', response)
+    // CONSOLE LOG REMOVED: console.log('保存搜索历史API响应:', response)
     
     if (response && response.code === 200) {
-      console.log('搜索历史保存成功，重新加载搜索历史')
+      // CONSOLE LOG REMOVED: console.log('搜索历史保存成功，重新加载搜索历史')
       await loadSearchHistory()
     } else {
-      console.warn('保存搜索历史API返回异常状态:', response?.code, response?.message)
+      // CONSOLE LOG REMOVED: console.warn('保存搜索历史API返回异常状态:', response?.code, response?.message)
       await loadSearchHistory()
     }
   } catch (error) {
-    console.error('保存搜索历史失败:', error)
-    console.error('错误详情:', error.message)
-    console.error('错误堆栈:', error.stack)
+    // CONSOLE LOG REMOVED: console.error('保存搜索历史失败:', error)
+    // CONSOLE LOG REMOVED: console.error('错误详情:', error.message)
+    // CONSOLE LOG REMOVED: console.error('错误堆栈:', error.stack)
     
     try {
       await loadSearchHistory()
     } catch (reloadError) {
-      console.error('重新加载搜索历史也失败:', reloadError)
+      // CONSOLE LOG REMOVED: console.error('重新加载搜索历史也失败:', reloadError)
     }
   }
 }
@@ -878,20 +878,20 @@ async function saveToSearchHistory(keyword) {
 async function loadSearchHistory() {
   try {
     const userId = getCurrentUserId()
-    console.log('加载搜索历史 - 用户ID:', userId)
+    // CONSOLE LOG REMOVED: console.log('加载搜索历史 - 用户ID:', userId)
     
     if (!userId) {
       searchHistory.value = []
-      console.log('用户未登录，清空搜索历史')
+      // CONSOLE LOG REMOVED: console.log('用户未登录，清空搜索历史')
       return
     }
     
-    console.log('从数据库加载搜索历史，userId:', userId)
+    // CONSOLE LOG REMOVED: console.log('从数据库加载搜索历史，userId:', userId)
     const response = await getSearchHistory(userId)
-    console.log('搜索历史API响应完整数据:', response)
+    // CONSOLE LOG REMOVED: console.log('搜索历史API响应完整数据:', response)
     
     if (response && response.code === 200) {
-      console.log('API调用成功，原始数据:', response.data)
+      // CONSOLE LOG REMOVED: console.log('API调用成功，原始数据:', response.data)
       
       if (Array.isArray(response.data)) {
         searchHistory.value = response.data.map(item => {
@@ -903,19 +903,19 @@ async function loadSearchHistory() {
           return ''
         }).filter(keyword => keyword && keyword.trim()) // 过滤空值和空格
         
-        console.log('处理后的搜索历史:', searchHistory.value)
+        // CONSOLE LOG REMOVED: console.log('处理后的搜索历史:', searchHistory.value)
       } else {
-        console.warn('搜索历史数据不是数组，类型为:', typeof response.data)
+        // CONSOLE LOG REMOVED: console.warn('搜索历史数据不是数组，类型为:', typeof response.data)
         searchHistory.value = []
       }
     } else {
-      console.warn('搜索历史API响应异常:', response?.code, response?.message)
+      // CONSOLE LOG REMOVED: console.warn('搜索历史API响应异常:', response?.code, response?.message)
       searchHistory.value = []
     }
   } catch (error) {
-    console.error('加载搜索历史失败:', error)
-    console.error('错误详情:', error.message)
-    console.error('错误堆栈:', error.stack)
+    // CONSOLE LOG REMOVED: console.error('加载搜索历史失败:', error)
+    // CONSOLE LOG REMOVED: console.error('错误详情:', error.message)
+    // CONSOLE LOG REMOVED: console.error('错误堆栈:', error.stack)
     searchHistory.value = []
   }
 }

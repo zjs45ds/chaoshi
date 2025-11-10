@@ -34,7 +34,7 @@ export const fetchUserInfo = async (userId = null) => {
     isLoading.value = true
     const targetUserId = userId || getCurrentUserId()
     
-    console.log('📡 从数据库获取用户信息，用户ID:', targetUserId)
+    // CONSOLE LOG REMOVED: console.log('📡 从数据库获取用户信息，用户ID:', targetUserId)
     
     let response = null
     let userData = null
@@ -42,26 +42,26 @@ export const fetchUserInfo = async (userId = null) => {
     // 首先尝试使用profile API
     try {
       response = await getUserProfile(targetUserId)
-      console.log('📡 Profile API响应:', response)
+      // CONSOLE LOG REMOVED: console.log('📡 Profile API响应:', response)
       
       if (response && response.code === 200 && response.data) {
         userData = response.data
-        console.log('✅ 通过Profile API获取用户数据成功')
+        // CONSOLE LOG REMOVED: console.log('✅ 通过Profile API获取用户数据成功')
       }
     } catch (profileError) {
-      console.warn('⚠️ Profile API调用失败，尝试备用API:', profileError)
+      // CONSOLE LOG REMOVED: console.warn('⚠️ Profile API调用失败，尝试备用API:', profileError)
       
       // 使用info API作为备用
       try {
         response = await getUserInfo(targetUserId)
-        console.log('📡 Info API响应:', response)
+        // CONSOLE LOG REMOVED: console.log('📡 Info API响应:', response)
         
         if (response && response.code === 200 && response.data) {
           userData = response.data
-          console.log('✅ 通过Info API获取用户数据成功')
+          // CONSOLE LOG REMOVED: console.log('✅ 通过Info API获取用户数据成功')
         }
       } catch (infoError) {
-        console.error('❌ Info API也失败了:', infoError)
+        // CONSOLE LOG REMOVED: console.error('❌ Info API也失败了:', infoError)
         throw new Error('无法获取用户信息')
       }
     }
@@ -85,7 +85,7 @@ export const fetchUserInfo = async (userId = null) => {
       localStorage.setItem('userBio', userInfo.bio)
       
       isInitialized.value = true
-      console.log('✅ 用户信息更新成功:', userInfo)
+      // CONSOLE LOG REMOVED: console.log('✅ 用户信息更新成功:', userInfo)
       
       // 触发全局事件通知其他组件
       window.dispatchEvent(new CustomEvent('user-info-updated', {
@@ -98,7 +98,7 @@ export const fetchUserInfo = async (userId = null) => {
     }
     
   } catch (error) {
-    console.error('❌ 获取用户信息失败:', error)
+    // CONSOLE LOG REMOVED: console.error('❌ 获取用户信息失败:', error)
     
     // 如果API失败，使用localStorage的备用数据
     const fallbackData = {
@@ -111,7 +111,7 @@ export const fetchUserInfo = async (userId = null) => {
     }
     
     Object.assign(userInfo, fallbackData)
-    console.log('⚠️ 使用备用数据:', userInfo)
+    // CONSOLE LOG REMOVED: console.log('⚠️ 使用备用数据:', userInfo)
     
     return { ...userInfo }
   } finally {
@@ -137,7 +137,7 @@ export const updateUserInfo = (newUserInfo) => {
     detail: { userInfo: { ...userInfo } }
   }))
   
-  console.log('✅ 用户信息已更新:', userInfo)
+  // CONSOLE LOG REMOVED: console.log('✅ 用户信息已更新:', userInfo)
 }
 
 /**

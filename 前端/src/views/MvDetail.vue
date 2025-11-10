@@ -96,45 +96,45 @@ const loadFavoriteStatus = async () => {
     const userId = getCurrentUserId()
     const mvId = route.params.id
     
-    console.log('🔍 开始加载MV收藏状态:', { userId, mvId })
+    // CONSOLE LOG REMOVED: console.log('🔍 开始加载MV收藏状态:', { userId, mvId })
     
     // 首先尝试使用收藏状态检查API
     try {
       const { getMvFavoriteStatus } = await import('@/api/favorite.js')
       const response = await getMvFavoriteStatus(mvId, userId)
       
-      console.log('📡 收藏状态API响应:', response)
+      // CONSOLE LOG REMOVED: console.log('📡 收藏状态API响应:', response)
       
       if (response.code === 200) {
         const favoriteStatus = response.data?.isFavorited === true || response.data === true
         isFavorited.value = favoriteStatus
-        console.log('✅ 通过API获取收藏状态:', favoriteStatus)
+        // CONSOLE LOG REMOVED: console.log('✅ 通过API获取收藏状态:', favoriteStatus)
         return
       }
     } catch (apiError) {
-      console.warn('⚠️ 收藏状态API调用失败，使用备用方法:', apiError)
+      // CONSOLE LOG REMOVED: console.warn('⚠️ 收藏状态API调用失败，使用备用方法:', apiError)
     }
     
     // 备用方法：通过获取用户收藏列表来检查
     try {
       const mvListResponse = await getUserFavoriteMvs(userId)
-      console.log('📡 收藏列表API响应:', mvListResponse)
+      // CONSOLE LOG REMOVED: console.log('📡 收藏列表API响应:', mvListResponse)
       
       if (mvListResponse.code === 200 && mvListResponse.data) {
         const favoriteMvIds = mvListResponse.data.map(mv => mv.id)
         const favoriteStatus = favoriteMvIds.includes(parseInt(mvId))
         isFavorited.value = favoriteStatus
-        console.log('✅ 通过收藏列表检查状态:', favoriteStatus, 'MV ID:', mvId, '收藏列表:', favoriteMvIds)
+        // CONSOLE LOG REMOVED: console.log('✅ 通过收藏列表检查状态:', favoriteStatus, 'MV ID:', mvId, '收藏列表:', favoriteMvIds)
       } else {
         isFavorited.value = false
-        console.log('❌ 收藏列表为空或获取失败，设为未收藏')
+        // CONSOLE LOG REMOVED: console.log('❌ 收藏列表为空或获取失败，设为未收藏')
       }
     } catch (listError) {
-      console.error('❌ 获取收藏列表失败:', listError)
+      // CONSOLE LOG REMOVED: console.error('❌ 获取收藏列表失败:', listError)
       isFavorited.value = false
     }
   } catch (error) {
-    console.error('❌ 获取收藏状态失败:', error)
+    // CONSOLE LOG REMOVED: console.error('❌ 获取收藏状态失败:', error)
     isFavorited.value = false
   }
 }
@@ -152,12 +152,7 @@ const toggleFavorite = async () => {
     const mvId = mv.value.id
     const originalStatus = isFavorited.value
     
-    console.log('🎯 开始收藏操作:', {
-      userId,
-      mvId,
-      currentStatus: originalStatus,
-      targetAction: originalStatus ? '取消收藏' : '收藏'
-    })
+    // CONSOLE LOG REMOVED: console.log('🎯 开始收藏操作:', { userId, mvId, currentStatus: originalStatus, targetAction: originalStatus ? '取消收藏' : '收藏' });
     
     const response = await favoriteMv(mvId, userId, originalStatus)
     
@@ -166,12 +161,7 @@ const toggleFavorite = async () => {
       isFavorited.value = newStatus
       ElMessage.success(newStatus ? '已收藏MV' : '已取消收藏MV')
       
-      console.log('✅ 收藏操作成功:', {
-        mvId,
-        originalStatus,
-        newStatus,
-        response: response.data
-      })
+      // CONSOLE LOG REMOVED: console.log('✅ 收藏操作成功:', { originalStatus, newStatus, response: response.data });
       
       // 发送收藏状态变化事件，通知我的音乐页面刷新
       window.dispatchEvent(new CustomEvent('mvFavoriteChanged', {
@@ -184,18 +174,18 @@ const toggleFavorite = async () => {
       // 等待一小段时间后重新验证状态，确保持久化成功
       setTimeout(async () => {
         await loadFavoriteStatus()
-        console.log('🔄 重新验证收藏状态:', isFavorited.value)
+        // CONSOLE LOG REMOVED: console.log('🔄 重新验证收藏状态:', isFavorited.value)
       }, 500)
       
     } else {
-      console.error('❌ 收藏操作失败:', response)
+      // CONSOLE LOG REMOVED: console.error('❌ 收藏操作失败:', response)
       ElMessage.error(response.message || '操作失败')
       
       // 重新加载状态以确保UI与服务器同步
       await loadFavoriteStatus()
     }
   } catch (error) {
-    console.error('❌ 收藏操作异常:', error)
+    // CONSOLE LOG REMOVED: console.error('❌ 收藏操作异常:', error)
     
     // 如果是重复数据错误或其他数据库错误，重新加载状态
     if (error.message && (
@@ -222,7 +212,7 @@ const fetchMvDetail = async () => {
     
     if (response && response.code === 200) {
       mv.value = response.data
-      console.log('🎬 MV详情加载完成:', mv.value)
+      // CONSOLE LOG REMOVED: console.log('🎬 MV详情加载完成:', mv.value)
       // 加载收藏状态
       await loadFavoriteStatus()
     } else {
@@ -263,7 +253,7 @@ const handlePlay = () => {
 // 页面可见性变化时刷新收藏状态
 const handleVisibilityChange = () => {
   if (!document.hidden && mv.value) {
-    console.log('🔄 页面重新可见，刷新收藏状态')
+    // CONSOLE LOG REMOVED: console.log('🔄 页面重新可见，刷新收藏状态')
     loadFavoriteStatus()
   }
 }
@@ -272,7 +262,7 @@ const handleVisibilityChange = () => {
 const handleMvFavoriteChanged = (event) => {
   const { mvId, isFavorited: newStatus } = event.detail
   if (mv.value && mv.value.id == mvId) {
-    console.log('🔄 收到收藏状态变化事件:', { mvId, newStatus })
+    // CONSOLE LOG REMOVED: console.log('🔄 收到收藏状态变化事件:', { mvId, newStatus })
     isFavorited.value = newStatus
   }
 }
@@ -288,14 +278,14 @@ onMounted(() => {
   
   // 检查是否需要自动播放
   if (route.query.autoPlay === 'true') {
-    console.log('🎬 检测到自动播放参数，准备自动播放视频')
+    // CONSOLE LOG REMOVED: console.log('🎬 检测到自动播放参数，准备自动播放视频')
     // 延迟一下确保视频元素加载完成
     setTimeout(() => {
       const videoElement = document.querySelector('.video-player')
       if (videoElement && videoElement.src) {
-        console.log('▶️ 自动播放视频:', mv.value?.name)
+        // CONSOLE LOG REMOVED: console.log('▶️ 自动播放视频:', mv.value?.name)
         videoElement.play().catch(error => {
-          console.warn('自动播放失败（可能需要用户交互）:', error)
+          // CONSOLE LOG REMOVED: console.warn('自动播放失败（可能需要用户交互）:', error)
           ElMessage.info('请点击播放按钮开始播放视频')
         })
       }

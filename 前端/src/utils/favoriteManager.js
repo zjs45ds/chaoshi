@@ -21,7 +21,7 @@ export const getUserId = () => {
   if (!userId) {
     userId = '1' // 默认使用用户ID为1
     localStorage.setItem('userId', userId)
-    console.log('👤 使用默认用户ID:', userId)
+    // CONSOLE LOG REMOVED: console.log('👤 使用默认用户ID:', userId)
   }
   
   return userId
@@ -34,11 +34,11 @@ export const initFavoriteSongs = async () => {
   try {
     const userId = getUserId()
     if (!userId) {
-      console.log('用户未登录，无法获取喜欢的歌曲')
+      // CONSOLE LOG REMOVED: console.log('用户未登录，无法获取喜欢的歌曲')
       return
     }
 
-    console.log('正在获取用户喜欢的歌曲，用户ID:', userId)
+    // CONSOLE LOG REMOVED: console.log('正在获取用户喜欢的歌曲，用户ID:', userId)
     const response = await getUserFavoriteSongs(userId, 1, 50)
     
     if (response && response.code === 200 && response.data) {
@@ -64,13 +64,13 @@ export const initFavoriteSongs = async () => {
         favoriteStatus.set(song.id, true)
       })
       
-      console.log('成功获取用户喜欢的歌曲:', favoriteSongs.value.length, '首')
+      // CONSOLE LOG REMOVED: console.log('成功获取用户喜欢的歌曲:', favoriteSongs.value.length, '首')
     } else {
-      console.warn('获取用户喜欢歌曲失败:', response?.message || '未知错误')
+      // CONSOLE LOG REMOVED: console.warn('获取用户喜欢歌曲失败:', response?.message || '未知错误')
       favoriteSongs.value = []
     }
   } catch (error) {
-    console.error('获取用户喜欢歌曲失败:', error)
+    // CONSOLE LOG REMOVED: console.error('获取用户喜欢歌曲失败:', error)
     favoriteSongs.value = []
   }
 }
@@ -89,12 +89,12 @@ export const toggleSongLike = async (song) => {
   try {
     const userId = getUserId()
     if (!userId) {
-      console.warn('用户未登录，无法执行收藏操作')
+      // CONSOLE LOG REMOVED: console.warn('用户未登录，无法执行收藏操作')
       return false
     }
     
     if (!song || !song.id) {
-      console.warn('歌曲信息不完整')
+      // CONSOLE LOG REMOVED: console.warn('歌曲信息不完整')
       return false
     }
     
@@ -110,7 +110,7 @@ export const toggleSongLike = async (song) => {
         // 移除
         favoriteSongs.value = favoriteSongs.value.filter(s => s.id !== song.id)
         favoriteStatus.set(song.id, false)
-        console.log(`♡ 已从我喜欢中移除：${song.name}`)
+        // CONSOLE LOG REMOVED: console.log(`♡ 已从我喜欢中移除：${song.name}`)
       } else {
         // 添加 - 确保歌曲对象格式完整，包含所有必要字段
         const formattedSong = {
@@ -130,7 +130,7 @@ export const toggleSongLike = async (song) => {
           favoriteSongs.value.unshift(formattedSong)
         }
         favoriteStatus.set(song.id, true)
-        console.log(`♥ 已添加到我喜欢：${song.name}`)
+        // CONSOLE LOG REMOVED: console.log(`♥ 已添加到我喜欢：${song.name}`)
       }
       
       // 触发自定义事件，通知其他组件更新
@@ -145,7 +145,7 @@ export const toggleSongLike = async (song) => {
       // 只有在成功添加到我喜欢的列表后才返回true
       return !isCurrentlyLiked
     } else {
-      console.error('收藏操作失败，请稍后重试')
+      // CONSOLE LOG REMOVED: console.error('收藏操作失败，请稍后重试')
       // 当操作失败时，重新同步后端状态
       await refreshFavoriteSongs()
       return isSongLiked(song.id)
@@ -183,7 +183,7 @@ export const toggleSongLike = async (song) => {
       }))
       
       shouldShowError = false
-      console.log(`歌曲${song.name}已在收藏夹中，已更新本地状态`)
+      // CONSOLE LOG REMOVED: console.log(`歌曲${song.name}已在收藏夹中，已更新本地状态`)
       return true
     } else if (error.message === 'Network Error' || error.code === 'ECONNABORTED' || error.code === 'ECONNREFUSED') {
       // 网络错误已在httpUtils.js中处理
@@ -195,7 +195,7 @@ export const toggleSongLike = async (song) => {
     }
     
     if (shouldShowError) {
-      console.error('收藏操作失败:', errorMessage)
+      // CONSOLE LOG REMOVED: console.error('收藏操作失败:', errorMessage)
     }
     
     // 无论如何，返回最新的本地状态
@@ -231,16 +231,16 @@ export const checkSongsLikeStatus = async (songs) => {
         const response = await isSongFavorited(userId, song.id)
         const isFavorited = response?.data === true || response?.data?.isFavorited === true
         favoriteStatus.set(song.id, isFavorited)
-        console.log(`歌曲 ${song.id} 收藏状态:`, isFavorited)
+        // CONSOLE LOG REMOVED: console.log(`歌曲 ${song.id} 收藏状态:`, isFavorited)
       } catch (error) {
-        console.log(`检查歌曲${song.id}喜欢状态失败:`, error)
+        // CONSOLE LOG REMOVED: console.log(`检查歌曲${song.id}喜欢状态失败:`, error)
         favoriteStatus.set(song.id, false)
       }
     })
     
     await Promise.all(promises)
   } catch (error) {
-    console.log('批量检查歌曲喜欢状态失败:', error)
+    // CONSOLE LOG REMOVED: console.log('批量检查歌曲喜欢状态失败:', error)
   }
 }
 
@@ -255,10 +255,10 @@ export const checkSongLikeStatus = async (songId) => {
     const response = await isSongFavorited(userId, songId)
     const isFavorited = response?.data === true || response?.data?.isFavorited === true
     favoriteStatus.set(songId, isFavorited)
-    console.log(`检查歌曲 ${songId} 收藏状态:`, isFavorited)
+    // CONSOLE LOG REMOVED: console.log(`检查歌曲 ${songId} 收藏状态:`, isFavorited)
     return isFavorited
   } catch (error) {
-    console.log(`检查歌曲${songId}收藏状态失败:`, error)
+    // CONSOLE LOG REMOVED: console.log(`检查歌曲${songId}收藏状态失败:`, error)
     favoriteStatus.set(songId, false)
     return false
   }

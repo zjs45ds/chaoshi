@@ -324,7 +324,7 @@ const goTo = (path) => {
 // 跳转到歌曲详情页
 const goToSongDetail = (song) => {
   if (!song || !song.id) {
-    console.warn('歌曲ID不存在');
+    // CONSOLE LOG REMOVED: console.warn('歌曲ID不存在');
     return;
   }
   const songId = song.id;
@@ -334,7 +334,7 @@ const goToSongDetail = (song) => {
 // 跳转到歌手详情页
 const goToArtistDetail = (song) => {
   if (!song) {
-    console.warn('歌曲信息不存在');
+    // CONSOLE LOG REMOVED: console.warn('歌曲信息不存在');
     return;
   }
   
@@ -347,7 +347,7 @@ const goToArtistDetail = (song) => {
   }
   
   if (!artistId) {
-    console.warn('歌曲中未找到歌手ID，无法跳转到歌手详情页');
+    // CONSOLE LOG REMOVED: console.warn('歌曲中未找到歌手ID，无法跳转到歌手详情页');
     return;
   }
   
@@ -375,7 +375,7 @@ const formatPlayCount = (count) => {
 };
 
 const playAlbum = async (album) => {
-  console.log('🎵 点击播放专辑:', album);
+  // CONSOLE LOG REMOVED: console.log('🎵 点击播放专辑:', album);
   
   if (!album || !album.id) {
     ElMessage.warning('专辑信息不完整');
@@ -385,13 +385,13 @@ const playAlbum = async (album) => {
   try {
     ElMessage.success(`开始播放专辑《${album.name}》`);
   } catch (error) {
-    console.error('播放专辑错误:', error);
+    // CONSOLE LOG REMOVED: console.error('播放专辑错误:', error);
     ElMessage.error('播放失败，请稍后重试');
   }
 };
 
 const playSong = async (song) => {
-  console.log('🎵 点击播放歌曲:', song)
+  // CONSOLE LOG REMOVED: console.log('🎵 点击播放歌曲:', song)
   if (!song || !song.id) {
     ElMessage.warning('歌曲信息不完整')
     return
@@ -401,12 +401,12 @@ const playSong = async (song) => {
     const success = await playMusic(song)
     
     if (success) {
-      console.log('播放成功')
+      // CONSOLE LOG REMOVED: console.log('播放成功')
     } else {
-      console.log('播放失败')
+      // CONSOLE LOG REMOVED: console.log('播放失败')
     }
   } catch (error) {
-    console.error('播放错误:', error)
+    // CONSOLE LOG REMOVED: console.error('播放错误:', error)
    
   }
 }
@@ -422,7 +422,7 @@ const getToplistSongsByCache = (toplist, limit = 5) => {
 
 const playToplist = async (toplist) => {
   try {
-    console.log('准备播放排行榜:', toplist)
+    // CONSOLE LOG REMOVED: console.log('准备播放排行榜:', toplist)
     let songs = getToplistSongsByCache(toplist, 10)
     if (!songs || songs.length === 0) {
       songs = await loadToplistSongs(toplist, 10)
@@ -432,7 +432,7 @@ const playToplist = async (toplist) => {
       ElMessage.success(`开始播放 ${toplist.name}`)
     }
   } catch (error) {
-    console.error('播放排行榜错误:', error)
+    // CONSOLE LOG REMOVED: console.error('播放排行榜错误:', error)
     ElMessage.error('播放失败: ' + error.message)
   }
 }
@@ -450,7 +450,7 @@ onMounted(async () => {
       await Promise.all(loadPromises)
     }
   } catch (error) {
-    console.error('获取排行榜数据失败:', error)
+    // CONSOLE LOG REMOVED: console.error('获取排行榜数据失败:', error)
     hotToplists.value = [
       { id: 1, name: '热歌榜', cover: 'https://via.placeholder.com/200/ff7700/ffffff?text=热歌榜' },
       { id: 2, name: '新歌榜', cover: 'https://via.placeholder.com/200/0099ff/ffffff?text=新歌榜' },
@@ -469,7 +469,7 @@ onMounted(async () => {
 
 const loadToplistSongs = async (toplist, limit = 10) => {
   if (!toplist || !toplist.id) {
-    console.warn('排行榜ID不存在')
+    // CONSOLE LOG REMOVED: console.warn('排行榜ID不存在')
     return []
   }
 
@@ -487,10 +487,10 @@ const loadToplistSongs = async (toplist, limit = 10) => {
     
     try {
       apiSource = '详情页API'
-      console.log(`优先使用详情页API获取 ${toplist.name} 歌曲数据`)
+      // CONSOLE LOG REMOVED: console.log(`优先使用详情页API获取 ${toplist.name} 歌曲数据`)
       const detailResponse = await getToplistSongsDetail(toplist.id, 1, limit)
       
-      console.log(`详情页API响应:`, detailResponse)
+      // CONSOLE LOG REMOVED: console.log(`详情页API响应:`, detailResponse)
       
       if (detailResponse) {
         if (detailResponse.code === 200 || detailResponse.code === 0) {
@@ -508,16 +508,16 @@ const loadToplistSongs = async (toplist, limit = 10) => {
         }
       }
     } catch (detailError) {
-      console.warn(`详情页API获取${toplist.name}歌曲失败:`, detailError.message)
+      // CONSOLE LOG REMOVED: console.warn(`详情页API获取${toplist.name}歌曲失败:`, detailError.message)
     }
     
     if (!songs || songs.length === 0) {
       try {
         apiSource = '首页API'
-        console.log(`降级尝试使用首页API获取 ${toplist.name} 歌曲数据`)
+        // CONSOLE LOG REMOVED: console.log(`降级尝试使用首页API获取 ${toplist.name} 歌曲数据`)
         const homeResponse = await fetchToplistSongs(toplist.id, limit)
         
-        console.log(`首页API响应:`, homeResponse)
+        // CONSOLE LOG REMOVED: console.log(`首页API响应:`, homeResponse)
         
         if (homeResponse) {
           if (homeResponse.code === 200 || homeResponse.code === 0) {
@@ -535,7 +535,7 @@ const loadToplistSongs = async (toplist, limit = 10) => {
           }
         }
       } catch (homeApiError) {
-        console.warn(`首页API获取${toplist.name}歌曲失败:`, homeApiError.message)
+        // CONSOLE LOG REMOVED: console.warn(`首页API获取${toplist.name}歌曲失败:`, homeApiError.message)
       }
     }
 
@@ -561,20 +561,20 @@ const loadToplistSongs = async (toplist, limit = 10) => {
         }
       })
       
-      console.log(`从${apiSource}获取到${toplist.name}的歌曲:`, songs.length, '首')
+      // CONSOLE LOG REMOVED: console.log(`从${apiSource}获取到${toplist.name}的歌曲:`, songs.length, '首')
     } else {
-      console.warn(`${toplist.name} 所有API都未获取到有效歌曲数据，将显示空状态`)
+      // CONSOLE LOG REMOVED: console.warn(`${toplist.name} 所有API都未获取到有效歌曲数据，将显示空状态`)
       songs = [] 
     }
 
     if (toplistSongsCache.value) {
       toplistSongsCache.value[cacheKey] = songs
-      console.log(`缓存${toplist.name}歌曲数据:`, songs.length, '首')
+      // CONSOLE LOG REMOVED: console.log(`缓存${toplist.name}歌曲数据:`, songs.length, '首')
     }
     
     return songs
   } catch (error) {
-    console.error(`获取排行榜${toplist.name}歌曲发生严重错误:`, error)
+    // CONSOLE LOG REMOVED: console.error(`获取排行榜${toplist.name}歌曲发生严重错误:`, error)
     const fallbackSongs = [
       { id: 1001 + toplist.id, name: '热门歌曲' + toplist.id, artist: '歌手' + toplist.id },
       { id: 1002 + toplist.id, name: '排行榜歌曲' + toplist.id, artist: '艺人' + toplist.id },
@@ -653,7 +653,7 @@ async function loadHomeData() {
             hotSongs.value = data
             break
           case 'toplists':
-            console.log('排序前的排行榜数据:', data.map(item => item.name))
+            // CONSOLE LOG REMOVED: console.log('排序前的排行榜数据:', data.map(item => item.name))
             // 按照指定顺序排序排行榜：飙升榜、原创榜、潮石热歌榜、新歌榜、新专辑榜
             const desiredOrder = ['飙升榜', '原创榜', '潮石热歌榜', '新歌榜', '新专辑榜']
             hotToplists.value = [...data].sort((a, b) => {
@@ -667,39 +667,39 @@ async function loadHomeData() {
               if (indexB !== -1) return 1
               return 0
             })
-            console.log('排序后的排行榜数据:', hotToplists.value.map(item => item.name))
+            // CONSOLE LOG REMOVED: console.log('排序后的排行榜数据:', hotToplists.value.map(item => item.name))
             break
         }
         
         // 标记该区域加载完成
         loadingStates.value[task.key] = false
         
-        console.log(`${task.key} 数据加载完成:`, data.length)
+        // CONSOLE LOG REMOVED: console.log(`${task.key} 数据加载完成:`, data.length)
         
         if (task.key === 'toplists' && hotToplists.value.length > 0) {
-          console.log('开始预加载排行榜歌曲数据...')
+          // CONSOLE LOG REMOVED: console.log('开始预加载排行榜歌曲数据...')
           hotToplists.value.slice(0, 5).forEach(async (toplist) => {
             try {
               await loadToplistSongs(toplist, 5)
-              console.log(`${toplist.name} 歌曲预加载完成`)
+              // CONSOLE LOG REMOVED: console.log(`${toplist.name} 歌曲预加载完成`)
             } catch (error) {
-              console.error(`${toplist.name} 歌曲预加载失败:`, error)
+              // CONSOLE LOG REMOVED: console.error(`${toplist.name} 歌曲预加载失败:`, error)
             }
           })
         }
         
       } catch (error) {
-        console.error(`${task.key} 数据加载失败:`, error)
+        // CONSOLE LOG REMOVED: console.error(`${task.key} 数据加载失败:`, error)
         loadingStates.value[task.key] = false
       }
     })
 
     await Promise.allSettled(promises)
     
-    console.log('首页所有数据加载完成')
+    // CONSOLE LOG REMOVED: console.log('首页所有数据加载完成')
     
   } catch (error) {
-    console.error('首页数据加载失败:', error)
+    // CONSOLE LOG REMOVED: console.error('首页数据加载失败:', error)
   } finally {
     loading.value = false
   }
@@ -910,7 +910,7 @@ function isTextFullyVisible(element, debug = false) {
   const text = element.textContent || element.innerText
   
   if (debug) {
-    console.log(`检查文本: "${text.substring(0, 20)}..."`)
+    // CONSOLE LOG REMOVED: console.log(`检查文本: "${text.substring(0, 20)}..."`)
   }
   
   const lineClamp = style.webkitLineClamp || style.lineClamp
@@ -920,37 +920,37 @@ function isTextFullyVisible(element, debug = false) {
     const actualHeight = element.scrollHeight
     
     if (debug) {
-      console.log(`  line-clamp: ${lineClamp}, 最大高度: ${maxHeight}, 实际高度: ${actualHeight}`)
+      // CONSOLE LOG REMOVED: console.log(`  line-clamp: ${lineClamp}, 最大高度: ${maxHeight}, 实际高度: ${actualHeight}`)
     }
     
     if (actualHeight > maxHeight + 3) {
-      if (debug) console.log(`  文本被 line-clamp 截断`)
+      if (debug) // CONSOLE LOG REMOVED: console.log(`  文本被 line-clamp 截断`)
       return false
     }
   }
   
   if (element.scrollWidth > element.clientWidth + 2) {
-    if (debug) console.log(`  文本水平溢出: ${element.scrollWidth} > ${element.clientWidth}`)
+    if (debug) // CONSOLE LOG REMOVED: console.log(`  文本水平溢出: ${element.scrollWidth} > ${element.clientWidth}`)
     return false
   }
   
   if (element.scrollHeight > element.clientHeight + 2) {
-    if (debug) console.log(`  文本垂直溢出: ${element.scrollHeight} > ${element.clientHeight}`)
+    if (debug) // CONSOLE LOG REMOVED: console.log(`  文本垂直溢出: ${element.scrollHeight} > ${element.clientHeight}`)
     return false
   }
   
   
   if (text.length > 15 && element.clientWidth < 80) {
-    if (debug) console.log(`  文本可能被强制截断：文本长度${text.length}，显示宽度${element.clientWidth}`)
+    if (debug) // CONSOLE LOG REMOVED: console.log(`  文本可能被强制截断：文本长度${text.length}，显示宽度${element.clientWidth}`)
     return false
   }
   
   if (style.textOverflow === 'ellipsis' && element.scrollWidth > element.clientWidth + 1) {
-    if (debug) console.log(`  检测到省略号截断`)
+    if (debug) // CONSOLE LOG REMOVED: console.log(`  检测到省略号截断`)
     return false
   }
   
-  if (debug) console.log(`  文本完整显示`)
+  if (debug) // CONSOLE LOG REMOVED: console.log(`  文本完整显示`)
   return true
 }
 

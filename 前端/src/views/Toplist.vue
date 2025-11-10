@@ -43,11 +43,11 @@ const goToToplist = (id) => {
 // 播放排行榜
 const playToplist = async (toplist) => {
   try {
-    console.log('🏆 准备播放排行榜:', toplist.name)
+    // CONSOLE LOG REMOVED: console.log('🏆 准备播放排行榜:', toplist.name)
     ElMessage.success(`开始播放排行榜: ${toplist.name}`)
     // 这里可以添加实际的播放逻辑
   } catch (error) {
-    console.error('播放排行榜错误:', error)
+    // CONSOLE LOG REMOVED: console.error('播放排行榜错误:', error)
     ElMessage.error('播放失败: ' + error.message)
   }
 }
@@ -72,10 +72,10 @@ async function loadToplists() {
       ElMessage.error(response?.message || '获取排行榜数据失败')
     }
     
-    console.log('🏆 排行榜数据加载完成:', toplists.value.length, toplists.value)
+    // CONSOLE LOG REMOVED: console.log('🏆 排行榜数据加载完成:', toplists.value.length, toplists.value)
     
   } catch (error) {
-    console.error('加载排行榜数据失败:', error)
+    // CONSOLE LOG REMOVED: console.error('加载排行榜数据失败:', error)
     
     // 根据项目规范处理错误
     let shouldShowError = true

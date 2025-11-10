@@ -360,7 +360,7 @@ function preloadRelatedRoutes(route) {
         // 延迟预加载，避免影响当前页面渲染
         setTimeout(() => {
           routeConfig.component().catch(error => {
-            console.warn(`Failed to preload route ${routeName}:`, error)
+            // CONSOLE LOG REMOVED: console.warn(`Failed to preload route ${routeName}:`, error)
           })
         }, 2000)
       }

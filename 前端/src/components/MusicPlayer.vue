@@ -216,7 +216,7 @@ const toggleLove = async () => {
   try {
     await toggleSongLike(currentSong.value)
   } catch (error) {
-    console.error('切换收藏状态失败:', error)
+    // CONSOLE LOG REMOVED: console.error('切换收藏状态失败:', error)
   }
 }
 

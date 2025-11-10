@@ -245,15 +245,15 @@ export class ErrorHandler {
       this.errorLogs.pop()
     }
     
-    // 控制台输出
-    if (this.options.logToConsole) {
-      console.group(`🚨 ${error.level.toUpperCase()}: ${error.type}`)
-      console.error(error.message)
-      console.error('Details:', error.details)
-      console.error('Context:', context)
-      console.error('Stack:', error.stack)
-      console.groupEnd()
-    }
+    // 控制台输出已移除
+    // if (this.options.logToConsole) {
+    //   // CONSOLE LOG REMOVED: console.group(`🚨 ${error.level.toUpperCase()}: ${error.type}`)
+    //   // CONSOLE LOG REMOVED: console.error(error.message)
+    //   // CONSOLE LOG REMOVED: console.error('Details:', error.details)
+    //   // CONSOLE LOG REMOVED: console.error('Context:', context)
+    //   // CONSOLE LOG REMOVED: console.error('Stack:', error.stack)
+    //   // CONSOLE LOG REMOVED: console.groupEnd()
+    // }
   }
 
   /**
@@ -336,9 +336,9 @@ export class ErrorHandler {
     try {
       // 这里可以调用错误上报API
       // await api.post('/errors/report', { error: error.toJSON(), context })
-      console.log('Error reported to server:', error.toJSON())
+      // CONSOLE LOG REMOVED: console.log('Error reported to server:', error.toJSON())
     } catch (reportError) {
-      console.warn('Failed to report error to server:', reportError)
+      // CONSOLE LOG REMOVED: console.warn('Failed to report error to server:', reportError)
     }
   }
 

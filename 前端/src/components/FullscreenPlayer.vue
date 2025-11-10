@@ -281,7 +281,7 @@ const handleLyricClick = (index) => {
    try {
      await toggleSongLike(currentSong.value)
    } catch (error) {
-     console.error('切换收藏状态失败:', error)
+     // CONSOLE LOG REMOVED: console.error('切换收藏状态失败:', error)
    }
  }
  
@@ -310,7 +310,7 @@ const handleLyricClick = (index) => {
      }
      
    } catch (error) {
-     console.error('初始化音效可视化失败:', error)
+     // CONSOLE LOG REMOVED: console.error('初始化音效可视化失败:', error)
      startSimulatedVisualization()
    }
  }
@@ -331,7 +331,7 @@ const handleLyricClick = (index) => {
        analyser.value.connect(audioContext.value.destination)
      }
    } catch (error) {
-     console.warn('无法连接真实音频源，使用模拟数据:', error)
+     // CONSOLE LOG REMOVED: console.warn('无法连接真实音频源，使用模拟数据:', error)
      startSimulatedVisualization()
    }
  }
@@ -601,7 +601,9 @@ watch(currentLyricIndex, () => {
      nextTick(() => setTimeout(() => { isTransitioning.value = false }, 300))
      
      nextTick(() => {
-       loadSongLyrics()
+       if (currentSong.value?.id) {
+         loadSongLyrics(currentSong.value.id)
+       }
      })
    } else {
      document.body.classList.remove('fullscreen-player-active')

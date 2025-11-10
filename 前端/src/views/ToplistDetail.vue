@@ -133,7 +133,7 @@ const fetchToplistDetail = async () => {
     // 处理排行榜详情
     if (toplistResponse.status === 'fulfilled' && toplistResponse.value && toplistResponse.value.code === 200) {
       toplist.value = toplistResponse.value.data
-      console.log('🏆 排行榜详情加载完成:', toplist.value)
+      // CONSOLE LOG REMOVED: console.log('🏆 排行榜详情加载完成:', toplist.value)
     } else {
       ElMessage.error('排行榜不存在')
       return
@@ -149,15 +149,15 @@ const fetchToplistDetail = async () => {
       } else {
         songs.value = []
       }
-      console.log('🎵 排行榜歌曲加载完成:', songs.value.length, '首歌曲')
+      // CONSOLE LOG REMOVED: console.log('🎵 排行榜歌曲加载完成:', songs.value.length, '首歌曲')
     } else {
       // 如果没有歌曲数据，使用排行榜详情中的歌曲（如果存在）
       if (toplist.value && toplist.value.songs && Array.isArray(toplist.value.songs)) {
         songs.value = toplist.value.songs
-        console.log('🎵 使用排行榜详情中的歌曲:', songs.value.length, '首')
+        // CONSOLE LOG REMOVED: console.log('🎵 使用排行榜详情中的歌曲:', songs.value.length, '首')
       } else {
         songs.value = []
-        console.warn('⚠️ 未获取到排行榜歌曲数据')
+        // CONSOLE LOG REMOVED: console.warn('⚠️ 未获取到排行榜歌曲数据')
       }
     }
     
@@ -167,7 +167,7 @@ const fetchToplistDetail = async () => {
     }
     
   } catch (error) {
-    console.error('获取排行榜详情失败:', error)
+    // CONSOLE LOG REMOVED: console.error('获取排行榜详情失败:', error)
     ElMessage.error('获取排行榜详情失败')
   } finally {
     loading.value = false
@@ -194,10 +194,10 @@ const formatDuration = (duration) => {
 const goToSongDetail = (song, event) => {
   event.stopPropagation()
   if (song.id) {
-    console.log('🎵 跳转到歌曲详情页:', song.name, 'ID:', song.id)
+    // CONSOLE LOG REMOVED: console.log('🎵 跳转到歌曲详情页:', song.name, 'ID:', song.id)
     router.push(`/song/${song.id}`)
   } else {
-    console.warn('⚠️ 歌曲ID不存在，无法跳转')
+    // CONSOLE LOG REMOVED: console.warn('⚠️ 歌曲ID不存在，无法跳转')
     ElMessage.warning('歌曲信息不完整，无法查看详情')
   }
 }
@@ -209,11 +209,11 @@ const goToArtistDetail = (song, event) => {
   const artistId = song.artistId || song.artist_id || song.singerId || song.singer_id
   
   if (artistId) {
-    console.log('👤 跳转到歌手详情页:', song.artist || song.artistName, 'ID:', artistId)
+    // CONSOLE LOG REMOVED: console.log('👤 跳转到歌手详情页:', song.artist || song.artistName, 'ID:', artistId)
     router.push(`/artist/${artistId}`)
   } else {
     // 如果没有歌手ID，可能是后端数据不完整，可以尝试提示用户
-    console.warn('⚠️ 歌手ID不存在，无法跳转')
+    // CONSOLE LOG REMOVED: console.warn('⚠️ 歌手ID不存在，无法跳转')
     ElMessage.warning('歌手信息不完整，无法查看详情')
   }
 }
@@ -233,17 +233,17 @@ const getTrendClass = (index) => {
 // 播放单首歌曲 - 优先播放逻辑
 const playCurrentSong = async (song) => {
   try {
-    console.log('🎵 准备播放单首歌曲:', song.name)
-    console.log('🎯 当前播放列表长度:', playlist.value.length)
-    console.log('🎯 当前播放索引:', currentIndex.value)
-    console.log('🎯 当前播放状态: isPlaying=', isPlaying.value, 'isLoading=', isLoading.value, 'currentSong=', currentSong.value?.name)
+    // CONSOLE LOG REMOVED: console.log('🎵 准备播放单首歌曲:', song.name)
+    // CONSOLE LOG REMOVED: console.log('🎯 当前播放列表长度:', playlist.value.length)
+    // CONSOLE LOG REMOVED: console.log('🎯 当前播放索引:', currentIndex.value)
+    // CONSOLE LOG REMOVED: console.log('🎯 当前播放状态: isPlaying=', isPlaying.value, 'isLoading=', isLoading.value, 'currentSong=', currentSong.value?.name)
     
     // 检查歌曲是否已在播放列表中
     const existingIndex = playlist.value.findIndex(item => item.id === song.id)
     
     if (existingIndex !== -1) {
       // 如果歌曲已在列表中，将其移动到第一位并播放
-      console.log('🔄 歌曲已在播放列表中，移动到第一位:', song.name)
+      // CONSOLE LOG REMOVED: console.log('🔄 歌曲已在播放列表中，移动到第一位:', song.name)
       
       // 移除原位置的歌曲
       const targetSong = playlist.value.splice(existingIndex, 1)[0]
@@ -251,27 +251,27 @@ const playCurrentSong = async (song) => {
       playlist.value.unshift(targetSong)
       
       // 播放第一位的歌曲
-      console.log('🎯 调用playByIndex(0)')
+      // CONSOLE LOG REMOVED: console.log('🎯 调用playByIndex(0)')
       const result = await playByIndex(0)
-      console.log('✅ playByIndex结果:', result)
+      // CONSOLE LOG REMOVED: console.log('✅ playByIndex结果:', result)
       ElMessage.success(`开始播放: ${song.name}`)
     } else {
       // 如果歌曲不在列表中，只添加这一首歌曲到第一位并播放
-      console.log('📥 添加单首歌曲到播放列表第一位:', song.name)
+      // CONSOLE LOG REMOVED: console.log('📥 添加单首歌曲到播放列表第一位:', song.name)
       playlist.value.unshift(song)
-      console.log('🎯 调用playByIndex(0)')
+      // CONSOLE LOG REMOVED: console.log('🎯 调用playByIndex(0)')
       const result = await playByIndex(0)
-      console.log('✅ playByIndex结果:', result)
+      // CONSOLE LOG REMOVED: console.log('✅ playByIndex结果:', result)
       ElMessage.success(`开始播放: ${song.name}`)
     }
     
-    console.log('📋 操作后播放列表长度:', playlist.value.length)
-    console.log('🎯 操作后播放索引:', currentIndex.value)
+    // CONSOLE LOG REMOVED: console.log('📋 操作后播放列表长度:', playlist.value.length)
+    // CONSOLE LOG REMOVED: console.log('🎯 操作后播放索引:', currentIndex.value)
     
   } catch (error) {
-    console.error('播放歌曲失败:', error)
-    console.error('🚨 错误详情:', error.message)
-    console.error('🚨 错误堆栈:', error.stack)
+    // CONSOLE LOG REMOVED: console.error('播放歌曲失败:', error)
+    // CONSOLE LOG REMOVED: console.error('🚨 错误详情:', error.message)
+    // CONSOLE LOG REMOVED: console.error('🚨 错误堆栈:', error.stack)
     ElMessage.error('播放失败，请稍后重试')
   }
 }
@@ -293,22 +293,22 @@ const closeMoreMenu = () => {
 // 添加到下一首播放
 const addToPlayNextAction = async (song) => {
   try {
-    console.log('⏭️ 添加到下一首播放:', song.name)
+    // CONSOLE LOG REMOVED: console.log('⏭️ 添加到下一首播放:', song.name)
     
     const added = addToPlayNext(song)
     
     if (added) {
-      console.log('✅ 歌曲已添加到下一首播放:', song.name)
+      // CONSOLE LOG REMOVED: console.log('✅ 歌曲已添加到下一首播放:', song.name)
       ElMessage.success(`${song.name} 已添加到下一首播放`)
     } else {
       ElMessage.error('添加失败')
     }
     
-    console.log('📋 当前播放列表长度:', playlist.value.length)
+    // CONSOLE LOG REMOVED: console.log('📋 当前播放列表长度:', playlist.value.length)
     closeMoreMenu()
     
   } catch (error) {
-    console.error('添加到下一首播放失败:', error)
+    // CONSOLE LOG REMOVED: console.error('添加到下一首播放失败:', error)
     ElMessage.error('添加失败，请稍后重试')
   }
 }
@@ -316,11 +316,11 @@ const addToPlayNextAction = async (song) => {
 // 添加到收藏
 const addToFavorites = async (song) => {
   try {
-    console.log('❤️ 添加到收藏:', song.name)
+    // CONSOLE LOG REMOVED: console.log('❤️ 添加到收藏:', song.name)
     ElMessage.success(`${song.name} 已添加到收藏`)
     closeMoreMenu()
   } catch (error) {
-    console.error('添加到收藏失败:', error)
+    // CONSOLE LOG REMOVED: console.error('添加到收藏失败:', error)
     ElMessage.error('添加到收藏失败，请稍后重试')
   }
 }
@@ -334,7 +334,7 @@ const ensureToplistInPlaylist = async () => {
   )
   
   if (missingSongs.length > 0) {
-    console.log('📥 添加缺失的排行榜歌曲到播放列表:', missingSongs.length, '首')
+    // CONSOLE LOG REMOVED: console.log('📥 添加缺失的排行榜歌曲到播放列表:', missingSongs.length, '首')
     // 将缺失的歌曲添加到播放列表末尾，保持排行榜顺序
     playlist.value.push(...missingSongs)
   }
@@ -348,7 +348,7 @@ const playAll = async () => {
       return
     }
     
-    console.log('🎵 准备播放排行榜:', toplist.value.name, songs.value.length, '首歌曲')
+    // CONSOLE LOG REMOVED: console.log('🎵 准备播放排行榜:', toplist.value.name, songs.value.length, '首歌曲')
     
     // 使用 ensureToplistInPlaylist 确保所有歌曲都在播放列表中
     await ensureToplistInPlaylist()
@@ -363,11 +363,11 @@ const playAll = async () => {
       }
     }
     
-    console.log('✅ 排行榜歌曲已添加到播放列表')
-    console.log('📋 当前播放列表长度:', playlist.value.length)
+    // CONSOLE LOG REMOVED: console.log('✅ 排行榜歌曲已添加到播放列表')
+    // CONSOLE LOG REMOVED: console.log('📋 当前播放列表长度:', playlist.value.length)
     
   } catch (error) {
-    console.error('播放排行榜失败:', error)
+    // CONSOLE LOG REMOVED: console.error('播放排行榜失败:', error)
     ElMessage.error('播放失败，请稍后重试')
   }
 }

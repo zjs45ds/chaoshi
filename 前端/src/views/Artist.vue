@@ -56,11 +56,11 @@ const fetchArtists = async () => {
       error.value = response?.message || '获取歌手数据失败'
     }
     
-    console.log('🎤 歌手数据加载完成 (保持原始数据库顺序):', artists.value.length, artists.value)
+    // CONSOLE LOG REMOVED: console.log('🎤 歌手数据加载完成 (保持原始数据库顺序):', artists.value.length, artists.value)
     
   } catch (err) {
     error.value = '获取歌手列表失败，请重试'
-    console.error('获取歌手列表失败:', err)
+    // CONSOLE LOG REMOVED: console.error('获取歌手列表失败:', err)
     
     // 根据项目规范，网络错误已在httpUtils.js中处理
     let shouldShowError = true
@@ -89,7 +89,7 @@ function goDetail(id) {
     router.push(targetPath).catch(err => {
       // 忽略导航重复错误
       if (err.name !== 'NavigationDuplicated') {
-        console.error('路由导航错误:', err)
+        // CONSOLE LOG REMOVED: console.error('路由导航错误:', err)
       }
     })
   }
