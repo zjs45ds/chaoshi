@@ -1,0 +1,81 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.chaoshi.mapper.SearchHistoryMapper">
+
+    <!-- 结果集映射 -->
+    <resultMap id="BaseResultMap" type="com.chaoshi.entity.SearchHistory">
+        <id column="id" property="id" jdbcType="BIGINT"/>
+        <result column="user_id" property="userId" jdbcType="BIGINT"/>
+        <result column="keyword" property="keyword" jdbcType="VARCHAR"/>
+        <result column="search_count" property="searchCount" jdbcType="INTEGER"/>
+        <result column="created_at" property="createdAt" jdbcType="TIMESTAMP"/>
+        <result column="updated_at" property="updatedAt" jdbcType="TIMESTAMP"/>
+        <result column="deleted" property="deleted" jdbcType="INTEGER"/>
+    </resultMap>
+
+    <!-- 基础列 -->
+    <sql id="Base_Column_List">
+        id, user_id, keyword, search_count, created_at, updated_at, deleted
+    </sql>
+
+    <!-- 根据用户ID查询搜索历史 -->
+    <select id="selectByUserId" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List"/>
+        FROM search_history
+        WHERE user_id = #{userId} AND deleted = 0
+        ORDER BY updated_at DESC
+        <if test="limit != null">
+            LIMIT #{limit}
+        </if>
+    </select>
+
+    <!-- 根据用户ID和关键词查询搜索历史 -->
+    <select id="selectByUserIdAndKeyword" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List"/>
+        FROM search_history
+        WHERE user_id = #{userId} AND keyword = #{keyword} AND deleted = 0
+    </select>
+
+    <!-- 插入搜索历史 -->
+    <insert id="insertSearchHistory" parameterType="com.chaoshi.entity.SearchHistory" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO search_history (user_id, keyword, search_count, created_at, updated_at, deleted)
+        VALUES (#{userId}, #{keyword}, #{searchCount}, NOW(), NOW(), 0)
+    </insert>
+
+    <!-- 更新搜索历史 -->
+    <update id="updateSearchHistory" parameterType="com.chaoshi.entity.SearchHistory">
+        UPDATE search_history
+        SET search_count = #{searchCount},
+            updated_at = NOW()
+        WHERE id = #{id}
+    </update>
+
+    <!-- 删除用户的单个搜索历史 -->
+    <update id="deleteByUserIdAndKeyword">
+        UPDATE search_history
+        SET deleted = 1,
+            updated_at = NOW()
+        WHERE user_id = #{userId} AND keyword = #{keyword}
+    </update>
+
+    <!-- 清空用户的所有搜索历史 -->
+    <update id="deleteByUserId">
+        UPDATE search_history
+        SET deleted = 1,
+            updated_at = NOW()
+        WHERE user_id = #{userId}
+    </update>
+
+    <!-- 获取热门搜索关键词 -->
+    <select id="selectHotKeywords" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List"/>
+        FROM search_history
+        WHERE deleted = 0
+        GROUP BY keyword
+        ORDER BY SUM(search_count) DESC
+        <if test="limit != null">
+            LIMIT #{limit}
+        </if>
+    </select>
+
+</mapper>

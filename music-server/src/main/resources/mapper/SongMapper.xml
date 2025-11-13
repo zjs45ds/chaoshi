@@ -1,0 +1,254 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.chaoshi.mapper.SongMapper">
+
+    <!-- 基础结果集映射 -->
+    <resultMap id="BaseResultMap" type="com.chaoshi.entity.Song">
+        <id column="id" property="id" jdbcType="BIGINT"/>
+        <result column="name" property="name" jdbcType="VARCHAR"/>
+        <result column="album_id" property="albumId" jdbcType="BIGINT"/>
+        <result column="artist_id" property="artistId" jdbcType="BIGINT"/>
+        <result column="duration" property="duration" jdbcType="INTEGER"/>
+        <result column="file_path" property="filePath" jdbcType="VARCHAR"/>
+        <result column="lyrics" property="lyrics" jdbcType="LONGVARCHAR"/>
+        <result column="cover" property="cover" jdbcType="VARCHAR"/>
+        <result column="created_at" property="createdAt" jdbcType="TIMESTAMP"/>
+        <result column="updated_at" property="updatedAt" jdbcType="TIMESTAMP"/>
+        <result column="deleted" property="deleted" jdbcType="INTEGER"/>
+    </resultMap>
+
+    <!-- 带歌手和专辑信息的结果集映射 -->
+    <resultMap id="SongWithArtistAndAlbumResultMap" type="com.chaoshi.entity.Song" extends="BaseResultMap">
+        <!-- 额外的结果映射，用于返回歌手名和专辑名 -->
+        <result column="artist_name" property="artist" jdbcType="VARCHAR"/>
+        <result column="album_name" property="album" jdbcType="VARCHAR"/>
+    </resultMap>
+
+    <!-- 基础列 -->
+    <sql id="Base_Column_List">
+        id, name, album_id, artist_id, duration, 
+        file_path,
+        lyrics, 
+        cover, 
+        created_at, updated_at, deleted
+    </sql>
+
+    <!-- 插入歌曲 -->
+    <insert id="insertSong" parameterType="com.chaoshi.entity.Song" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO songs (name, album_id, artist_id, duration, file_path, lyrics, cover, created_at, updated_at)
+        VALUES (#{name}, #{albumId}, #{artistId}, #{duration}, #{filePath}, #{lyrics}, #{cover}, NOW(), NOW())
+    </insert>
+
+    <!-- 批量插入歌曲 -->
+    <insert id="insertBatch" parameterType="java.util.List">
+        INSERT INTO songs (name, album_id, artist_id, duration, file_path, lyrics, cover, created_at, updated_at)
+        VALUES
+        <foreach collection="list" item="item" separator=",">
+            (#{item.name}, #{item.albumId}, #{item.artistId}, #{item.duration}, #{item.filePath}, #{item.lyrics}, #{item.cover}, NOW(), NOW())
+        </foreach>
+    </insert>
+
+    <!-- 根据ID查询歌曲 -->
+    <select id="selectById" parameterType="java.lang.Long" resultMap="BaseResultMap">
+        SELECT
+        <include refid="Base_Column_List"/>
+        FROM songs
+        WHERE id = #{id} AND deleted = 0
+    </select>
+
+    <!-- 根据ID查询歌曲(带歌手和专辑信息) -->
+    <select id="selectByIdWithArtistAndAlbum" parameterType="java.lang.Long" resultMap="SongWithArtistAndAlbumResultMap">
+        SELECT
+        s.id,
+        s.name,
+        s.album_id,
+        s.artist_id,
+        s.duration,
+        s.file_path,
+        s.lyrics,
+        s.cover,
+        s.created_at,
+        s.updated_at,
+        s.deleted,
+        a.name as artist_name,
+        al.name as album_name
+        FROM songs s
+        LEFT JOIN artists a ON s.artist_id = a.id AND a.deleted = 0
+        LEFT JOIN albums al ON s.album_id = al.id AND al.deleted = 0
+        WHERE s.id = #{id} AND s.deleted = 0
+    </select>
+
+    <!-- 查询所有歌曲 -->
+    <select id="selectAll" resultMap="BaseResultMap">
+        SELECT
+        <include refid="Base_Column_List"/>
+        FROM songs
+        WHERE deleted = 0
+        ORDER BY created_at DESC
+    </select>
+
+    <!-- 根据专辑ID查询歌曲列表 -->
+    <select id="selectByAlbumId" parameterType="java.lang.Long" resultMap="BaseResultMap">
+        SELECT
+        <include refid="Base_Column_List"/>
+        FROM songs
+        WHERE album_id = #{albumId} AND deleted = 0
+        ORDER BY id ASC
+    </select>
+
+    <!-- 根据专辑ID查询歌曲列表(带歌手和专辑信息) -->
+    <select id="selectByAlbumIdWithArtistAndAlbum" parameterType="java.lang.Long" resultMap="SongWithArtistAndAlbumResultMap">
+        SELECT
+        s.id,
+        s.name,
+        s.album_id,
+        s.artist_id,
+        s.duration,
+        s.file_path,
+        s.lyrics,
+        s.cover,
+        s.created_at,
+        s.updated_at,
+        s.deleted,
+        a.name as artist_name,
+        al.name as album_name
+        FROM songs s
+        LEFT JOIN artists a ON s.artist_id = a.id AND a.deleted = 0
+        LEFT JOIN albums al ON s.album_id = al.id AND al.deleted = 0
+        WHERE s.album_id = #{albumId} AND s.deleted = 0
+        ORDER BY id ASC
+    </select>
+
+    <!-- 根据歌手ID查询歌曲列表 -->
+    <select id="selectByArtistId" parameterType="java.lang.Long" resultMap="BaseResultMap">
+        SELECT
+        <include refid="Base_Column_List"/>
+        FROM songs
+        WHERE artist_id = #{artistId} AND deleted = 0
+        ORDER BY created_at DESC
+    </select>
+
+    <!-- 根据歌手ID查询歌曲列表(带歌手和专辑信息) -->
+    <select id="selectByArtistIdWithArtistAndAlbum" parameterType="java.lang.Long" resultMap="SongWithArtistAndAlbumResultMap">
+        SELECT
+        s.id,
+        s.name,
+        s.album_id,
+        s.artist_id,
+        s.duration,
+        s.file_path,
+        s.lyrics,
+        s.cover,
+        s.created_at,
+        s.updated_at,
+        s.deleted,
+        a.name as artist_name,
+        al.name as album_name
+        FROM songs s
+        LEFT JOIN artists a ON s.artist_id = a.id AND a.deleted = 0
+        LEFT JOIN albums al ON s.album_id = al.id AND al.deleted = 0
+        WHERE s.artist_id = #{artistId} AND s.deleted = 0
+        ORDER BY created_at DESC
+    </select>
+
+    <!-- 分页查询歌曲 -->
+    <select id="selectPage" resultMap="BaseResultMap">
+        SELECT
+        <include refid="Base_Column_List"/>
+        FROM songs
+        WHERE deleted = 0
+        <if test="name != null and name != ''">
+            AND name LIKE CONCAT('%', #{name}, '%')
+        </if>
+        <if test="artistId != null">
+            AND artist_id = #{artistId}
+        </if>
+        <if test="albumId != null">
+            AND album_id = #{albumId}
+        </if>
+        ORDER BY created_at DESC
+        LIMIT #{offset}, #{size}
+    </select>
+
+    <!-- 统计歌曲数量 -->
+    <select id="countSongs" resultType="java.lang.Long">
+        SELECT COUNT(*)
+        FROM songs
+        WHERE deleted = 0
+        <if test="name != null and name != ''">
+            AND name LIKE CONCAT('%', #{name}, '%')
+        </if>
+        <if test="artistId != null">
+            AND artist_id = #{artistId}
+        </if>
+        <if test="albumId != null">
+            AND album_id = #{albumId}
+        </if>
+    </select>
+
+    <!-- 更新歌曲信息 -->
+    <update id="updateSong" parameterType="com.chaoshi.entity.Song">
+        UPDATE songs
+        <set>
+            <if test="name != null and name != ''">
+                name = #{name},
+            </if>
+            <if test="albumId != null">
+                album_id = #{albumId},
+            </if>
+            <if test="artistId != null">
+                artist_id = #{artistId},
+            </if>
+            <if test="duration != null">
+                duration = #{duration},
+            </if>
+            <if test="filePath != null and filePath != ''">
+                file_path = #{filePath},
+            </if>
+            <if test="lyrics != null">
+                lyrics = #{lyrics},
+            </if>
+            <if test="cover != null">
+                cover = #{cover},
+            </if>
+            updated_at = NOW()
+        </set>
+        WHERE id = #{id} AND deleted = 0
+    </update>
+
+    <!-- 逻辑删除歌曲 -->
+    <update id="deleteSong" parameterType="java.lang.Long">
+        UPDATE songs
+        SET deleted = 1, updated_at = NOW()
+        WHERE id = #{id} AND deleted = 0
+    </update>
+
+    <!-- 批量逻辑删除歌曲 -->
+    <update id="deleteBatch">
+        UPDATE songs
+        SET deleted = 1, updated_at = NOW()
+        WHERE id IN
+        <foreach collection="list" item="id" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+        AND deleted = 0
+    </update>
+
+    <!-- 搜索歌曲 -->
+    <select id="searchSongs" resultMap="BaseResultMap">
+        SELECT
+        <include refid="Base_Column_List"/>
+        FROM songs
+        WHERE deleted = 0
+        AND (name LIKE CONCAT('%', #{keyword}, '%') OR lyrics LIKE CONCAT('%', #{keyword}, '%'))
+        ORDER BY
+        CASE
+            WHEN name LIKE CONCAT(#{keyword}, '%') THEN 1
+            WHEN name LIKE CONCAT('%', #{keyword}, '%') THEN 2
+            ELSE 3
+        END,
+        created_at DESC
+        LIMIT #{offset}, #{size}
+    </select>
+
+</mapper>
