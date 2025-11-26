@@ -127,33 +127,38 @@ npm run dev
 
 ![首页](music-client/screenshots/image1.png)
 
-### 播放器 / Player
+### 消消乐小游戏 / Match Game
 
-![播放器](music-client/screenshots/image2.png)
+![消消乐](music-client/screenshots/image10.png)
 
 ### 全屏播放器 / Fullscreen Player
 
-![全屏播放器](music-client/screenshots/image3.png)
+![全屏播放器](music-client/screenshots/image9.png)
 
 ### 我的音乐 / My Music
 
-![我的音乐](music-client/screenshots/image4.png)
+![我的音乐](music-client/screenshots/image6.png)
 
-### 歌单详情 / Playlist Detail
+### 歌单 / Playlist
 
-![歌单详情](music-client/screenshots/image5.png)
+![歌单](music-client/screenshots/image2.png)
 
-### 搜索页面 / Search
+### 0717页面 / 0717
 
-![搜索](music-client/screenshots/image6.png)
-
-### 消消乐小游戏 / Match Game
-
-![消消乐](music-client/screenshots/image7.png)
+![0717页面](music-client/screenshots/image7.png)
 
 ### 登录注册 / Login
 
-![登录注册](music-client/screenshots/image8.png)
+![登录注册](music-client/screenshots/image.png)
+
+### 排行榜 / Toplist
+
+![排行榜](music-client/screenshots/image4.png)
+
+### 个人资料 / Profile
+
+![个人资料](music-client/screenshots/image8.png)
+
 
 ---
 
