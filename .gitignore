@@ -63,3 +63,6 @@ temp/
 tmp/
 *.tmp
 *.temp
+
+# Ignore local resources
+资源/

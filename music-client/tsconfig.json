@@ -8,7 +8,7 @@
     "esModuleInterop": true,
     "skipLibCheck": true,
     "jsxImportSource": "vue",
-    "types": ["vue", "node", "vite/client"],
+    "types": ["node", "vite/client"],
     "lib": ["esnext", "dom", "dom.iterable"],
     "resolveJsonModule": true,
     "baseUrl": ".",
@@ -30,7 +30,7 @@
     "allowJs": true,
     "checkJs": false,
     "isolatedModules": true,
-    "verbatimModuleSyntax": true,
+    "verbatimModuleSyntax": false,
     "forceConsistentCasingInFileNames": true,
     "useDefineForClassFields": true,
     "noEmit": true

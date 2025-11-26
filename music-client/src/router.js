@@ -145,7 +145,7 @@ const routes = [
     meta: {
       title: '歌单详情',
       keepAlive: false,
-      requireAuth: false
+      requireAuth: true
     }
   },
   {
@@ -369,8 +369,7 @@ router.beforeEach((to, from, next) => {
       ElMessage({
         message: `请先登录后再访问${pageName}`,
         type: 'warning',
-        duration: 500,
-        customClass: 'auth-required-message',
+        duration: 2000,
         offset: 80
       })
       

@@ -428,9 +428,15 @@ export default {
         // 清空表单
         loginForm.value = { username: '', password: '', remember: false }
         
-        // 跳转到主页（延迟一下让用户看到成功提示）
+        // 跳转页面（延迟一下让用户看到成功提示）
         setTimeout(() => {
-          router.push('/my-music')
+          // 如果有 redirect 参数，跳转到原来想访问的页面
+          const redirect = router.currentRoute.value.query.redirect
+          if (redirect && redirect !== '/login') {
+            router.push(redirect)
+          } else {
+            router.push('/')
+          }
         }, 1500)
         
       } catch (error) {
