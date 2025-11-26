@@ -1,7 +1,7 @@
 # 潮石音乐 / Chaoshi Music
 
 <p align="center">
-  <img src="music-client/screenshots/image.png" alt="潮石音乐" width="800">
+  <img src="music-client/screenshots/image1.png" alt="潮石音乐" width="800">
 </p>
 
 一个仿网易云风格的在线音乐平台，包含前后端完整项目：
@@ -75,7 +75,7 @@ npm install
 npm run dev
 ```
 
-- 默认访问：`http://localhost:5173/`
+- 默认访问：`http://localhost:3000/`
 
 ---
 
