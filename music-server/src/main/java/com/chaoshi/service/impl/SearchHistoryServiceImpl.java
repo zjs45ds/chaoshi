@@ -62,26 +62,26 @@ public class SearchHistoryServiceImpl implements SearchHistoryService {
     @Transactional
     public void deleteSearchHistoryItem(Long userId, String keyword) {
         if (userId == null || keyword == null || keyword.trim().isEmpty()) {
-            System.out.println("删除搜索历史失败: 用户ID或关键词为空");
+            // System.out.println("删除搜索历史失败: 用户ID或关键词为空");
             return;
         }
         
-        System.out.println("正在删除搜索历史: userId=" + userId + ", keyword=" + keyword.trim());
+        // System.out.println("正在删除搜索历史: userId=" + userId + ", keyword=" + keyword.trim());
         int result = searchHistoryMapper.deleteByUserIdAndKeyword(userId, keyword.trim());
-        System.out.println("删除搜索历史结果: 影响行数=" + result);
+        // System.out.println("删除搜索历史结果: 影响行数=" + result);
     }
     
     @Override
     @Transactional
     public void clearUserSearchHistory(Long userId) {
         if (userId == null) {
-            System.out.println("清空搜索历史失败: 用户ID为空");
+            // System.out.println("清空搜索历史失败: 用户ID为空");
             return;
         }
         
-        System.out.println("正在清空用户搜索历史: userId=" + userId);
+        // System.out.println("正在清空用户搜索历史: userId=" + userId);
         int result = searchHistoryMapper.deleteByUserId(userId);
-        System.out.println("清空搜索历史结果: 影响行数=" + result);
+        // System.out.println("清空搜索历史结果: 影响行数=" + result);
     }
     
     @Override

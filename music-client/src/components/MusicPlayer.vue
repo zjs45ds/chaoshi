@@ -1012,9 +1012,11 @@ onMounted(() => {
   position: fixed;
   z-index: 1001;
   background: rgba(0, 0, 0, 0.8);
-  backdrop-filter: blur(10px);
-  padding: 12px 8px;
-  animation: volumePopupIn 0.2s ease-out;
+  backdrop-filter: blur(20px);
+  padding: 16px 12px;
+  border-radius: 20px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+  animation: volumePopupIn 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 @keyframes volumePopupIn {
@@ -1032,17 +1034,19 @@ onMounted(() => {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 8px;
-  min-height: 80px;
+  gap: 12px;
+  min-height: 100px;
 }
 
 /* 垂直音量滑块 */
 .volume-slider-vertical {
-  width: 4px;
-  height: 80px;
+  width: 6px;
+  height: 100px;
   position: relative;
   cursor: pointer;
   flex: 1;
+  border-radius: 3px;
+  overflow: hidden;
 }
 
 .volume-bg-vertical {
@@ -1051,7 +1055,8 @@ onMounted(() => {
   left: 0;
   right: 0;
   bottom: 0;
-  background: rgba(255, 255, 255, 0.3);
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 3px;
 }
 
 .volume-fill-vertical {
@@ -1059,25 +1064,30 @@ onMounted(() => {
   bottom: 0;
   left: 0;
   right: 0;
-  background: #fff;
+  background: linear-gradient(to top, #60a5fa, #3b82f6);
   transition: height 0.1s ease;
-  min-height: 2px;
+  min-height: 3px;
+  border-radius: 3px;
+  box-shadow: 0 0 10px rgba(96, 165, 250, 0.5);
 }
 
 .volume-handle-vertical {
   position: absolute;
   left: 50%;
-  width: 12px;
-  height: 12px;
-  background: #fff;
+  width: 16px;
+  height: 16px;
+  background: white;
+  border-radius: 50%;
   transform: translate(-50%, 50%);
   opacity: 0;
-  transition: opacity 0.2s ease;
+  transition: all 0.2s ease;
   cursor: grab;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
 }
 
 .volume-handle-vertical:active {
   cursor: grabbing;
+  transform: translate(-50%, 50%) scale(1.2);
 }
 
 .volume-slider-vertical:hover .volume-handle-vertical {
@@ -1085,11 +1095,12 @@ onMounted(() => {
 }
 
 .volume-text-popup {
-  font-size: 11px;
-  opacity: 0.8;
+  font-size: 14px;
+  font-weight: 600;
   color: #fff;
-  min-width: 20px;
+  min-width: 30px;
   text-align: center;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
 }
 
 @keyframes spin {
@@ -1145,8 +1156,18 @@ onMounted(() => {
   color: #cccccc !important;
 }
 
+/* 黑色主题下的爱心图标 - 使用 filter 反转颜色使其可见 */
+[data-theme="black"] .tool-btn.love .icon-heart::before {
+  filter: invert(1) brightness(0.8) !important;
+}
+
 [data-theme="black"] .tool-btn.love.loved {
   color: #dc2626 !important;
+}
+
+/* 已收藏状态保持红色 */
+[data-theme="black"] .tool-btn.love.loved .icon-heart-filled::before {
+  filter: none !important;
 }
 
 [data-theme="black"] .tool-btn.love:hover {

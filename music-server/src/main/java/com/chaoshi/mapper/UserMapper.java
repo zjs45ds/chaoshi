@@ -70,4 +70,9 @@ public interface UserMapper {
      * 检查邮箱是否存在
      */
     Boolean existsByEmail(@Param("email") String email);
+    
+    /**
+     * 检查手机号是否存在
+     */
+    Boolean existsByPhone(@Param("phone") String phone);
 }

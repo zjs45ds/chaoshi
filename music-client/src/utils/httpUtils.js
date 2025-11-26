@@ -9,7 +9,9 @@ import { ElMessage, ElLoading } from 'element-plus'
 
 // API配置
 const API_CONFIG = {
-  baseURL: import.meta.env.VITE_API_BASE_URL || 'http://localhost:8081',
+  // 在development模式下（3000端口），使用相对路径走代理
+  // 在production模式下（3001端口），直接请求后端
+  baseURL: import.meta.env.MODE === 'development' ? '' : (import.meta.env.VITE_API_BASE_URL || 'http://localhost:8081'),
   timeout: 10000,
   maxRetries: 3,
   retryDelay: 1000

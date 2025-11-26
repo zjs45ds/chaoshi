@@ -214,9 +214,9 @@ export function validateUsername(username) {
   }
   
   // 长度检查
-  if (username.length < 3 || username.length > 20) {
+  if (username.length < 1 || username.length > 20) {
     result.isValid = false
-    result.errors.push('用户名长度必须在3-20个字符之间')
+    result.errors.push('用户名长度必须在1-20个字符之间')
   }
   
   // 字符检查（只允许字母、数字、下划线、中文）

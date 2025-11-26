@@ -80,4 +80,12 @@ public interface UserService {
      * @return 是否更新成功
      */
     boolean updateUserAvatar(Long userId, String avatarUrl);
+
+    /**
+     * 更新用户背景
+     * @param userId 用户ID
+     * @param backgroundUrl 背景URL
+     * @return 是否更新成功
+     */
+    boolean updateUserBackground(Long userId, String backgroundUrl);
 }

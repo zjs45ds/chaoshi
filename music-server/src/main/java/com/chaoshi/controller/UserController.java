@@ -12,6 +12,8 @@ import com.chaoshi.dto.response.UserResponse;
 import com.chaoshi.service.UserService;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.Map;
+
 /**
  * 用户Controller
  */
@@ -41,17 +43,17 @@ public class UserController {
     @PostMapping("/login")
     public ApiResult<LoginResponse> login(@RequestBody LoginRequest loginRequest) {
         try {
-            System.out.println("[LOGIN] 收到登录请求: " + loginRequest.getUsername());
-            System.out.println("[LOGIN] 请求数据: " + loginRequest);
+            // System.out.println("[LOGIN] 收到登录请求: " + loginRequest.getUsername());
+            // System.out.println("[LOGIN] 请求数据: " + loginRequest);
             LoginResponse loginResponse = userService.login(loginRequest);
-            System.out.println("[LOGIN] 登录成功: " + loginResponse.getUsername());
+            // System.out.println("[LOGIN] 登录成功: " + loginResponse.getUsername());
             
             // 返回成功消息，包含用户名
             String successMessage = String.format("🎉 欢迎回来，%s！登录成功", loginResponse.getUsername());
             return ApiResult.success(successMessage, loginResponse);
         } catch (Exception e) {
-            System.out.println("[LOGIN] 登录失败: " + e.getMessage());
-            e.printStackTrace();
+            // System.out.println("[LOGIN] 登录失败: " + e.getMessage());
+            // e.printStackTrace();
             
             // 根据异常类型返回友好的错误消息
             String errorMessage = getLoginErrorMessage(e.getMessage(), loginRequest.getUsername());
@@ -108,6 +110,22 @@ public class UserController {
             return ApiResult.success("个人资料更新成功", userResponse);
         } catch (Exception e) {
             return ApiResult.error("个人资料更新失败: " + e.getMessage());
+        }
+    }
+
+    @Operation(summary = "更新用户背景", description = "设置或清空用户背景图")
+    @PutMapping("/background")
+    public ApiResult<Boolean> updateBackground(@RequestParam Long userId,
+                                               @RequestBody(required = false) Map<String, String> payload) {
+        try {
+            String backgroundUrl = payload != null ? payload.get("backgroundUrl") : null;
+            boolean success = userService.updateUserBackground(userId, backgroundUrl);
+            if (success) {
+                return ApiResult.success("背景更新成功", true);
+            }
+            return ApiResult.error("背景更新失败");
+        } catch (Exception e) {
+            return ApiResult.error("背景更新失败: " + e.getMessage());
         }
     }
     

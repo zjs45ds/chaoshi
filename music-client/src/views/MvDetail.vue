@@ -75,9 +75,10 @@
 <script setup>
 import { ref, onMounted, onUnmounted } from 'vue'
 import { useRoute } from 'vue-router'
-import { getMVById } from '@/api/mv.js'
+import { getMVById, incrementMVPlayCount } from '@/api/mv.js'
 import { favoriteMv, getUserFavoriteMvs } from '@/api/favorite.js'
 import { ElMessage } from 'element-plus'
+import { checkLoginForAction } from '@/utils/authCheck.js'
 
 const route = useRoute()
 const mv = ref(null)
@@ -241,11 +242,37 @@ const formatDuration = (seconds) => {
   return `${minutes.toString().padStart(2, '0')}:${remainingSeconds.toString().padStart(2, '0')}`
 }
 
+// 播放次数是否已增加（防止重复增加）
+const playCountIncremented = ref(false)
+
 // 处理播放事件
-const handlePlay = () => {
-  // 这里可以调用API增加播放次数
-  if (mv.value && mv.value.id) {
-    // TODO: 调用增加播放次数的API
+const handlePlay = async (event) => {
+  // 检查登录状态
+  const isLoggedIn = await checkLoginForAction('播放视频')
+  if (!isLoggedIn) {
+    // 未登录，暂停视频
+    if (event && event.target) {
+      event.target.pause()
+    }
+    return
+  }
+
+  // 只在第一次播放时增加播放次数
+  if (mv.value && mv.value.id && !playCountIncremented.value) {
+    try {
+      const response = await incrementMVPlayCount(mv.value.id)
+      if (response && response.code === 200) {
+        playCountIncremented.value = true
+        // 更新本地播放次数显示
+        if (mv.value.playCount !== undefined) {
+          mv.value.playCount = (mv.value.playCount || 0) + 1
+        }
+        // CONSOLE LOG REMOVED: console.log('✅ MV播放次数已增加:', mv.value.playCount)
+      }
+    } catch (error) {
+      // CONSOLE LOG REMOVED: console.error('❌ 增加播放次数失败:', error)
+      // 静默失败，不影响用户体验
+    }
   }
 }
 

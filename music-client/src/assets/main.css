@@ -567,3 +567,96 @@ html, body, div, section, article, main, aside, nav, header, footer {
   display: none !important;
   background: transparent !important;
 }
+/* ==================== 登录检查MessageBox样式 ==================== */
+.auth-check-message-box {
+  background-color: #fff !important;
+}
+
+.auth-check-message-box .el-message-box__title {
+  color: #000000 !important;
+  font-size: 18px !important;
+  font-weight: 700 !important;
+}
+
+.auth-check-message-box .el-message-box__message {
+  color: #000000 !important;
+  font-size: 15px !important;
+  line-height: 1.8 !important;
+  font-weight: 500 !important;
+}
+
+.auth-check-message-box .el-message-box__content {
+  color: #000000 !important;
+  padding: 20px 20px !important;
+}
+
+.auth-check-message-box .el-message-box__message p {
+  color: #000000 !important;
+  margin: 0 !important;
+}
+
+.auth-check-message-box .el-message-box__btns {
+  padding: 10px 20px 20px !important;
+}
+
+.auth-check-message-box .el-message-box__btns .el-button {
+  font-weight: 600 !important;
+  font-size: 14px !important;
+  padding: 10px 20px !important;
+}
+
+.auth-check-message-box .el-message-box__btns .el-button--primary {
+  background-color: #409eff !important;
+  border-color: #409eff !important;
+  color: #fff !important;
+}
+
+.auth-check-message-box .el-message-box__btns .el-button--default {
+  color: #333333 !important;
+  background-color: #fff !important;
+  border-color: #dcdfe6 !important;
+}
+
+.auth-check-message-box .el-message-box__btns .el-button--default:hover {
+  color: #409eff !important;
+  border-color: #409eff !important;
+  background-color: #ecf5ff !important;
+}
+
+/* ==================== 路由拦截提示消息样式 ==================== */
+.auth-required-message {
+  min-width: 300px !important;
+  padding: 14px 20px !important;
+  background: #ffffff !important;
+  border: 1px solid #FFB6C1 !important;
+  box-shadow: 0 4px 12px rgba(255, 107, 155, 0.15) !important;
+  font-size: 14px !important;
+  font-weight: 500 !important;
+  color: #333333 !important;
+  border-radius: 8px !important;
+}
+
+.auth-required-message .el-message__content {
+  color: #333333 !important;
+  font-weight: 500 !important;
+}
+
+.auth-required-message .el-message__icon {
+  color: #FF6B9B !important;
+  font-size: 16px !important;
+}
+
+/* 黑色主题下的提示消息样式 */
+[data-theme="black"] .auth-required-message {
+  background: #1a1a1a !important;
+  border: 1px solid #FF6B9B !important;
+  box-shadow: 0 4px 12px rgba(255, 107, 155, 0.2) !important;
+}
+
+[data-theme="black"] .auth-required-message .el-message__content {
+  color: #ffffff !important;
+}
+
+[data-theme="black"] .auth-required-message .el-message__icon {
+  color: #FF85B3 !important;
+}

@@ -1884,8 +1884,8 @@ export default {
 }
 
 .user-avatar {
-  width: 300px;
-  height: 300px;
+  width: 130px;
+  height: 130px;
   border-radius: 50%;
   border: 4px solid white;
   cursor: pointer;
@@ -2406,22 +2406,6 @@ export default {
   content: '\00D7'; /* 乘号 */
 }
 
-  .user-banner {
-    height: 300px;
-  }
-  .user-avatar {
-    width: 130px;
-    height: 130px;
-  }
-  .user-name {
-    font-size: 18px;
-  }
-  .user-stats {
-    flex-direction: row;
-    gap: 15px;
-  }
-
-  
 /* 黑色主题特殊调整 */
 [data-theme="black"] .content-area {
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
@@ -3830,6 +3814,19 @@ body:has(.user-music-login-page) {
   .user-music-login-page {
     padding: 1rem 0;
     min-height: calc(100vh - 152px);
+  }
+  
+  .user-banner {
+    height: 400px;
+  }
+
+  .user-avatar {
+    width: 130px;
+    height: 130px;
+  }
+
+  .user-name {
+    font-size: 18px;
   }
 }
 

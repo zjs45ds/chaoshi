@@ -1,60 +1,30 @@
 <template>
-  <div class="login-container" :class="backgroundType">
-    <!-- 动态粒子背景 -->
-    <div v-if="backgroundType === 'particles'" class="particles-background">
-      <div class="particle" v-for="n in 50" :key="n" :style="getParticleStyle(n)"></div>
-    </div>
-    
-    <!-- 动态渐变背景 -->
-    <div v-if="backgroundType === 'gradient'" class="gradient-background"></div>
-    
-    <!-- 自定义背景 -->
-    <div v-if="backgroundType === 'custom' && customBackground" 
-         class="custom-background" 
-         :style="{ backgroundImage: `url(${customBackground})` }"></div>
-    
-    <!-- 背景控制面板 -->
-    <div class="background-controls">
-      <button @click="toggleBackgroundType" class="bg-toggle-btn" title="切换背景">
+  <div class="login-container">
+    <!-- 背景切换按钮 -->
+    <div v-if="backgroundImages.length > 1" class="background-controls">
+      <button class="bg-toggle-btn" @click="switchBackground" title="切换背景">
         🎨
       </button>
-      <input 
-        ref="fileInput" 
-        type="file" 
-        accept="image/*" 
-        @change="handleCustomBackground" 
-        style="display: none"
-      >
-      <button @click="selectCustomBackground" class="bg-upload-btn" title="上传背景">
-        📁
-      </button>
     </div>
-  
-    <!-- SVG滤镜库 -->
-    <svg style="display: none">
-      <filter id="glass-distortion" x="0%" y="0%" width="100%" height="100%" filterUnits="objectBoundingBox">
-        <feTurbulence type="fractalNoise" baseFrequency="0.001 0.005" numOctaves="1" seed="17" result="turbulence" />
-        <feComponentTransfer in="turbulence" result="mapped">
-          <feFuncR type="gamma" amplitude="1" exponent="10" offset="0.5" />
-          <feFuncG type="gamma" amplitude="0" exponent="1" offset="0" />
-          <feFuncB type="gamma" amplitude="0" exponent="1" offset="0.5" />
-        </feComponentTransfer>
-        <feGaussianBlur in="turbulence" stdDeviation="3" result="softMap" />
-        <feSpecularLighting in="softMap" surfaceScale="5" specularConstant="1" specularExponent="100" lighting-color="white" result="specLight">
-          <fePointLight x="-200" y="-200" z="300" />
-        </feSpecularLighting>
-        <feComposite in="specLight" operator="arithmetic" k1="0" k2="1" k3="1" k4="0" result="litImage" />
-        <feDisplacementMap in="SourceGraphic" in2="softMap" scale="200" xChannelSelector="R" yChannelSelector="G" />
-      </filter>
-    </svg>
+    
+    <!-- 预设背景图片 -->
+    <div class="image-background" 
+         :style="{ backgroundImage: `url(${backgroundImages[currentBackgroundIndex]})` }"
+         :key="currentBackgroundIndex">
+    </div>
+    
+    <!-- 备用渐变背景 -->
+    <div v-if="imageLoadError" class="fallback-background"></div>
+    
+    
+    <!-- 背景加载指示器 -->
+    <div v-if="isBackgroundLoading" class="background-loading">
+      <div class="loading-spinner"></div>
+      <p>背景加载中...</p>
+    </div>
 
     <!-- 登录/注册卡片 -->
-    <div
-      class="glass-component login-card"
-      ref="tiltCard"
-      @mousemove="handleMouseMove"
-      @mouseleave="handleMouseLeave"
-    >
+    <div class="glass-component login-card">
       <div class="glass-effect"></div>
       <div class="glass-tint"></div>
       <div class="glass-shine"></div>
@@ -72,6 +42,7 @@
                 v-model="loginForm.username"
                 @blur="validateLoginField('username')"
                 @input="clearLoginError('username')"
+                autocomplete="username"
                 required
               >
               <div v-if="loginErrors.username" class="error-message">{{ loginErrors.username }}</div>
@@ -85,6 +56,7 @@
                 v-model="loginForm.password"
                 @blur="validateLoginField('password')"
                 @input="clearLoginError('password')"
+                autocomplete="current-password"
                 required
               >
               <button 
@@ -124,6 +96,7 @@
                 v-model="registerForm.username"
                 @blur="validateRegisterField('username')"
                 @input="clearRegisterError('username')"
+                autocomplete="username"
                 required
               >
               <div v-if="registerErrors.username" class="error-message">{{ registerErrors.username }}</div>
@@ -137,6 +110,7 @@
                 v-model="registerForm.email"
                 @blur="validateRegisterField('email')"
                 @input="clearRegisterError('email')"
+                autocomplete="email"
                 required
               >
               <div v-if="registerErrors.email" class="error-message">{{ registerErrors.email }}</div>
@@ -150,6 +124,7 @@
                 v-model="registerForm.password"
                 @blur="validateRegisterField('password')"
                 @input="clearRegisterError('password')"
+                autocomplete="new-password"
                 required
               >
               <button 
@@ -172,6 +147,7 @@
                 v-model="registerForm.confirmPassword"
                 @blur="validateRegisterField('confirmPassword')"
                 @input="clearRegisterError('confirmPassword')"
+                autocomplete="new-password"
                 required
               >
               <button 
@@ -194,6 +170,7 @@
                 v-model="registerForm.phone"
                 @blur="validateRegisterField('phone')"
                 @input="clearRegisterError('phone')"
+                autocomplete="tel"
                 required
               >
               <div v-if="registerErrors.phone" class="error-message">{{ registerErrors.phone }}</div>
@@ -213,18 +190,30 @@
 import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
-import { validateImageFile, compressImage } from '@/utils/imageUtils.js'
 import { login, register } from '@/api/user.js'
+import { updateUserInfo } from '@/utils/userStore.js'
 
 export default {
   name: 'LiquidGlass',
   setup() {
     const router = useRouter()
     const isRegisterMode = ref(false)
-    const backgroundType = ref('gradient') // 默认动态渐变背景
-    const customBackground = ref('')
-    const isProcessing = ref(false)
-    const fileInput = ref(null)
+    
+    // 背景相关
+    const currentBackgroundIndex = ref(0)
+    const isBackgroundLoading = ref(false)
+    const imageLoadError = ref(false)
+    const backgroundImages = [
+      'http://localhost:9000/chaoshi/背景/侧脸.png',
+      'http://localhost:9000/chaoshi/背景/背景1.png',
+      'http://localhost:9000/chaoshi/背景/背景2.png',
+      'http://localhost:9000/chaoshi/背景/背景3.png',
+      'http://localhost:9000/chaoshi/背景/背景4.png',
+      'http://localhost:9000/chaoshi/背景/背景5.png',
+      'http://localhost:9000/chaoshi/背景/双马尾小猫.png',
+      'http://localhost:9000/chaoshi/背景/背景.jpg'
+    ]
+    
     const showLoginPassword = ref(false)
     const showRegisterPassword = ref(false)
     const showRegisterConfirmPassword = ref(false)
@@ -306,8 +295,8 @@ export default {
         case 'username':
           if (!form.username.trim()) {
             errors.username = '请输入用户名'
-          } else if (form.username.trim().length < 3) {
-            errors.username = '用户名至少需要3个字符'
+          } else if (form.username.trim().length < 1) {
+            errors.username = '用户名至少需要1个字符'
           } else {
             errors.username = ''
           }
@@ -409,8 +398,15 @@ export default {
         })
         
         const storage = loginForm.value.remember ? localStorage : sessionStorage
-      
-        storage.setItem('isLogin', '1')
+        
+        // 确保同时设置localStorage和sessionStorage的isLogin标志
+        // 这样路由守卫和其他组件都能正确识别登录状态
+        if (loginForm.value.remember) {
+          localStorage.setItem('isLogin', '1')
+        }
+        // 总是设置sessionStorage，确保当前会话中登录状态被正确识别
+        sessionStorage.setItem('isLogin', '1')
+        
         storage.setItem('token', userData.token)
         storage.setItem('userId', userData.id)
         storage.setItem('username', userData.username)
@@ -418,6 +414,9 @@ export default {
         if (userData.avatar) {
           storage.setItem('avatar', userData.avatar)
         }
+        
+        // 更新全局用户状态
+        updateUserInfo(userData)
         
         if (loginForm.value.remember) {
           localStorage.setItem('rememberedUsername', userData.username)
@@ -547,119 +546,47 @@ export default {
       }
     }
 
-    // 背景相关功能
-    const backgroundTypes = ['gradient', 'particles', 'custom']
-    let currentTypeIndex = 0
-
-    const toggleBackgroundType = () => {
-      currentTypeIndex = (currentTypeIndex + 1) % backgroundTypes.length
-      backgroundType.value = backgroundTypes[currentTypeIndex]
-      
-      // 如果切换到自定义背景但没有自定义图片，则跳过
-      if (backgroundType.value === 'custom' && !customBackground.value) {
-        toggleBackgroundType()
-        return
-      }
+    // 图片加载错误处理
+    const handleImageError = () => {
+      imageLoadError.value = true
     }
 
-    const selectCustomBackground = () => {
-      fileInput.value?.click()
+    // 背景切换函数
+    const switchBackground = () => {
+      isBackgroundLoading.value = true
+      imageLoadError.value = false
+      currentBackgroundIndex.value = (currentBackgroundIndex.value + 1) % backgroundImages.length
+      
+      // 仅保存登录页面的背景选择，避免影响全局背景
+      localStorage.setItem('loginPageBackgroundIndex', currentBackgroundIndex.value.toString())
+      
+      // 模拟加载时间
+      setTimeout(() => {
+        isBackgroundLoading.value = false
+      }, 500)
     }
 
-    // 图片压缩处理函数
-    const compressImageLocal = compressImage
-
-    const handleCustomBackground = async (event) => {
-      const file = event.target.files[0]
-      if (!file) return
-      
-      // 验证文件
-      const validation = validateImageFile(file)
-      if (!validation.isValid) {
-        validation.errors.forEach(error => ElMessage.error(error))
-        return
-      }
-      
+    // 初始化时加载记住的用户名和背景
+    onMounted(async () => {
       try {
-        // 显示处理提示
-        if (validation.needsCompression) {
-          isProcessing.value = true
-        }
-        
-        // 压缩图片
-        const result = await compressImageLocal(file)
-        
-        // 检查压缩后大小
-        if (parseFloat(result.compressedSize) > 3) {
-          ElMessage.warning('图片较大，建议使用更小的图片以获得更好的性能')
-        }
-        
-        // 尝试保存到localStorage
-        try {
-          const backgroundData = {
-            data: result.dataUrl,
-            backgroundProcessed: true,
-            timestamp: Date.now()
-          }
-          localStorage.setItem('customLoginBackground', JSON.stringify(backgroundData))
-          customBackground.value = result.dataUrl
-          backgroundType.value = 'custom'
-          ElMessage.success('自定义背景设置成功')
-        } catch (storageError) {
-          // localStorage存储失败
-          customBackground.value = result.dataUrl
-          backgroundType.value = 'custom'
-          ElMessage.warning('背景过大，无法保存到本地，刷新页面后将恢复默认背景')
-        }
-      } catch (error) {
-        ElMessage.error('图片处理失败，请重试')
-      } finally {
-        isProcessing.value = false
-        // 清空input
-        if (fileInput.value) {
-          fileInput.value.value = ''
-        }
-      }
-    }
-
-    // 粒子动画相关
-    const getParticleStyle = (index) => {
-      const size = Math.random() * 4 + 2
-      const duration = Math.random() * 20 + 10
-      const delay = Math.random() * 5
-      
-      return {
-        width: `${size}px`,
-        height: `${size}px`,
-        left: `${Math.random() * 100}%`,
-        top: `${Math.random() * 100}%`,
-        animationDuration: `${duration}s`,
-        animationDelay: `${delay}s`
-      }
-    }
-
-    // 初始化时加载保存的自定义背景和记住的用户名
-    onMounted(() => {
-      try {
-        // 加载保存的自定义背景
-        const savedBackground = localStorage.getItem('customLoginBackground')
-        if (savedBackground) {
-          const backgroundData = JSON.parse(savedBackground)
-          if (backgroundData.backgroundProcessed && backgroundData.data) {
-            customBackground.value = backgroundData.data
-            // 如果有保存的背景，默认使用自定义背景
-            backgroundType.value = 'custom'
-          }
-        }
-        
         // 加载记住的用户名
         const rememberedUsername = localStorage.getItem('rememberedUsername')
         if (rememberedUsername) {
           loginForm.value.username = rememberedUsername
           loginForm.value.remember = true
         }
+        
+        // 加载保存的背景选择
+        const savedIndex = localStorage.getItem('loginPageBackgroundIndex')
+        if (savedIndex !== null) {
+          const index = parseInt(savedIndex)
+          if (index >= 0 && index < backgroundImages.length) {
+            currentBackgroundIndex.value = index
+          }
+        }
+        
       } catch (error) {
-        // CONSOLE LOG REMOVED: console.error('初始化失败:', error)
+        // 初始化错误处理
       }
     })
 
@@ -669,10 +596,6 @@ export default {
       registerForm,
       loginErrors,
       registerErrors,
-      backgroundType,
-      customBackground,
-      isProcessing,
-      fileInput,
       showLoginPassword,
       showRegisterPassword,
       showRegisterConfirmPassword,
@@ -686,10 +609,12 @@ export default {
       validateRegisterField,
       clearLoginError,
       clearRegisterError,
-      toggleBackgroundType,
-      selectCustomBackground,
-      handleCustomBackground,
-      getParticleStyle
+      currentBackgroundIndex,
+      backgroundImages,
+      isBackgroundLoading,
+      imageLoadError,
+      handleImageError,
+      switchBackground
     }
   }
 }
@@ -710,96 +635,16 @@ export default {
   z-index: 1000;
 }
 
-/* 动态渐变背景 */
-.gradient-background {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background: linear-gradient(-45deg, 
-    #667eea 0%, 
-    #764ba2 25%, 
-    #f093fb 50%, 
-    #f5576c 75%, 
-    #4facfe 100%);
-  background-size: 400% 400%;
-  animation: gradientShift 15s ease infinite;
-  z-index: -1;
-}
-
-@keyframes gradientShift {
-  0% {
-    background-position: 0% 50%;
-  }
-  50% {
-    background-position: 100% 50%;
-  }
-  100% {
-    background-position: 0% 50%;
-  }
-}
-
-/* 粒子背景 */
-.particles-background {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
-  z-index: -1;
-}
-
-.particle {
-  position: absolute;
-  background: rgba(255, 255, 255, 0.8);
-  border-radius: 50%;
-  animation: float linear infinite;
-}
-
-@keyframes float {
-  0% {
-    transform: translateY(100vh) rotate(0deg);
-    opacity: 0;
-  }
-  10% {
-    opacity: 1;
-  }
-  90% {
-    opacity: 1;
-  }
-  100% {
-    transform: translateY(-100px) rotate(360deg);
-    opacity: 0;
-  }
-}
-
-/* 自定义背景 */
-.custom-background {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background-size: cover;
-  background-position: center;
-  background-repeat: no-repeat;
-  z-index: -1;
-}
 
 /* 背景控制面板 */
 .background-controls {
   position: fixed;
   top: 20px;
   right: 20px;
-  display: flex;
-  gap: 10px;
   z-index: 1001;
 }
 
-.bg-toggle-btn,
-.bg-upload-btn {
+.bg-toggle-btn {
   width: 50px;
   height: 50px;
   border: none;
@@ -814,51 +659,93 @@ export default {
   align-items: center;
   justify-content: center;
   box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+
+  &:hover {
+    background: rgba(255, 255, 255, 0.25);
+    transform: scale(1.1);
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
+  }
+
+  &:active {
+    transform: scale(0.95);
+  }
 }
 
-.bg-toggle-btn:hover,
-.bg-upload-btn:hover {
-  background: rgba(255, 255, 255, 0.25);
-  transform: scale(1.1);
-}
-
-/* 处理提示覆盖层 */
-.processing-overlay {
-  position: fixed;
+/* 图片背景 */
+.image-background {
+  position: absolute;
   top: 0;
   left: 0;
   width: 100%;
   height: 100%;
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  z-index: -1;
+  transition: all 0.5s ease-in-out;
+}
+
+/* 备用渐变背景 */
+.fallback-background {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(-45deg, 
+    #667eea 0%, 
+    #764ba2 25%, 
+    #f093fb 50%, 
+    #f5576c 75%, 
+    #4facfe 100%);
+  background-size: 400% 400%;
+  animation: gradientShift 15s ease infinite;
+  z-index: -2;
+}
+
+@keyframes gradientShift {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+/* 背景加载指示器 */
+.background-loading {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
   background: rgba(0, 0, 0, 0.7);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 1002;
-}
-
-.processing-content {
-  background: rgba(255, 255, 255, 0.1);
-  backdrop-filter: blur(10px);
-  padding: 30px;
-  border-radius: 15px;
-  text-align: center;
   color: white;
+  padding: 20px 30px;
+  border-radius: 10px;
+  text-align: center;
+  z-index: 1002;
+  backdrop-filter: blur(10px);
 }
 
-.spinner {
-  width: 40px;
-  height: 40px;
-  border: 4px solid rgba(255, 255, 255, 0.3);
-  border-top: 4px solid white;
+.loading-spinner {
+  width: 30px;
+  height: 30px;
+  border: 3px solid rgba(255, 255, 255, 0.3);
+  border-top: 3px solid white;
   border-radius: 50%;
   animation: spin 1s linear infinite;
-  margin: 0 auto 15px;
+  margin: 0 auto 10px;
 }
 
 @keyframes spin {
   0% { transform: rotate(0deg); }
   100% { transform: rotate(360deg); }
 }
+
 
 .login-card {
   width: 400px;
@@ -876,7 +763,6 @@ export default {
   inset: 0;
   z-index: 0;
   backdrop-filter: blur(5px);
-  filter: url(#glass-distortion);
   isolation: isolate;
   border-radius: 24px;
 }
@@ -1037,7 +923,7 @@ export default {
       content: '✓';
       position: absolute;
       top: -2px;
-      left: 1px;
+      left: 2px;
       color: white;
       font-size: 12px;
       font-weight: bold;
@@ -1045,232 +931,52 @@ export default {
   }
 }
 
+.password-group {
+  position: relative;
+}
+
+.password-input {
+  padding-right: 50px;
+}
+
+.password-toggle {
+  position: absolute;
+  right: 15px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0.7;
+  transition: opacity 0.3s ease;
+
+  &:hover {
+    opacity: 1;
+  }
+
+  img {
+    width: 20px;
+    height: 20px;
+  }
+}
+
 .form-footer {
-  margin-top: 1.5rem;
   text-align: center;
+  margin-top: 1.5rem;
 }
 
 .switch-form {
   color: rgba(255, 255, 255, 0.8);
   cursor: pointer;
-  margin: 0.5rem 0;
-  font-size: 0.9rem;
   transition: color 0.3s ease;
+  margin: 0;
 
   &:hover {
-    color: white;
+    color: rgba(255, 255, 255, 1);
   }
-}
-
-
-
-.form-container {
-  transition: all 0.3s ease;
-}
-
-// 添加点击波纹效果
-.click-gradient {
-  position: absolute;
-  border-radius: 50%;
-  background: radial-gradient(circle, rgba(255,255,255,0.4) 0%, rgba(180,180,255,0.2) 40%, rgba(100,100,255,0.1) 70%, rgba(50,50,255,0) 100%);
-  transform: translate(-50%, -50%) scale(0);
-  opacity: 0;
-  pointer-events: none;
-  z-index: 4;
-}
-
-.glass-component.clicked .click-gradient {
-  animation: gradient-ripple 0.6s ease-out;
-}
-
-@keyframes gradient-ripple {
-  0% {
-    transform: translate(-50%, -50%) scale(0);
-    opacity: 1;
-  }
-  100% {
-    transform: translate(-50%, -50%) scale(3);
-    opacity: 0;
-  }
-}
-
-.glass-component {
-  transition: transform 0.25s cubic-bezier(0.22, 1, 0.36, 1);
-  will-change: transform;
-}
-
-.remember-label {
-  display: flex;
-  align-items: center;
-  color: rgba(255, 255, 255, 0.8);
-  font-size: 0.9rem;
-  cursor: pointer;
-  
-  .glass-checkbox {
-    margin-right: 8px;
-    accent-color: rgba(255, 255, 255, 0.6);
-  }
-}
-
-.glass-button {
-  width: 100%;
-  padding: 12px;
-  border: none;
-  border-radius: 10px;
-  background: rgba(255, 255, 255, 0.2);
-  color: #fff;
-  font-size: 1rem;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  backdrop-filter: blur(5px);
-  position: relative;
-  overflow: hidden;
-
-  &:hover {
-    background: rgba(255, 255, 255, 0.3);
-    transform: translateY(-2px);
-    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
-  }
-
-  &:active {
-    transform: translateY(0);
-  }
-}
-
-.form-footer {
-  margin-top: 1.5rem;
-  text-align: center;
-  
-  .switch-form {
-    color: rgba(255, 255, 255, 0.8);
-    cursor: pointer;
-    margin-bottom: 0.5rem;
-    transition: color 0.3s ease;
-    
-    &:hover {
-      color: #fff;
-    }
-  }
-  
-
-}
-
-// 添加点击波纹效果
-.click-gradient {
-  position: absolute;
-  border-radius: 50%;
-  background: radial-gradient(circle, rgba(255,255,255,0.4) 0%, rgba(180,180,255,0.2) 40%, rgba(100,100,255,0.1) 70%, rgba(50,50,255,0) 100%);
-  transform: translate(-50%, -50%) scale(0);
-  opacity: 0;
-  pointer-events: none;
-  z-index: 4;
-}
-
-.glass-component.clicked .click-gradient {
-  animation: gradient-ripple 0.6s ease-out;
-}
-
-@keyframes gradient-ripple {
-  0% {
-    transform: translate(-50%, -50%) scale(0);
-    opacity: 1;
-  }
-  100% {
-    transform: translate(-50%, -50%) scale(3);
-    opacity: 0;
-  }
-}
-
-.glass-component {
-  transition: transform 0.25s cubic-bezier(0.22, 1, 0.36, 1);
-  will-change: transform;
-}
-
-// 响应式设计
-@media (max-width: 480px) {
-  .login-card {
-    width: 90vw;
-    max-width: 350px;
-  }
-  
-  .glass-content {
-    padding: 1.5rem;
-  }
-  
-  .login-title {
-    font-size: 1.5rem;
-  }
-}
-
-/* 密码输入框组样式 - 完全重构 */
-.password-group {
-  position: relative;
-  display: block;
-  height: auto;
-  margin-bottom: 1.5rem;
-}
-
-.password-input {
-  padding-right: 40px !important; 
-  box-sizing: border-box;
-  position: relative;
-  z-index: 0;
-  height: 44px; /* 固定高度确保一致的布局 */
-}
-
-/* 完全重写的密码切换按钮样式 */
-.password-toggle {
-  position: absolute;
-  right: 8px;
-  top: 0;
-  bottom: 0;
-  width: 24px;
-  display: block;
-  background: none;
-  border: none;
-  cursor: pointer;
-  padding: 0;
-  margin: 0;
-  text-align: center;
-  z-index: 10;
-  box-sizing: border-box;
-}
-
-.password-toggle:hover {
-  background-color: rgba(255, 255, 255, 0.1);
-  border-radius: 4px;
-}
-
-.password-toggle:active {
-  transform: scale(0.9);
-}
-
-/* 密码图标样式 - 使用表格布局技术确保垂直居中 */
-.password-toggle img {
-  display: inline-block;
-  width: 18px;
-  height: 18px;
-  margin: 0;
-  padding: 0;
-  vertical-align: middle;
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  object-fit: contain;
-}
-
-/* 添加伪元素确保按钮高度与输入框一致 */
-.password-toggle::before {
-  content: '';
-  display: inline-block;
-  height: 100%;
-  vertical-align: middle;
-}
-
-/* 确保输入框和按钮在各种状态下保持一致 */
-.password-group:focus-within .password-toggle img {
-  transform: translate(-50%, -50%);
 }
 </style>

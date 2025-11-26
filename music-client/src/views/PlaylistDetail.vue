@@ -18,7 +18,15 @@
       
       <div class="song-list-header">
         <div class="song-list-title">歌曲列表</div>
-        <div class="song-list-count">共 {{ songs.length }} 首歌曲</div>
+        <div class="song-list-actions">
+          <button v-if="songs.length > 0" class="play-all-btn" @click="playAllSongs">
+            <svg class="play-icon" viewBox="0 0 1024 1024" xmlns="http://www.w3.org/2000/svg">
+              <path d="M955.733333 512L68.266667 1024V0z" fill="currentColor"></path>
+            </svg>
+            <span>播放全部</span>
+          </button>
+          <div class="song-list-count">共 {{ songs.length }} 首歌曲</div>
+        </div>
       </div>
       
       <div class="song-list-content" v-if="songs.length > 0">
@@ -50,8 +58,9 @@
           <div class="col-album clickable-item" :title="song.albumName || '未知专辑'" @click.stop="goToAlbumDetail(song)">{{ song.albumName || '未知专辑' }}</div>
           <div class="col-duration"><span>{{ formatDuration(song.duration || 0) }}</span></div>
           <div class="col-operation">
-              <button class="operation-btn favorite-btn" @click.stop="toggleFavorite(song.id)">              <!-- 使用正确的条件判断，确保只有用户手动收藏的歌曲才显示红色爱心 -->
-              <svg v-if="favorites.has(song.id)" class="heart-icon-svg filled" viewBox="0 0 24 24" width="18" height="18">
+              <button class="operation-btn favorite-btn" @click.stop="toggleFavorite(song.id)">
+              <!-- 使用全局的isSongLiked来判断收藏状态，确保与后端同步 -->
+              <svg v-if="isSongLiked(song.id)" class="heart-icon-svg filled" viewBox="0 0 24 24" width="18" height="18">
                 <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" fill="currentColor"/>
               </svg>
               <svg v-else class="heart-icon-svg" viewBox="0 0 24 24" width="18" height="18">
@@ -127,7 +136,7 @@ import { ref, onMounted, computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { getPlaylistById, getPlaylistSongs } from '@/api/playlist.js'
 import { isSongFavorited, favoriteSong } from '@/api/song.js'
-import { playSong as playMusic, addToPlaylist, isPlaying as isMusicPlaying } from '@/utils/musicPlayer.js'
+import { playSong as playMusic, addToPlaylist, isPlaying as isMusicPlaying, addMultipleToPlaylist } from '@/utils/musicPlayer.js'
 import { toggleSongLike, getFavoriteSongs, initFavoriteSongs, isSongLiked } from '@/utils/favoriteManager.js'
 import { ElMessage } from 'element-plus'
 
@@ -159,6 +168,7 @@ const fetchPlaylistDetail = async function() {
       
       if (songsResponse && songsResponse.code === 200) {
         let songList = songsResponse.data || [];
+        
         songList = songList.map(function(song) {
           return {
             ...song,
@@ -200,7 +210,9 @@ const fetchSongsFavoriteStatus = async () => {
   try {
     // 先清空收藏集合，确保初始状态为空
     favorites.value.clear();
-    // CONSOLE LOG REMOVED: console.log('已清空收藏状态，开始获取新的收藏状态...');
+    
+    // 重新从服务器获取最新的收藏状态
+    await initFavoriteSongs();
     
     // 从全局的favoriteManager获取用户已收藏的歌曲状态
     const favoriteSongsList = getFavoriteSongs();
@@ -210,12 +222,8 @@ const fetchSongsFavoriteStatus = async () => {
       // 确保这个歌曲ID在当前歌单中存在
       if (songs.value.some(song => song.id === favoriteSong.id)) {
         favorites.value.add(favoriteSong.id);
-        // CONSOLE LOG REMOVED: console.log(`添加已收藏歌曲: ID=${favoriteSong.id}, 名称=${favoriteSong.name}`);
       }
     });
-    
-    // CONSOLE LOG REMOVED: console.log('当前收藏数:', favorites.value.size)
-    // CONSOLE LOG REMOVED: console.log('当前收藏列表:', Array.from(favorites.value))
   } catch (error) {
     // CONSOLE LOG REMOVED: console.error('获取歌曲收藏状态失败:', error)
     // 发生错误时清空收藏集合
@@ -313,7 +321,31 @@ const playSong = async (song, index) => {
   }
 }
 
+// 播放全部歌曲
+const playAllSongs = async () => {
+  if (songs.value.length === 0) {
+    ElMessage.warning('歌单中没有歌曲')
+    return
+  }
+  
+  try {
+    ElMessage.success(`开始播放歌单《${playlist.value.name}》，共 ${songs.value.length} 首歌曲`)
+    const success = await addMultipleToPlaylist(songs.value, true)
+    if (success) {
+      activeSongIndex.value = 0
+    } else {
+      ElMessage.warning('播放失败，请稍后重试')
+    }
+  } catch (error) {
+    // CONSOLE LOG REMOVED: console.error('播放全部失败:', error)
+    ElMessage.error('播放失败: ' + error.message)
+  }
+}
+
 // 切换收藏状态
+// 添加一个响应式的刷新标记
+const refreshKey = ref(0)
+
 const toggleFavorite = async (songId) => {
   try {
     // 查找当前歌曲完整信息
@@ -322,10 +354,6 @@ const toggleFavorite = async (songId) => {
       ElMessage.error('未找到歌曲信息')
       return
     }
-    
-    // CONSOLE LOG REMOVED: console.log(`尝试切换歌曲收藏状态: 歌曲ID=${songId}, 歌曲名称=${song.name}`)
-    // CONSOLE LOG REMOVED: console.log(`切换前本地收藏状态: ${favorites.value.has(songId)}`)
-    // CONSOLE LOG REMOVED: console.log(`切换前全局收藏状态: ${isSongLiked(songId)}`)
     
     // 调用toggleSongLike函数来更新收藏状态，只有成功添加到后端我喜欢的列表才会返回true
     const newFavoriteState = await toggleSongLike({
@@ -340,19 +368,15 @@ const toggleFavorite = async (songId) => {
       audioUrl: song.audioUrl
     })
     
-    // 只有在toggleSongLike返回true（表示歌曲已成功添加到我喜欢的列表）时，才更新本地状态
+    // 强制刷新UI
+    refreshKey.value++
+    
+    // toggleSongLike会自动更新全局状态，我们只需要显示提示消息
     if (newFavoriteState) {
-      favorites.value.add(songId)
       ElMessage.success(`已添加到我喜欢的音乐: ${song.name}`)
     } else {
-      favorites.value.delete(songId)
       ElMessage.success(`已取消收藏: ${song.name}`)
     }
-    
-    // CONSOLE LOG REMOVED: console.log(`切换后本地收藏状态: ${favorites.value.has(songId)}`)
-    // CONSOLE LOG REMOVED: console.log(`切换后全局收藏状态: ${isSongLiked(songId)}`)
-    // CONSOLE LOG REMOVED: console.log(`当前收藏列表: ${Array.from(favorites.value).join(', ')}`)
-    // CONSOLE LOG REMOVED: console.log(`全局收藏列表数量: ${getFavoriteSongs().length}`)
   } catch (error) {
     // CONSOLE LOG REMOVED: console.error('切换收藏状态失败:', error)
     ElMessage.error('网络错误，请重试')
@@ -564,6 +588,43 @@ onMounted(async () => {
   font-size: 20px;
   font-weight: bold;
   color: var(--text-primary);
+}
+
+.song-list-actions {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.play-all-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 20px;
+  background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%);
+  color: white;
+  border: none;
+  border-radius: 24px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 12px rgba(255, 107, 155, 0.3);
+}
+
+.play-all-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(255, 107, 155, 0.4);
+  background: linear-gradient(135deg, var(--primary-light) 0%, var(--primary) 100%);
+}
+
+.play-all-btn:active {
+  transform: translateY(0);
+}
+
+.play-all-btn .play-icon {
+  width: 14px;
+  height: 14px;
 }
 
 .song-list-count {

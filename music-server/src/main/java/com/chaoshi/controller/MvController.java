@@ -104,7 +104,7 @@ public class MvController {
             @Parameter(description = "MV名称") @RequestParam(required = false) String name,
             @Parameter(description = "歌手ID") @RequestParam(required = false) Long artistId,
             @Parameter(description = "页码", example = "1") @RequestParam(defaultValue = "1") Integer page,
-            @Parameter(description = "每页大小", example = "10") @RequestParam(defaultValue = "10") Integer size) {
+            @Parameter(description = "每页大小", example = "1000") @RequestParam(defaultValue = "1000") Integer size) {
         
         try {
             PageResult<Mv> result = mvService.getMvPage(name, artistId, page, size);

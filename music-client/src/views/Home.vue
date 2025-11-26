@@ -195,7 +195,7 @@
                 </div>
                 <div class="chaoshi-info">
                   <div class="chaoshi-title clickable-item" @click.stop="goToSongDetail(s)">{{ s.name }}</div>
-                  <div class="chaoshi-subtitle clickable-item" @click.stop="goToArtistDetail(s)">{{ s.artist }}{{ s.playCount ? ` | ${formatPlayCount(s.playCount)}` : '' }}</div>
+                  <div class="chaoshi-subtitle clickable-item" @click.stop="goToArtistDetail(s)">{{ s.artist }}</div>
                 </div>
               </div>
             </div>
@@ -307,8 +307,10 @@
 <script setup>
 import { ref, onMounted, onUnmounted, computed } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
-import { getBanners, getRecommendPlaylists, getHotArtists, getHotAlbums, getHotSongs, getHotToplists, getToplistSongs as fetchToplistSongs } from '@/api/home.js'
+import { getBanners, getRecommendPlaylists, getHotAlbums, getHotSongs, getHotToplists, getToplistSongs as fetchToplistSongs } from '@/api/home.js'
+import { getArtistList } from '@/api/artist.js'
 import { getToplistSongs as getToplistSongsDetail } from '@/api/toplist.js'
+import { getSongsByAlbumId } from '@/api/album.js'
 import { ElMessage } from 'element-plus'
 import { playSong as playMusic } from '@/utils/musicPlayer.js'
 import HomeCarousel from '@/components/HomeCarousel.vue'
@@ -383,10 +385,36 @@ const playAlbum = async (album) => {
   }
   
   try {
-    ElMessage.success(`开始播放专辑《${album.name}》`);
+    // 获取专辑中的歌曲
+    const songsResponse = await getSongsByAlbumId(album.id);
+    let songs = [];
+    
+    if (songsResponse && songsResponse.code === 200) {
+      if (songsResponse.data && songsResponse.data.content) {
+        songs = songsResponse.data.content;
+      } else if (songsResponse.data && Array.isArray(songsResponse.data)) {
+        songs = songsResponse.data;
+      }
+    }
+    
+    if (songs && songs.length > 0) {
+      // 使用addMultipleToPlaylist播放专辑中的所有歌曲
+      const { addMultipleToPlaylist } = await import('@/utils/musicPlayer.js');
+      const success = addMultipleToPlaylist(songs, true);
+      
+      if (success) {
+        // CONSOLE LOG REMOVED: console.log('专辑播放成功');
+        ElMessage.success(`开始播放专辑《${album.name}》`);
+      } else {
+        // CONSOLE LOG REMOVED: console.log('专辑播放失败');
+        ElMessage.error('播放失败，请稍后重试');
+      }
+    } else {
+      ElMessage.warning('该专辑暂无歌曲');
+    }
   } catch (error) {
     // CONSOLE LOG REMOVED: console.error('播放专辑错误:', error);
-    ElMessage.error('播放失败，请稍后重试');
+    ElMessage.error('播放专辑失败: ' + error.message);
   }
 };
 
@@ -611,9 +639,6 @@ const hasAnyLoading = computed(() => {
 })
 
 
-// banner数据仍保留，以备后续功能需要
-// 轮播逻辑已移至HomeCarousel组件
-
 async function loadHomeData() {
   try {
     loading.value = true
@@ -621,9 +646,9 @@ async function loadHomeData() {
     const loadTasks = [
       { key: 'banners', request: getBanners() },
       { key: 'playlists', request: getRecommendPlaylists(10) },
-      { key: 'artists', request: getHotArtists(10) },
-      { key: 'albums', request: getHotAlbums(10) },
-      { key: 'songs', request: getHotSongs(10) },
+      { key: 'artists', request: getArtistList(1, 1000) },
+      { key: 'albums', request: getHotAlbums(25) },
+      { key: 'songs', request: getHotSongs(25) },
       { key: 'toplists', request: getHotToplists(5) }
     ]
     
@@ -644,13 +669,25 @@ async function loadHomeData() {
             recommendPlaylists.value = data
             break
           case 'artists':
-            hotArtists.value = data
+            let artistList = []
+            if (data && data.content) {
+              artistList = data.content
+            } else if (Array.isArray(data)) {
+              artistList = data
+            }
+            
+            // 与歌手页面使用相同的排序逻辑
+            hotArtists.value = artistList
+              .sort((a, b) => (a.id || 0) - (b.id || 0))
+              .slice(0, 25)
             break
           case 'albums':
-            hotAlbums.value = data
+            // 确保只使用前25条数据
+            hotAlbums.value = data.slice(0, 25)
             break
           case 'songs':
-            hotSongs.value = data
+            // 确保只使用前25条数据
+            hotSongs.value = data.slice(0, 25)
             break
           case 'toplists':
             // CONSOLE LOG REMOVED: console.log('排序前的排行榜数据:', data.map(item => item.name))
@@ -659,7 +696,6 @@ async function loadHomeData() {
             hotToplists.value = [...data].sort((a, b) => {
               const indexA = desiredOrder.indexOf(a.name)
               const indexB = desiredOrder.indexOf(b.name)
-              // 按指定顺序排列，如果不在指定列表中则放在后面
               if (indexA !== -1 && indexB !== -1) {
                 return indexA - indexB
               }
@@ -708,7 +744,7 @@ onMounted(async () => {
   await loadHomeData()
 
   window.addEventListener('scroll', handleScroll)
-  window.addEventListener('resize', handleScroll)
+  window.addEventListener('resize', handleResize)
   
   // 初始设置cardsFullyVisible为true，确保切换按钮可见
   playlistCardsFullyVisible.value = true
@@ -721,21 +757,38 @@ onMounted(async () => {
     handleScroll()
   }, 300)
   
-  // 再次延时检查，确保所有内容都已加载完成
   setTimeout(() => {
     handleScroll()
   }, 600)
 })
 onUnmounted(() => {
   window.removeEventListener('scroll', handleScroll)
-  window.removeEventListener('resize', handleScroll)
+  window.removeEventListener('resize', handleResize)
 })
+
+// 处理窗口大小变化，重置所有分页
+function handleResize() {
+  artistPage.value = 0
+  albumPage.value = 0
+  songPage.value = 0
+  handleScroll()
+}
+
+// 每页显示5个专辑数据项，总共显示25个(5页)
+function getAlbumPageSize() {
+  return 5
+}
+
+// 每页显示5个歌曲数据项，总共显示25个(5页)
+function getSongPageSize() {
+  return 5
+}
 
 // 推荐歌单分页轮播
 const playlistPage = ref(0)
 const pageSize = 5
 const playlistAnimating = ref(false)
-const playlistCardsFullyVisible = ref(false) // 新增：卡片100%可见性状态
+const playlistCardsFullyVisible = ref(false) 
 const playlistTotalPages = computed(() => Math.ceil((recommendPlaylists.value?.length || 0) / pageSize))
 const playlistPageList = computed(() => {
   const start = playlistPage.value * pageSize
@@ -768,8 +821,23 @@ function nextPlaylistPage() {
 const artistPage = ref(0)
 const artistAnimating = ref(false)
 const artistCardsFullyVisible = ref(false) // 新增：卡片100%可见性状态
-const artistTotalPages = computed(() => Math.ceil((hotArtists.value?.length || 0) / pageSize))
+// 根据屏幕宽度动态计算每页显示的歌手数量
+function getArtistPageSize() {
+  const width = window.innerWidth
+  if (width >= 1200) return 5 // 大屏幕显示5个
+  if (width >= 992) return 4 // 中等屏幕显示4个
+  if (width >= 768) return 3 // 平板显示3个
+  return 2 // 移动端显示2个
+}
+
+// 响应式的歌手分页计算
+const artistTotalPages = computed(() => {
+  const pageSize = getArtistPageSize()
+  return Math.ceil((hotArtists.value?.length || 0) / pageSize)
+})
+
 const artistPageList = computed(() => {
+  const pageSize = getArtistPageSize()
   const start = artistPage.value * pageSize
   return (hotArtists.value || []).slice(start, start + pageSize)
 })
@@ -800,8 +868,12 @@ function nextArtistPage() {
 const albumPage = ref(0)
 const albumAnimating = ref(false)
 const albumCardsFullyVisible = ref(false) // 新增：卡片100%可见性状态
-const albumTotalPages = computed(() => Math.ceil((hotAlbums.value?.length || 0) / pageSize))
+const albumTotalPages = computed(() => {
+  const pageSize = getAlbumPageSize()
+  return Math.ceil((hotAlbums.value?.length || 0) / pageSize)
+})
 const albumPageList = computed(() => {
+  const pageSize = getAlbumPageSize()
   const start = albumPage.value * pageSize
   return (hotAlbums.value || []).slice(start, start + pageSize)
 })
@@ -832,8 +904,12 @@ function nextAlbumPage() {
 const songPage = ref(0)
 const songAnimating = ref(false)
 const songCardsFullyVisible = ref(false) // 新增：卡片100%可见性状态
-const songTotalPages = computed(() => Math.ceil((hotSongs.value?.length || 0) / pageSize))
+const songTotalPages = computed(() => {
+  const pageSize = getSongPageSize()
+  return Math.ceil((hotSongs.value?.length || 0) / pageSize)
+})
 const songPageList = computed(() => {
+  const pageSize = getSongPageSize()
   const start = songPage.value * pageSize
   return (hotSongs.value || []).slice(start, start + pageSize)
 })
@@ -867,7 +943,6 @@ function triggerSlideAnimation(listSelector, direction, callback) {
   animatingRef.value = true
   const listElement = document.querySelector(listSelector)
   
-  // 简化动画逻辑，使用更直接的方式更新内容
   try {
     // 先立即执行回调更新数据
     callback()
@@ -894,7 +969,7 @@ function triggerSlideAnimation(listSelector, direction, callback) {
     }
   } catch (error) {
     // 错误处理，确保动画状态总是被重置
-    console.error('轮播动画执行失败:', error)
+    // console.error('轮播动画执行失败:', error)
     animatingRef.value = false
   }
 }

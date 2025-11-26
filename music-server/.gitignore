@@ -53,6 +53,9 @@ jspm_packages/
 .env.development.local
 .env.test.local
 
+# Sensitive configuration (use application.properties.example as template)
+src/main/resources/application.properties
+
 # Build output
 build/
 dist/

@@ -6,6 +6,7 @@ import { ref, computed, reactive, watch, nextTick } from 'vue'
 import { ElMessage } from 'element-plus'
 import { getSongStreamUrl, getSongLyrics } from '@/api/song.js'
 import { getArtistById } from '@/api/artist.js'
+import { checkLoginForAction } from '@/utils/authCheck.js'
 
 export const isPlaying = ref(false)
 export const isPaused = ref(false)
@@ -33,6 +34,64 @@ export const playMode = ref('sequence')
 
 // 音频元素
 export const audioElement = ref(null)
+
+// 音频分析相关
+let audioContext = null
+let analyser = null
+let dataArray = null
+let sourceNode = null
+export const audioData = ref([]) // 音频频率数据，用于可视化
+
+// 初始化音频分析器
+export const initAudioAnalyser = () => {
+  if (!audioElement.value || audioContext) return
+  
+  try {
+    audioContext = new (window.AudioContext || window.webkitAudioContext)()
+    analyser = audioContext.createAnalyser()
+    analyser.fftSize = 256
+    analyser.smoothingTimeConstant = 0.8
+    
+    const bufferLength = analyser.frequencyBinCount
+    dataArray = new Uint8Array(bufferLength)
+    
+    sourceNode = audioContext.createMediaElementSource(audioElement.value)
+    sourceNode.connect(analyser)
+    analyser.connect(audioContext.destination)
+  } catch (e) {
+    console.warn('音频分析器初始化失败:', e)
+  }
+}
+
+// 获取音频频率数据
+export const getAudioFrequencyData = () => {
+  if (!analyser || !dataArray) return []
+  
+  analyser.getByteFrequencyData(dataArray)
+  
+  // 返回简化的数据（5个频段，对应5个波浪）
+  const bands = 5
+  const bandSize = Math.floor(dataArray.length / bands)
+  const result = []
+  
+  for (let i = 0; i < bands; i++) {
+    let sum = 0
+    for (let j = 0; j < bandSize; j++) {
+      sum += dataArray[i * bandSize + j]
+    }
+    // 归一化到 0-1 范围
+    result.push(sum / bandSize / 255)
+  }
+  
+  return result
+}
+
+// 恢复音频上下文（用于解决自动播放限制）
+export const resumeAudioContext = async () => {
+  if (audioContext && audioContext.state === 'suspended') {
+    await audioContext.resume()
+  }
+}
 
 export const magicColors = ref({
   primary: '#ec4899',
@@ -179,6 +238,7 @@ export const loadSong = async (song) => {
       try {
         await audioElement.value.pause()
 0      } catch (pauseError) {
+        // console.warn('暂停当前播放失败:', pauseError)
       }
     }
     isPlaying.value = false
@@ -217,7 +277,8 @@ export const loadSong = async (song) => {
         
         if (streamResponse && (streamResponse.success || streamResponse.code === 200)) {
           const responseData = streamResponse.data || streamResponse
-          audioUrl = responseData.audioUrl || responseData.streamUrl || responseData.filePath
+          
+          audioUrl = responseData.audioUrl || responseData.streamUrl || responseData.filePath || responseData.url
 
           const artistInfo = responseData.artist || 
                             responseData.artistName || 
@@ -236,17 +297,19 @@ export const loadSong = async (song) => {
           }
 
           checkAndFetchArtistName(currentSong.value)
-          if (responseData.duration) {
+          if (responseData.duration && !currentSong.value.duration) {
             metadata.duration = responseData.duration
             currentSong.value.duration = responseData.duration
           }
-          if (responseData.title || responseData.name) {
+          // 只有在当前歌曲没有名称时，才使用API返回的名称
+          if ((responseData.title || responseData.name) && !song.name) {
             metadata.title = responseData.title || responseData.name
             currentSong.value.name = responseData.title || responseData.name
           }
 
         }
       } catch (apiError) {
+        // console.warn('获取音频流URL失败:', apiError)
       }
     }
     
@@ -309,9 +372,11 @@ export const loadSong = async (song) => {
       audioElement.value.load()
       await loadPromise
 
-      try {
-        await extractMagicColors(currentSong.value.cover || currentSong.value.albumCover)
-      } catch (colorError) {
+      // 在后台异步提取颜色，不阻塞主流程
+      if (currentSong.value.cover || currentSong.value.albumCover) {
+        extractMagicColors(currentSong.value.cover || currentSong.value.albumCover).catch(() => {
+          // 静默处理错误
+        })
       }
 
       window.dispatchEvent(new CustomEvent('song-loaded', {
@@ -328,6 +393,7 @@ export const loadSong = async (song) => {
       return false
     }
   } catch (error) {
+    // console.error('加载歌曲失败:', error)
     isLoading.value = false
     return false
   }
@@ -379,6 +445,13 @@ export const togglePlay = async () => {
  * 播放歌曲
  */
 export const playSong = async (song) => {
+  // 检查登录状态
+  const isLoggedIn = await checkLoginForAction('播放歌曲')
+  
+  if (!isLoggedIn) {
+    return false
+  }
+
   if (!song) {
     return false
   }
@@ -392,6 +465,7 @@ export const playSong = async (song) => {
   }
 
   const loaded = await loadSong(song)
+  
   if (loaded) {
 
     try {
@@ -441,6 +515,7 @@ export const playSong = async (song) => {
             isPaused.value = false
             return true
           } catch (playError) {
+              // console.warn('播放失败，尝试恢复:', playError)
               isPlaying.value = false
               isPaused.value = true
               return false
@@ -450,6 +525,7 @@ export const playSong = async (song) => {
         }
       }
     } catch (playError) {
+      // console.error('播放歌曲时发生错误:', playError)
       isPlaying.value = false
       isPaused.value = true
       return false
@@ -613,7 +689,7 @@ const addToPlaylistFirst = (song) => {
 /**
  * 批量添加歌曲
  */
-export const addMultipleToPlaylist = (songs, playFirst = false) => {
+export const addMultipleToPlaylist = async (songs, playFirst = false) => {
   if (!Array.isArray(songs) || songs.length === 0) return false
   
   // 当需要立即播放第一首时（播放全部功能），清空现有播放列表
@@ -646,7 +722,8 @@ export const addMultipleToPlaylist = (songs, playFirst = false) => {
   })
   
   if (playFirst && playlist.value.length > 0) {
-    playByIndex(0)
+    const success = await playByIndex(0)
+    return success
   }
   
   return true
@@ -825,16 +902,27 @@ export const extractMagicColors = async (coverUrl) => {
     return new Promise((resolve) => {
       img.onload = () => {
         try {
-          // 创建canvas提取色彩
+          // 创建canvas提取色彩 - 限制canvas大小以提高性能
           const canvas = document.createElement('canvas')
           const ctx = canvas.getContext('2d')
           
-          canvas.width = img.width
-          canvas.height = img.height
-          ctx.drawImage(img, 0, 0)
+          // 限制canvas最大尺寸为200x200，保持宽高比
+          const maxSize = 200
+          let width = img.width
+          let height = img.height
+          
+          if (width > maxSize || height > maxSize) {
+            const ratio = Math.min(maxSize / width, maxSize / height)
+            width = Math.floor(width * ratio)
+            height = Math.floor(height * ratio)
+          }
+          
+          canvas.width = width
+          canvas.height = height
+          ctx.drawImage(img, 0, 0, width, height)
           
           // 提取主色调
-          const colors = extractDominantColors(ctx, canvas.width, canvas.height)
+          const colors = extractDominantColors(ctx, width, height)
           
           // 生成魔法色
           const magic = generateMagicColors(colors)
@@ -867,15 +955,19 @@ const extractDominantColors = (ctx, width, height) => {
   const data = imageData.data
   const colorMap = {}
   
-  for (let i = 0; i < data.length; i += 16) {
+  // 增加采样步长以减少处理的像素数量
+  const sampleStep = Math.max(4, Math.floor(Math.sqrt(width * height) / 50))
+  
+  for (let i = 0; i < data.length; i += sampleStep * 4) {
     const r = data[i]
     const g = data[i + 1]
     const b = data[i + 2]
     const alpha = data[i + 3]
     
     if (alpha > 125) { 
-      const color = `${r},${g},${b}`
-      colorMap[color] = (colorMap[color] || 0) + 1
+      // 对颜色进行分组，减少相似颜色的处理
+      const colorKey = `${Math.floor(r / 8) * 8},${Math.floor(g / 8) * 8},${Math.floor(b / 8) * 8}`
+      colorMap[colorKey] = (colorMap[colorKey] || 0) + 1
     }
   }
   
@@ -1190,7 +1282,8 @@ export const getCurrentLyricIndex = (currentTimeInSeconds, lyrics) => {
 
 // 检查并获取艺术家名称的函数
 const checkAndFetchArtistName = (song) => {
-  if (song.artistId && (song.artist === '未知艺术家' || song.artist.includes('艺术家'))) {
+  // 只要有artistId就尝试获取，不管当前artist是什么
+  if (song.artistId) {
     fetchArtistName(song)
   }
 }
@@ -1200,10 +1293,27 @@ const fetchArtistName = (song) => {
   if (!song.artistId) return
   
   getArtistById(song.artistId).then(response => {
-    if (response && response.success && response.data && response.data.name) {
-      song.artist = response.data.name
+    if (response && (response.success || response.code === 200) && response.data && response.data.name) {
+      const newArtistName = response.data.name
+      
+      // 更新当前播放歌曲（响应式更新）
+      if (currentSong.value && currentSong.value.id === song.id) {
+        currentSong.value = { ...currentSong.value, artist: newArtistName }
+      }
+      
+      // 更新播放列表中的歌曲（响应式更新）
+      if (playlist.value.length > 0) {
+        const index = playlist.value.findIndex(item => item.id === song.id)
+        if (index !== -1) {
+          playlist.value[index] = { ...playlist.value[index], artist: newArtistName }
+        }
+      }
+      
+      // 同时更新传入的song对象
+      song.artist = newArtistName
     }
   }).catch(() => {
+    // 静默处理错误
   })
 }
 export { addToPlaylistFirst }

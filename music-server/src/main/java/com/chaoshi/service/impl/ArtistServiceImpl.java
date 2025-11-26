@@ -39,13 +39,17 @@ public class ArtistServiceImpl implements ArtistService {
     @Override
     public PageResult<Artist> getArtistPage(String name, Integer page, Integer size) {
         try {
-            List<Artist> artists = artistMapper.selectAll();
-            if (name != null && !name.trim().isEmpty()) {
-                artists = artists.stream()
-                    .filter(artist -> artist.getName().contains(name))
-                    .collect(java.util.stream.Collectors.toList());
-            }
-            return new PageResult<>((long)artists.size(), artists, page, size);
+            // 计算偏移量，转换为Long类型以匹配Mapper接口
+            long offset = (long)(page - 1) * size;
+            long pageSize = size;
+            
+            // 使用数据库分页查询，保持数据库排序顺序
+            List<Artist> artists = artistMapper.selectPage(name, offset, pageSize);
+            
+            // 获取总记录数
+            long total = artistMapper.countArtists(name);
+            
+            return new PageResult<>(total, artists, page, size);
         } catch (Exception e) {
             log.error("分页获取歌手失败", e);
             throw new RuntimeException("分页获取歌手失败: " + e.getMessage());

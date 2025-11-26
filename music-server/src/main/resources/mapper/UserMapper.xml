@@ -11,6 +11,7 @@
         <result column="phone" property="phone" jdbcType="VARCHAR"/>
         <result column="avatar" property="avatar" jdbcType="VARCHAR"/>
         <result column="bio" property="bio" jdbcType="LONGVARCHAR"/>
+        <result column="background_url" property="backgroundUrl" jdbcType="VARCHAR"/>
         <result column="created_at" property="createdAt" jdbcType="TIMESTAMP"/>
         <result column="updated_at" property="updatedAt" jdbcType="TIMESTAMP"/>
         <result column="deleted" property="deleted" jdbcType="INTEGER"/>
@@ -18,13 +19,13 @@
 
     <!-- 基础列 -->
     <sql id="Base_Column_List">
-        id, username, email, password, phone, avatar, bio, created_at, updated_at, deleted
+        id, username, email, password, phone, avatar, bio, background_url, created_at, updated_at, deleted
     </sql>
 
     <!-- 插入用户 -->
     <insert id="insertUser" parameterType="com.chaoshi.entity.User" useGeneratedKeys="true" keyProperty="id">
-        INSERT INTO users (username, email, password, phone, avatar, bio, created_at, updated_at)
-        VALUES (#{username}, #{email}, #{password}, #{phone}, #{avatar}, #{bio}, NOW(), NOW())
+        INSERT INTO users (username, email, password, phone, avatar, bio, background_url, created_at, updated_at)
+        VALUES (#{username}, #{email}, #{password}, #{phone}, #{avatar}, #{bio}, #{backgroundUrl}, NOW(), NOW())
     </insert>
 
     <!-- 根据ID查询用户 -->
@@ -102,6 +103,9 @@
             <if test="bio != null">
                 bio = #{bio},
             </if>
+            <if test="backgroundUrl != null">
+                background_url = #{backgroundUrl},
+            </if>
             updated_at = NOW()
         </set>
         WHERE id = #{id} AND deleted = 0
@@ -126,6 +130,13 @@
         SELECT COUNT(*) > 0
         FROM users
         WHERE email = #{email} AND deleted = 0
+    </select>
+    
+    <!-- 检查手机号是否存在 -->
+    <select id="existsByPhone" parameterType="java.lang.String" resultType="java.lang.Boolean">
+        SELECT COUNT(*) > 0
+        FROM users
+        WHERE phone = #{phone} AND deleted = 0
     </select>
 
 </mapper>

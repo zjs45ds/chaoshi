@@ -75,7 +75,6 @@ onMounted(() => {
   
   window.addEventListener('openPlaylist', () => {
     showPlaylist.value = !showPlaylist.value // 切换显示/隐藏状态
-    // 通知BackToTop组件播放列表状态变化
     window.dispatchEvent(new CustomEvent('playlistToggle', { detail: { isOpen: showPlaylist.value } }))
   })
 });
@@ -95,7 +94,6 @@ function applyBackground(url) {
     document.body.style.backgroundRepeat = 'no-repeat'
     document.body.style.backgroundAttachment = 'fixed'
   } else {
-    // 移除背景
     document.body.style.backgroundImage = ''
     document.body.style.backgroundSize = ''
     document.body.style.backgroundPosition = ''

@@ -6,7 +6,8 @@ import { request } from '@/utils/httpUtils.js'
  * @param {number} size - 每页数量，默认为10
  * @returns {Promise<Object>} 包含MV列表的响应对象
  */
-export const getMVList = (page = 1, size = 10) => request.get('/api/mvs', { page, size })
+// 修改默认size为1000，确保获取所有MV
+export const getMVList = (page = 1, size = 1000) => request.get('/api/mvs', { page, size })
 
 /**
  * 获取MV详情
@@ -44,3 +45,10 @@ export const favoriteMV = (userId, mvId, action) => request.post('/api/mvs/favor
  * @returns {Promise<Object>} 包含播放地址的响应对象
  */
 export const getMVUrl = (id) => request.get(`/api/mvs/${id}/url`)
+
+/**
+ * 增加MV播放次数
+ * @param {number} id - MV ID
+ * @returns {Promise<Object>} 操作结果
+ */
+export const incrementMVPlayCount = (id) => request.post(`/api/mvs/${id}/play`)

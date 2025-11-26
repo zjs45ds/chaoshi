@@ -13,7 +13,8 @@ const userInfo = reactive({
   email: '',
   phone: '',
   bio: '',
-  avatar: ''
+  avatar: '',
+  backgroundUrl: ''
 })
 
 const isLoading = ref(false)
@@ -74,7 +75,8 @@ export const fetchUserInfo = async (userId = null) => {
         email: userData.email || '',
         phone: userData.phone || '',
         bio: userData.bio || '',
-        avatar: userData.avatar || 'https://q1.qlogo.cn/g?b=qq&nk=10000&s=100'
+        avatar: userData.avatar || 'https://q1.qlogo.cn/g?b=qq&nk=10000&s=100',
+        backgroundUrl: userData.backgroundUrl || ''
       })
       
       // 同步更新localStorage（保持兼容性）
@@ -83,6 +85,11 @@ export const fetchUserInfo = async (userId = null) => {
       localStorage.setItem('username', userInfo.username)
       localStorage.setItem('userAvatar', userInfo.avatar)
       localStorage.setItem('userBio', userInfo.bio)
+      if (userInfo.backgroundUrl) {
+        localStorage.setItem('userBannerBg', userInfo.backgroundUrl)
+      } else {
+        localStorage.removeItem('userBannerBg')
+      }
       
       isInitialized.value = true
       // CONSOLE LOG REMOVED: console.log('✅ 用户信息更新成功:', userInfo)
@@ -90,6 +97,9 @@ export const fetchUserInfo = async (userId = null) => {
       // 触发全局事件通知其他组件
       window.dispatchEvent(new CustomEvent('user-info-updated', {
         detail: { userInfo: { ...userInfo } }
+      }))
+      window.dispatchEvent(new CustomEvent('background-changed', {
+        detail: { url: userInfo.backgroundUrl || '' }
       }))
       
       return { ...userInfo }
@@ -107,7 +117,8 @@ export const fetchUserInfo = async (userId = null) => {
       email: localStorage.getItem('userEmail') || '',
       phone: localStorage.getItem('userPhone') || '',
       bio: localStorage.getItem('userBio') || '',
-      avatar: localStorage.getItem('userAvatar') || 'https://q1.qlogo.cn/g?b=qq&nk=10000&s=100'
+      avatar: localStorage.getItem('userAvatar') || 'https://q1.qlogo.cn/g?b=qq&nk=10000&s=100',
+      backgroundUrl: localStorage.getItem('userBannerBg') || ''
     }
     
     Object.assign(userInfo, fallbackData)
@@ -131,6 +142,11 @@ export const updateUserInfo = (newUserInfo) => {
   localStorage.setItem('username', userInfo.username)
   localStorage.setItem('userAvatar', userInfo.avatar)
   localStorage.setItem('userBio', userInfo.bio)
+  if (userInfo.backgroundUrl) {
+    localStorage.setItem('userBannerBg', userInfo.backgroundUrl)
+  } else {
+    localStorage.removeItem('userBannerBg')
+  }
   
   // 触发全局事件
   window.dispatchEvent(new CustomEvent('user-info-updated', {
@@ -190,6 +206,61 @@ export const initUserInfo = async () => {
     await fetchUserInfo()
   }
   return { ...userInfo }
+}
+
+/**
+ * 清理用户信息（退出登录时调用）
+ */
+export const clearUserInfo = () => {
+  // 清理全局用户信息状态
+  Object.assign(userInfo, {
+    id: null,
+    username: '',
+    email: '',
+    phone: '',
+    bio: '',
+    avatar: '',
+    backgroundUrl: ''
+  })
+  
+  // 清理localStorage中的用户相关数据
+  localStorage.removeItem('isLogin')
+  localStorage.removeItem('userId')
+  localStorage.removeItem('currentUserId')
+  localStorage.removeItem('userNickname')
+  localStorage.removeItem('nickname')
+  localStorage.removeItem('username')
+  localStorage.removeItem('userAvatar')
+  localStorage.removeItem('userBio')
+  localStorage.removeItem('userEmail')
+  localStorage.removeItem('userPhone')
+  localStorage.removeItem('userBannerBg')
+  localStorage.removeItem('token')
+  localStorage.removeItem('accessToken')
+  
+  // 清理sessionStorage中的用户相关数据
+  sessionStorage.removeItem('isLogin')
+  sessionStorage.removeItem('userId')
+  sessionStorage.removeItem('currentUserId')
+  sessionStorage.removeItem('token')
+  sessionStorage.removeItem('accessToken')
+  
+  // 重置状态
+  isInitialized.value = false
+  isLoading.value = false
+  
+  // 触发全局事件通知其他组件
+  window.dispatchEvent(new CustomEvent('user-logout', {
+    detail: { cleared: true }
+  }))
+  window.dispatchEvent(new CustomEvent('user-info-updated', {
+    detail: { userInfo: { ...userInfo } }
+  }))
+  window.dispatchEvent(new CustomEvent('background-changed', {
+    detail: { url: '' }
+  }))
+  
+  console.log('✅ 用户信息已清理')
 }
 
 // 导出响应式状态供组件使用

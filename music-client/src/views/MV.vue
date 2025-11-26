@@ -37,11 +37,13 @@
 
 <script setup>
 import { ref, onMounted } from 'vue'
-import { useRouter } from 'vue-router'
+import { useRouter, useRoute } from 'vue-router'
 import { getMVList } from '@/api/mv.js'
 import { ElMessage } from 'element-plus'
+import { safeNavigate } from '@/utils/navigation.js'
 
 const router = useRouter()
+const route = useRoute()
 const mvs = ref([])
 const loading = ref(true)
 const error = ref(null)
@@ -52,12 +54,16 @@ const fetchMVs = async () => {
     loading.value = true
     error.value = null
     
-    const response = await getMVList(1, 50) // 获取前50个MV
+    // 设置一个更大的值来获取所有MV
+    // console.log('请求MV列表，参数:', { page: 1, size: 1000 })
+    const response = await getMVList(1, 1000) // 获取所有MV
     
     // 处理API返回的数据
     if (response && response.code === 200) {
-      if (response.data && response.data.content) {
+      // 检查是否是PageResult格式
+      if (response.data && response.data.content && Array.isArray(response.data.content)) {
         mvs.value = response.data.content
+        // console.log('成功获取MV列表，总数:', mvs.value.length)
       } else if (response.data && Array.isArray(response.data)) {
         mvs.value = response.data
       } else {
@@ -94,18 +100,10 @@ onMounted(() => {
   fetchMVs()
 })
 
-// 跳转MV详情，遵循路由导航规范
+// 跳转MV详情，使用安全导航函数避免导航取消问题
 function goToMVDetail(id) {
   const targetPath = `/mv/${id}`
-  // 避免重复导航
-  if (router.currentRoute.value.path !== targetPath) {
-    router.push(targetPath).catch(err => {
-      // 忽略导航重复错误
-      if (err.name !== 'NavigationDuplicated') {
-        // CONSOLE LOG REMOVED: console.error('路由导航错误:', err)
-      }
-    })
-  }
+  safeNavigate.to(router, route, targetPath)
 }
 
 // 播放MV

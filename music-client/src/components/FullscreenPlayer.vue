@@ -1,27 +1,88 @@
 // 全屏播放器组件
 <template>
   <div class="fullscreen-player" :class="{ 'is-visible': visible }" v-if="visible || isTransitioning">
-    <!-- 背景层 -->
-    <div class="player-background" :style="backgroundStyle"></div>
+    <!-- 背景层 - 纯色背景（跟随主题色） -->
+    <div class="player-background">
+      <!-- 纯色背景 -->
+      <div class="solid-color-background"></div>
+      
+      <!-- 左侧半圆波纹（仅在播放时显示） -->
+      <transition name="fade">
+        <div class="side-ripple left-ripple" v-if="isPlaying">
+          <!-- 更靠里的两条小半圈线条 -->
+          <div class="ripple-circle ripple-inner-1"></div>
+          <div class="ripple-circle ripple-inner-2"></div>
+          <!-- 原有的五条主半圈波浪 -->
+          <div class="ripple-circle ripple-1"></div>
+          <div class="ripple-circle ripple-2"></div>
+          <div class="ripple-circle ripple-3"></div>
+          <div class="ripple-circle ripple-4"></div>
+          <div class="ripple-circle ripple-5"></div>
+        </div>
+      </transition>
+      
+      <!-- 右侧半圆波纹（仅在播放时显示） -->
+      <transition name="fade">
+        <div class="side-ripple right-ripple" v-if="isPlaying">
+          <!-- 更靠里的两条小半圈线条 -->
+          <div class="ripple-circle ripple-inner-1"></div>
+          <div class="ripple-circle ripple-inner-2"></div>
+          <!-- 原有的五条主半圈波浪 -->
+          <div class="ripple-circle ripple-1"></div>
+          <div class="ripple-circle ripple-2"></div>
+          <div class="ripple-circle ripple-3"></div>
+          <div class="ripple-circle ripple-4"></div>
+          <div class="ripple-circle ripple-5"></div>
+        </div>
+      </transition>
+      
+      <!-- 音频驱动的背景半圈波浪（仅在播放时显示） -->
+      <div class="audio-wave-background left-audio-wave" v-if="isPlaying">
+        <div class="audio-wave" v-for="i in 5" :key="'left-wave-' + i" :style="getLeftWaveStyle(i - 1)"></div>
+      </div>
+      <div class="audio-wave-background right-audio-wave" v-if="isPlaying">
+        <div class="audio-wave" v-for="i in 5" :key="'right-wave-' + i" :style="getRightWaveStyle(i - 1)"></div>
+      </div>
+      
+
+      
+      <!-- 大歌词背景（仅在歌词模式显示） -->
+      <div class="lyrics-background-layer" v-if="showLyricsBackground">
+        <!-- 点击遮罩层 -->
+        <!-- 第一个大字作为背景 -->
+        <div class="first-char-bg">{{ (currentLyricText || '看一看自己从前到底有多疯狂')[0] }}</div>
+        <!-- 完整歌词 -->
+        <div class="full-lyric-text">{{ currentLyricText || '看一看自己从前到底有多疯狂' }}</div>
+      </div>
+    </div>
     
     <!-- 播放器内容 -->
-    <div class="player-content">
+    <div class="player-content" :class="{ 'lyrics-bg-mode': showLyricsBackground }" @mousemove="handleMouseMove" @click="handleClick">
       <!-- 头部控制栏 -->
-      <div class="player-header">
-        <button class="header-btn back" @click="closePlayer">
-          <i class="icon-arrow-down"></i>
-        </button>
-        
-         <div class="header-info">
-           <div class="playing-text">正在播放</div>
-           <div class="source-text">{{ getSourceInfo() }}</div>
-         </div>
-       </div>
+      <transition name="fade">
+        <div class="player-header" v-show="showControls" @mouseenter="showControlsTemporarily" @mousemove="showControlsTemporarily">
+          <div class="header-left-buttons">
+            <button class="header-btn back" @click="closePlayer">
+              <svg viewBox="0 0 24 24" width="28" height="28">
+                <path d="M7 10l5 5 5-5z" fill="currentColor"/>
+              </svg>
+            </button>
+            <button class="header-btn fullscreen" @click="toggleFullscreen">
+              <svg viewBox="0 0 24 24" width="28" height="28" v-if="!isFullscreen">
+                <path d="M7 14H5v5h5v-2H7v-3zm-2-4h2V7h3V5H5v5zm12 7h-3v2h5v-5h-2v3zM14 5v2h3v3h2V5h-5z" fill="currentColor"/>
+              </svg>
+              <svg viewBox="0 0 24 24" width="28" height="28" v-else>
+                <path d="M5 16h3v3h2v-5H5v2zm3-8H5v2h5V5H8v3zm6 11h2v-3h3v-2h-5v5zm2-11V5h-2v5h5V8h-3z" fill="currentColor"/>
+              </svg>
+            </button>
+          </div>
+        </div>
+      </transition>
       
        <!-- 主要内容区域 -->
-       <div class="player-main">
+       <div class="player-main" :class="{ 'lyrics-mode': showLyricsBackground }">
          <!-- 经典模式 -->
-         <div class="classic-layout">
+         <div class="classic-layout" v-if="!showLyricsBackground">
            <!-- 专辑封面 -->
            <div class="album-section">
              <div class="album-cover" :class="{ 'playing': isPlaying }">
@@ -40,18 +101,31 @@
          </div>
        </div>
       
-      <!-- 底部单行歌词显示 -->
-      <div class="bottom-single-lyric">
-        <div class="bottom-lyric-content">
-          <div class="bottom-lyric-text" v-if="currentLyricText" @click="toggleFullLyrics">
-            {{ currentLyricText }}
+      <!-- 底部三行歌词显示（大歌词模式下隐藏） -->
+      <div class="bottom-single-lyric" v-if="!showLyricsBackground" @click="toggleLyricsBackground">
+        <div class="bottom-lyric-content" v-if="currentSongLyrics.length > 0 && currentLyricIndex >= 0">
+          <!-- 上一句歌词 -->
+          <div class="lyric-line prev-line" v-if="currentLyricIndex > 0">
+            {{ currentSongLyrics[currentLyricIndex - 1]?.text || '' }}
           </div>
-          <div class="bottom-lyric-text" v-else-if="!isLoadingLyrics">
-            正在播放音乐...
+          <div class="lyric-line prev-line" v-else></div>
+          
+          <!-- 当前歌词 -->
+          <div class="lyric-line current-lyric-line">
+            {{ currentSongLyrics[currentLyricIndex]?.text || '...' }}
           </div>
-          <div class="bottom-lyric-text" v-else>
-            加载歌词中...
+          
+          <!-- 下一句歌词 -->
+          <div class="lyric-line next-line" v-if="currentLyricIndex < currentSongLyrics.length - 1">
+            {{ currentSongLyrics[currentLyricIndex + 1]?.text || '' }}
           </div>
+          <div class="lyric-line next-line" v-else></div>
+        </div>
+        <div class="bottom-lyric-content" v-else-if="!isLoadingLyrics">
+          <div class="bottom-lyric-text">正在播放音乐...</div>
+        </div>
+        <div class="bottom-lyric-content" v-else>
+          <div class="bottom-lyric-text">加载歌词中...</div>
         </div>
       </div>
       
@@ -93,7 +167,8 @@
       </transition>
       
       <!-- 播放控制区域 -->
-      <div class="player-controls-section">
+      <transition name="fade">
+        <div class="player-controls-section" v-show="showControls" @mouseenter="showControlsTemporarily" @mousemove="showControlsTemporarily">
         <!-- 进度控制 -->
         <div class="progress-section">
           <div class="progress-bar" @click="seekTo" ref="progressBarRef">
@@ -149,7 +224,8 @@
             </button>
           </div>
         </div>
-      </div>
+        </div>
+      </transition>
       
       <!-- 音量弹出面板 -->
       <div class="volume-popup" v-if="showVolumePanel" :style="volumePopupStyle">
@@ -163,6 +239,12 @@
           <span class="volume-text-popup">{{ Math.round(displayVolume * 100) }}</span>
         </div>
       </div>
+      
+      <!-- 底部触发区域 - 鼠标移动到底部显示控制栏（仅在控制栏隐藏时显示） -->
+      <div class="bottom-trigger-area" v-show="!showControls" @mouseenter="handleMouseMove" @click="handleClick"></div>
+      
+      <!-- 顶部触发区域 - 鼠标移动到顶部显示控制栏（仅在控制栏隐藏时显示） -->
+      <div class="top-trigger-area" v-show="!showControls" @mouseenter="handleMouseMove" @click="handleClick"></div>
     </div>
   </div>
 </template>
@@ -174,7 +256,8 @@ import {
   currentSong, currentIndex, playlist, playMode, playModeText, currentSongLyrics, isLoadingLyrics, currentLyricIndex,
   progress, currentTimeFormatted, durationFormatted, currentLyricText,
   togglePlay, playNext, playPrevious, togglePlayMode, seekToProgress, setVolumeLevel, toggleMute,
-  hasSong, hasPlaylist, loadLyrics as loadSongLyrics, getCurrentLyricIndex
+  hasSong, hasPlaylist, loadLyrics as loadSongLyrics, getCurrentLyricIndex,
+  initAudioAnalyser, getAudioFrequencyData, resumeAudioContext
 } from '@/utils/musicPlayer.js'
 import { isSongLiked, toggleSongLike } from '@/utils/favoriteManager.js'
 
@@ -198,7 +281,87 @@ const emit = defineEmits(['close', 'toggle-playlist'])
  const isTransitioning = ref(false)
  const showVolumePanel = ref(false)
  const showStylePanel = ref(false)
- const showFullLyrics = ref(false) // 控制完整歌词显示 
+ const showFullLyrics = ref(false) // 控制完整歌词显示
+ const showLyricsBackground = ref(false) // 控制歌词背景模式
+ const showControls = ref(true) // 控制控制栏显示/隐藏
+ const hideControlsTimer = ref(null) // 自动隐藏定时器 
+
+// 音频可视化相关
+const rippleScales = ref([0, 0, 0, 0, 0]) // 5个波浪的缩放值
+let animationFrameId = null
+let audioAnalyserInitialized = false
+
+// 更新波浪动画
+const updateRippleAnimation = () => {
+  if (!isPlaying.value) {
+    // 停止播放时，波浪逐渐归零
+    rippleScales.value = rippleScales.value.map(v => v * 0.95)
+    if (rippleScales.value.some(v => v > 0.01)) {
+      animationFrameId = requestAnimationFrame(updateRippleAnimation)
+    }
+    return
+  }
+  
+  const frequencyData = getAudioFrequencyData()
+  
+  if (frequencyData.length > 0) {
+    // 使用音频数据更新波浪，添加平滑过渡
+    rippleScales.value = rippleScales.value.map((current, i) => {
+      const target = frequencyData[i] || 0
+      // 平滑过渡：当前值向目标值靠近
+      return current + (target - current) * 0.3
+    })
+  }
+  
+  animationFrameId = requestAnimationFrame(updateRippleAnimation)
+}
+
+// 初始化音频分析并开始动画
+const startAudioVisualization = async () => {
+  if (!audioAnalyserInitialized) {
+    await resumeAudioContext()
+    initAudioAnalyser()
+    audioAnalyserInitialized = true
+  }
+  
+  if (!animationFrameId) {
+    updateRippleAnimation()
+  }
+}
+
+// 停止动画
+const stopAudioVisualization = () => {
+  if (animationFrameId) {
+    cancelAnimationFrame(animationFrameId)
+    animationFrameId = null
+  }
+}
+
+// 计算左侧背景波浪样式
+const getLeftWaveStyle = (index) => {
+  const baseScale = 0.3 + index * 0.2 // 基础缩放，让外层波浪更大
+  const audioScale = rippleScales.value[index] * 0.6 // 音频驱动的缩放
+  const scale = baseScale + audioScale
+  const opacity = 0.08 + rippleScales.value[index] * 0.2 // 背景波浪更透明
+  
+  return {
+    transform: `translate(-50%, -50%) scale(${scale})`,
+    opacity: Math.min(opacity, 0.3)
+  }
+}
+
+// 计算右侧背景波浪样式
+const getRightWaveStyle = (index) => {
+  const baseScale = 0.3 + index * 0.2
+  const audioScale = rippleScales.value[index] * 0.6
+  const scale = baseScale + audioScale
+  const opacity = 0.08 + rippleScales.value[index] * 0.2
+  
+  return {
+    transform: `translate(50%, -50%) scale(${scale})`,
+    opacity: Math.min(opacity, 0.3)
+  }
+}
 
 // 计算属性
 const backgroundStyle = computed(() => {
@@ -217,13 +380,21 @@ const isCurrentSongLiked = computed(() => {
 })
 
  const volumePopupStyle = computed(() => {
-   if (!volumeButtonRef.value) return {}
+   if (!volumeButtonRef.value) {
+     // 默认位置：屏幕中下方
+     return {
+       position: 'fixed',
+       right: '100px',
+       bottom: '120px',
+       zIndex: 100000
+     }
+   }
    
    const rect = volumeButtonRef.value.getBoundingClientRect()
    return {
      position: 'fixed',
-     left: `${rect.left + rect.width / 2 - 20}px`,
-     bottom: `${window.innerHeight - rect.top + 10}px`,
+     left: `${rect.left + rect.width / 2 - 28}px`,
+     bottom: `${window.innerHeight - rect.top + 15}px`,
      zIndex: 100000
    }
  })
@@ -257,6 +428,8 @@ const getSourceInfo = () => {
   return currentSong.value?.album ? `来自专辑《${currentSong.value.album}》` : '我的音乐库'
 }
 
+
+
 // 事件处理
 const closePlayer = () => {
   isTransitioning.value = true
@@ -269,6 +442,61 @@ const togglePlaylist = () => emit('toggle-playlist')
 const toggleFullLyrics = () => {
   showFullLyrics.value = !showFullLyrics.value
 }
+
+const isFullscreen = ref(false)
+
+const toggleLyricsBackground = () => {
+  showLyricsBackground.value = !showLyricsBackground.value
+}
+
+const toggleFullscreen = async () => {
+  try {
+    if (!document.fullscreenElement) {
+      // 进入全屏
+      await document.documentElement.requestFullscreen()
+      isFullscreen.value = true
+    } else {
+      // 退出全屏
+      await document.exitFullscreen()
+      isFullscreen.value = false
+    }
+  } catch (error) {
+    console.error('全屏切换失败:', error)
+  }
+}
+
+// 控制栏自动隐藏逻辑
+const showControlsTemporarily = () => {
+  showControls.value = true
+  resetHideControlsTimer()
+}
+
+const resetHideControlsTimer = () => {
+  if (hideControlsTimer.value) {
+    clearTimeout(hideControlsTimer.value)
+  }
+  // 始终自动隐藏控制栏
+  hideControlsTimer.value = setTimeout(() => {
+    showControls.value = false
+    // 同时关闭音量面板，避免控制栏隐藏后面板位置异常
+    showVolumePanel.value = false
+  }, 3000) // 3秒后自动隐藏
+}
+
+const handleMouseMove = () => {
+  showControlsTemporarily()
+}
+
+const handleClick = () => {
+  showControlsTemporarily()
+}
+
+// 监听全屏状态变化
+const handleFullscreenChange = () => {
+  isFullscreen.value = !!document.fullscreenElement
+}
+
+
 
 const handleLyricClick = (index) => {
   if (currentSongLyrics.value[index]) {
@@ -505,7 +733,11 @@ const handleImageLoad = (event) => {
 }
 
 // 音量面板控制
-const toggleVolumePanel = () => {
+const toggleVolumePanel = async () => {
+  if (!showVolumePanel.value) {
+    // 打开面板时，等待 DOM 更新以确保按钮引用可用
+    await nextTick()
+  }
   showVolumePanel.value = !showVolumePanel.value
 }
 
@@ -573,6 +805,7 @@ const startVolumeDrag = (event) => {
 }
 
 watch(currentLyricIndex, () => {
+  // 处理完整歌词模态框的滚动
   if (showFullLyrics.value && currentLyricIndex.value !== -1) {
     nextTick(() => {
       const container = document.querySelector('.full-lyrics-container')
@@ -584,6 +817,8 @@ watch(currentLyricIndex, () => {
       }
     })
   }
+  
+  // 底部歌词不需要滚动，只显示当前行
 })
 
 // 监听器和生命周期
@@ -632,16 +867,57 @@ watch(currentLyricIndex, () => {
    }
  })
 
+// 监听大歌词模式变化
+watch(showLyricsBackground, (newValue) => {
+  if (newValue) {
+    // 进入大歌词模式，显示控制栏并开始自动隐藏计时
+    showControlsTemporarily()
+  } else {
+    // 退出大歌词模式，重新开始自动隐藏计时
+    showControlsTemporarily()
+  }
+})
+
+// 监听播放状态变化，启动/停止音频可视化
+watch(isPlaying, (playing) => {
+  if (playing && props.visible) {
+    startAudioVisualization()
+  }
+})
+
+// 监听组件可见性，启动/停止音频可视化
+watch(() => props.visible, (visible) => {
+  if (visible && isPlaying.value) {
+    startAudioVisualization()
+  } else if (!visible) {
+    stopAudioVisualization()
+  }
+})
+
 onMounted(() => {
+  // 初始化控制栏自动隐藏
+  resetHideControlsTimer()
+  
+  // 如果正在播放，启动音频可视化
+  if (isPlaying.value && props.visible) {
+    startAudioVisualization()
+  }
+  
   const handleKeydown = (event) => {
     if (event.key === 'Escape' && props.visible) {
-      if (showVolumePanel.value) {
+      if (showLyricsBackground.value) {
+        // 如果在大字模式，先退出大字模式
+        toggleLyricsBackground()
+      } else if (showVolumePanel.value) {
         showVolumePanel.value = false
       } else {
         closePlayer()
       }
     }
   }
+  
+  // 监听全屏状态变化
+  document.addEventListener('fullscreenchange', handleFullscreenChange)
   
    // 点击外部关闭面板
    const handleClickOutside = (event) => {
@@ -664,9 +940,18 @@ onMounted(() => {
   document.addEventListener('touchmove', handleTouchMove, { passive: false })
   
   onUnmounted(() => {
+    // 清理控制栏隐藏定时器
+    if (hideControlsTimer.value) {
+      clearTimeout(hideControlsTimer.value)
+    }
+    
+    // 停止音频可视化动画
+    stopAudioVisualization()
+    
     document.removeEventListener('keydown', handleKeydown)
     document.removeEventListener('click', handleClickOutside)
     document.removeEventListener('touchmove', handleTouchMove)
+    document.removeEventListener('fullscreenchange', handleFullscreenChange)
     document.body.classList.remove('fullscreen-player-active')
     document.body.style.overflow = ''
     document.documentElement.style.overflow = ''
@@ -680,6 +965,40 @@ onMounted(() => {
 </script>
 
 <style scoped>
+/* 淡入淡出过渡动画 */
+.fade-enter-active,
+.fade-leave-active {
+  transition: opacity 0.3s ease;
+}
+
+.fade-enter-from,
+.fade-leave-to {
+  opacity: 0;
+}
+
+/* 触发区域 */
+.bottom-trigger-area {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 100px;
+  z-index: 99997;
+  pointer-events: auto;
+  cursor: pointer;
+}
+
+.top-trigger-area {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 80px;
+  z-index: 99997;
+  pointer-events: auto;
+  cursor: pointer;
+}
+
 .fullscreen-player {
   position: fixed;
   top: 0;
@@ -707,6 +1026,695 @@ onMounted(() => {
   right: 0;
   bottom: 0;
   z-index: 1;
+  overflow: hidden;
+}
+
+/* 纯色背景（始终显示，跟随主题色） */
+.solid-color-background {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  /* 叠加一层淡黑色遮罩，使背景变暗，突出白色波纹 */
+  background: linear-gradient(rgba(0, 0, 0, 0.2), rgba(0, 0, 0, 0.2)), var(--primary, #FF6B9B);
+  z-index: 1;
+}
+
+/* 音频驱动的背景半圈波浪 */
+.audio-wave-background {
+  position: absolute;
+  top: 0;
+  width: 50%;
+  height: 100%;
+  z-index: 1;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+.left-audio-wave {
+  left: 0;
+}
+
+.right-audio-wave {
+  right: 0;
+}
+
+.audio-wave {
+  position: absolute;
+  top: 50%;
+  width: 200%;
+  height: 200%;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(255, 255, 255, 0.25) 0%, rgba(255, 255, 255, 0.1) 30%, transparent 60%);
+  transition: transform 0.12s ease-out, opacity 0.15s ease-out;
+}
+
+/* 左侧背景波浪 - 圆心在左边缘 */
+.left-audio-wave .audio-wave {
+  left: 0;
+}
+
+/* 右侧背景波浪 - 圆心在右边缘 */
+.right-audio-wave .audio-wave {
+  right: 0;
+}
+
+/* 背景波动动画 */
+@keyframes backgroundWave {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+
+
+/* 左右侧半圆波浪 */
+.side-wave {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 600px;
+  height: 100%;
+  z-index: 2;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+.left-wave {
+  left: 0;
+}
+
+.right-wave {
+  right: 0;
+}
+
+.wave-circle {
+  position: absolute;
+  border-radius: 50%;
+  background: radial-gradient(circle, 
+    rgba(255, 255, 255, 0.3) 0%, 
+    rgba(255, 255, 255, 0.2) 30%, 
+    rgba(255, 255, 255, 0.1) 60%,
+    transparent 100%);
+  filter: blur(30px);
+}
+
+.left-wave .wave-circle {
+  left: -50%;
+}
+
+.right-wave .wave-circle {
+  right: -50%;
+}
+
+.wave-circle-1 {
+  width: 400px;
+  height: 400px;
+  top: 50%;
+  transform: translateY(-50%) scale(0.5);
+  animation: waveCirclePulseLeft 6s ease-in-out infinite;
+  animation-delay: 0s;
+}
+
+.wave-circle-2 {
+  width: 600px;
+  height: 600px;
+  top: 50%;
+  transform: translateY(-50%) scale(0.5);
+  animation: waveCirclePulseLeft 6s ease-in-out infinite;
+  animation-delay: 1.2s;
+}
+
+.wave-circle-3 {
+  width: 800px;
+  height: 800px;
+  top: 50%;
+  transform: translateY(-50%) scale(0.5);
+  animation: waveCirclePulseLeft 6s ease-in-out infinite;
+  animation-delay: 2.4s;
+}
+
+.wave-circle-4 {
+  width: 1000px;
+  height: 1000px;
+  top: 50%;
+  transform: translateY(-50%) scale(0.5);
+  animation: waveCirclePulseLeft 6s ease-in-out infinite;
+  animation-delay: 3.6s;
+}
+
+.wave-circle-5 {
+  width: 1200px;
+  height: 1200px;
+  top: 50%;
+  transform: translateY(-50%) scale(0.5);
+  animation: waveCirclePulseLeft 6s ease-in-out infinite;
+  animation-delay: 4.8s;
+}
+
+@keyframes waveCirclePulseLeft {
+  0% {
+    transform: translateY(-50%) scale(0.5);
+    opacity: 0;
+  }
+  15% {
+    opacity: 1;
+  }
+  85% {
+    opacity: 0.4;
+  }
+  100% {
+    transform: translateY(-50%) scale(1.8);
+    opacity: 0;
+  }
+}
+
+/* 左右波浪 */
+.wave-left,
+.wave-right {
+  position: absolute;
+  top: 0;
+  width: 200px;
+  height: 100%;
+  z-index: 2;
+  pointer-events: none;
+}
+
+.wave-left {
+  left: 0;
+}
+
+.wave-right {
+  right: 0;
+}
+
+.wave-left svg,
+.wave-right svg {
+  width: 100%;
+  height: 100%;
+}
+
+.wave-path {
+  fill: rgba(255, 255, 255, 0.1);
+}
+
+.wave-1 {
+  animation: waveMove1 8s ease-in-out infinite;
+}
+
+.wave-2 {
+  animation: waveMove2 10s ease-in-out infinite;
+  fill: rgba(255, 255, 255, 0.08);
+}
+
+.wave-3 {
+  animation: waveMove3 12s ease-in-out infinite;
+  fill: rgba(255, 255, 255, 0.06);
+}
+
+@keyframes waveMove1 {
+  0%, 100% {
+    d: path("M0,500 Q50,400 0,300 Q50,200 0,100 L0,0 L0,1000 L0,900 Q50,800 0,700 Q50,600 0,500 Z");
+  }
+  50% {
+    d: path("M0,500 Q80,450 0,400 Q80,350 0,300 L0,0 L0,1000 L0,700 Q80,650 0,600 Q80,550 0,500 Z");
+  }
+}
+
+@keyframes waveMove2 {
+  0%, 100% {
+    d: path("M0,500 Q60,420 0,340 Q60,260 0,180 L0,0 L0,1000 L0,820 Q60,740 0,660 Q60,580 0,500 Z");
+  }
+  50% {
+    d: path("M0,500 Q90,460 0,420 Q90,380 0,340 L0,0 L0,1000 L0,660 Q90,620 0,580 Q90,540 0,500 Z");
+  }
+}
+
+@keyframes waveMove3 {
+  0%, 100% {
+    d: path("M0,500 Q70,440 0,380 Q70,320 0,260 L0,0 L0,1000 L0,740 Q70,680 0,620 Q70,560 0,500 Z");
+  }
+  50% {
+    d: path("M0,500 Q100,470 0,440 Q100,410 0,380 L0,0 L0,1000 L0,620 Q100,590 0,560 Q100,530 0,500 Z");
+  }
+}
+
+/* 左右侧半圆波纹 - 重新设计 */
+.side-ripple {
+  position: absolute;
+  top: 0;
+  width: 50%;
+  height: 100%;
+  overflow: hidden;
+  z-index: 2;
+  pointer-events: none;
+}
+
+.left-ripple {
+  left: 0;
+}
+
+.right-ripple {
+  right: 0;
+}
+
+/* 半圆波纹 - 使用伪元素创建 */
+.ripple-circle {
+  position: absolute;
+  top: 50%;
+  width: 200%;
+  height: 200%;
+  border-radius: 50%;
+  border: 3px solid rgba(255, 255, 255, 0.5);
+  background: transparent;
+  opacity: 0; /* 默认隐藏，等待动画开始 */
+}
+
+/* 左边半圆 - 圆心在左边缘 */
+.left-ripple .ripple-circle {
+  left: 0;
+  transform: translate(-50%, -50%);
+}
+
+/* 右边半圆 - 圆心在右边缘 */
+.right-ripple .ripple-circle {
+  right: 0;
+  transform: translate(50%, -50%);
+}
+
+/* 5层主波纹大小 */
+.ripple-1 {
+  width: 30%;
+  height: 30%;
+  animation: semiCirclePulse 5s ease-in-out infinite;
+  animation-delay: 0s;
+}
+
+.ripple-2 {
+  width: 50%;
+  height: 50%;
+  animation: semiCirclePulse 5s ease-in-out infinite;
+  animation-delay: 1s;
+}
+
+.ripple-3 {
+  width: 70%;
+  height: 70%;
+  animation: semiCirclePulse 5s ease-in-out infinite;
+  animation-delay: 2s;
+}
+
+.ripple-4 {
+  width: 90%;
+  height: 90%;
+  animation: semiCirclePulse 5s ease-in-out infinite;
+  animation-delay: 3s;
+}
+
+.ripple-5 {
+  width: 110%;
+  height: 110%;
+  animation: semiCirclePulse 5s ease-in-out infinite;
+  animation-delay: 4s;
+}
+
+/* 内侧小半圈波浪，比 ripple-1 更小，更细、更柔和 */
+.ripple-inner-1,
+.ripple-inner-2 {
+  border-width: 1.5px;
+  border-color: rgba(255, 255, 255, 0.6);
+}
+
+/* 第一条最内侧小半圈 */
+.ripple-inner-1 {
+  animation: semiCirclePulseInner 4s ease-in-out infinite;
+  animation-delay: 0s;
+}
+
+/* 第二条小半圈，稍微大一点、稍微滞后 */
+.ripple-inner-2 {
+  animation: semiCirclePulseInner 4s ease-in-out infinite;
+  animation-delay: 0.8s;
+}
+
+/* 小半圈扩散动画（半径更小） */
+@keyframes semiCirclePulseInner {
+  0% {
+    width: 10%;
+    height: 10%;
+    opacity: 0;
+  }
+  20% {
+    opacity: 0.6;
+  }
+  80% {
+    width: 45%;
+    height: 45%;
+    opacity: 0.2;
+  }
+  100% {
+    width: 55%;
+    height: 55%;
+    opacity: 0;
+  }
+}
+
+/* 半圆扩散动画 */
+@keyframes semiCirclePulse {
+  0% {
+    width: 20%;
+    height: 20%;
+    opacity: 0;
+  }
+  20% {
+    opacity: 0.7;
+  }
+  80% {
+    opacity: 0.2;
+  }
+  100% {
+    width: 120%;
+    height: 120%;
+    opacity: 0;
+  }
+}
+
+/* 中心波纹 */
+.center-ripple {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 100%;
+  height: 100%;
+  z-index: 2;
+  pointer-events: none;
+}
+
+.center-ripple-circle {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  border-radius: 50%;
+  border: 3px solid rgba(255, 255, 255, 0.4);
+  background: radial-gradient(circle, 
+    rgba(255, 255, 255, 0.35) 0%, 
+    rgba(255, 255, 255, 0.25) 30%, 
+    rgba(255, 255, 255, 0.15) 50%,
+    rgba(255, 255, 255, 0.05) 70%,
+    transparent 100%);
+  filter: blur(15px);
+  box-shadow: 
+    0 0 40px rgba(255, 255, 255, 0.3),
+    inset 0 0 60px rgba(255, 255, 255, 0.2);
+}
+
+.center-ripple-1 {
+  width: 400px;
+  height: 400px;
+  animation: centerRipplePulse 5s ease-in-out infinite;
+}
+
+.center-ripple-2 {
+  width: 600px;
+  height: 600px;
+  animation: centerRipplePulse 6s ease-in-out infinite;
+  animation-delay: 1.5s;
+}
+
+.center-ripple-3 {
+  width: 800px;
+  height: 800px;
+  animation: centerRipplePulse 7s ease-in-out infinite;
+  animation-delay: 3s;
+}
+
+@keyframes centerRipplePulse {
+  0% {
+    transform: translate(-50%, -50%) scale(0.6);
+    opacity: 0;
+  }
+  20% {
+    opacity: 0.8;
+  }
+  80% {
+    opacity: 0.3;
+  }
+  100% {
+    transform: translate(-50%, -50%) scale(1.8);
+    opacity: 0;
+  }
+}
+
+/* 歌词背景层 */
+.lyrics-background-layer {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2rem;
+  z-index: 100000;
+  cursor: pointer;
+  transition: opacity 0.3s ease;
+}
+
+.lyrics-background-layer:hover {
+  opacity: 0.95;
+}
+
+/* 点击遮罩层 - 覆盖整个屏幕，确保能捕获点击 */
+.lyrics-click-mask {
+  position: fixed !important;
+  top: 0 !important;
+  left: 0 !important;
+  width: 100% !important;
+  height: 100% !important;
+  z-index: 999999 !important;
+  cursor: pointer !important;
+  background: rgba(255, 0, 0, 0.1) !important;
+  pointer-events: auto !important;
+}
+
+/* 提示文字 */
+.lyrics-hint {
+  position: absolute;
+  bottom: 200px;
+  font-size: 14px;
+  color: rgba(255, 255, 255, 0.6);
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
+  z-index: 4;
+  pointer-events: none;
+  animation: hintFade 2s ease-in-out infinite;
+}
+
+@keyframes hintFade {
+  0%, 100% { opacity: 0.4; }
+  50% { opacity: 0.8; }
+}
+
+/* 第一个大字背景 */
+.first-char-bg {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 12rem;
+  font-weight: 900;
+  color: rgba(255, 255, 255, 0.15);
+  text-shadow: 0 0 100px rgba(0, 0, 0, 0.3);
+  letter-spacing: 0;
+  line-height: 1;
+  z-index: 1;
+  pointer-events: none;
+}
+
+/* 完整歌词文字 */
+.full-lyric-text {
+  position: relative;
+  font-size: 4rem;
+  font-weight: 700;
+  color: rgba(255, 255, 255, 1);
+  text-shadow: 
+    0 0 80px rgba(0, 0, 0, 0.5),
+    0 4px 20px rgba(0, 0, 0, 0.3);
+  letter-spacing: 0.05em;
+  line-height: 1.2;
+  text-align: center;
+  padding: 0 2rem;
+  z-index: 2;
+  pointer-events: none;
+}
+
+/* 退出提示 */
+.exit-hint {
+  position: fixed;
+  bottom: 180px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 14px;
+  color: rgba(255, 255, 255, 0.6);
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
+  z-index: 4;
+  pointer-events: none;
+  animation: hintFade 2s ease-in-out infinite;
+  background: rgba(0, 0, 0, 0.3);
+  padding: 8px 16px;
+  border-radius: 20px;
+  backdrop-filter: blur(10px);
+}
+
+/* 波浪容器 */
+.wave-container-bg {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  height: 300px;
+  z-index: 3;
+  pointer-events: none;
+}
+
+.wave-bg {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 200%;
+  height: 100%;
+}
+
+.wave-path-bg {
+  fill: rgba(0, 0, 0, 0.1);
+}
+
+.wave-bg-1 {
+  animation: waveBgMove1 20s linear infinite;
+}
+
+.wave-bg-1 .wave-path-bg {
+  fill: rgba(0, 0, 0, 0.15);
+}
+
+.wave-bg-2 {
+  animation: waveBgMove2 25s linear infinite;
+  animation-delay: -5s;
+}
+
+.wave-bg-2 .wave-path-bg {
+  fill: rgba(0, 0, 0, 0.1);
+}
+
+.wave-bg-3 {
+  animation: waveBgMove3 30s linear infinite;
+  animation-delay: -10s;
+}
+
+.wave-bg-3 .wave-path-bg {
+  fill: rgba(0, 0, 0, 0.08);
+}
+
+@keyframes waveBgMove1 {
+  0% {
+    transform: translateX(0);
+  }
+  100% {
+    transform: translateX(-50%);
+  }
+}
+
+@keyframes waveBgMove2 {
+  0% {
+    transform: translateX(0);
+  }
+  100% {
+    transform: translateX(-50%);
+  }
+}
+
+@keyframes waveBgMove3 {
+  0% {
+    transform: translateX(0);
+  }
+  100% {
+    transform: translateX(-50%);
+  }
+}
+
+/* 音频圆环效果 */
+.audio-rings-bg {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 600px;
+  height: 600px;
+  z-index: 1;
+}
+
+.ring-bg {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  border: 2px solid rgba(255, 255, 255, 0.05);
+  border-radius: 50%;
+  animation: ringBgPulse 4s ease-in-out infinite;
+}
+
+.ring-bg-1 {
+  width: 300px;
+  height: 300px;
+  animation-delay: 0s;
+}
+
+.ring-bg-2 {
+  width: 450px;
+  height: 450px;
+  animation-delay: 1.3s;
+}
+
+.ring-bg-3 {
+  width: 600px;
+  height: 600px;
+  animation-delay: 2.6s;
+}
+
+@keyframes ringBgPulse {
+  0% {
+    transform: translate(-50%, -50%) scale(0.8);
+    opacity: 0;
+  }
+  50% {
+    opacity: 0.3;
+  }
+  100% {
+    transform: translate(-50%, -50%) scale(1.2);
+    opacity: 0;
+  }
+}
+
+/* 渐变遮罩 */
+.gradient-overlay-bg {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: radial-gradient(circle at center, transparent 0%, rgba(0, 0, 0, 0.15) 100%);
+  z-index: 5;
+  pointer-events: none;
 }
 
 .player-content {
@@ -723,27 +1731,40 @@ onMounted(() => {
 .player-header {
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: flex-start;
   padding: 20px;
   flex-shrink: 0;
 }
 
+.header-left-buttons {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
 .header-btn {
-  background: none;
+  background: rgba(255, 255, 255, 0.1);
   border: none;
   color: #fff;
   cursor: pointer;
-  width: 40px;
-  height: 40px;
+  width: 50px;
+  height: 50px;
   display: flex;
   align-items: center;
   justify-content: center;
   transition: all 0.2s ease;
-  font-size: 16px;
+  border-radius: 50%;
+  backdrop-filter: blur(10px);
 }
 
 .header-btn:hover {
-  background: rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.2);
+  transform: scale(1.1);
+}
+
+.header-btn svg {
+  width: 28px;
+  height: 28px;
 }
 
 .header-info {
@@ -856,14 +1877,21 @@ onMounted(() => {
 
  /* 主要内容区域 */
  .player-main {
-   flex: 1;
+   position: absolute;
+   top: 30%;
+   left: 50%;
+   transform: translate(-50%, -50%);
    display: flex;
    flex-direction: column;
    align-items: center;
    justify-content: center;
-   padding: 30px 15px; /* 减小内边距 */
-   min-height: 0;
-   opacity: 0.95; /* 设置透明度 */
+   width: 100%;
+   opacity: 0.95;
+   pointer-events: none;
+ }
+ 
+ .player-main > * {
+   pointer-events: auto;
  }
  
  .player-main.visualizer-mode {
@@ -875,7 +1903,7 @@ onMounted(() => {
    display: flex;
    flex-direction: column;
    align-items: center;
-   justify-content: center;
+   justify-content: flex-start;
    width: 100%;
    height: 100%;
  }
@@ -1158,7 +2186,7 @@ onMounted(() => {
 .album-section {
   display: flex;
   justify-content: center;
-  margin-bottom: 20px; /* 减少下边距，使封面照片上移 */
+  margin: 0;
 }
 
 /* 调整歌曲信息和封面的整体布局 */
@@ -1168,8 +2196,9 @@ onMounted(() => {
   align-items: center;
   justify-content: flex-start;
   width: 100%;
-  height: 100%;
-  padding-top: 30px; /* 减小顶部内边距 */
+  height: auto;
+  padding: 0;
+  gap: 40px;
 }
 
 .album-cover {
@@ -1208,16 +2237,23 @@ onMounted(() => {
 /* 歌曲信息区域 */
 .song-section {
   text-align: center;
+  width: 100%;
   max-width: 500px;
-  margin-bottom: 40px;
+  margin: 0 auto;
   position: relative;
   z-index: 10;
   opacity: 1;
   visibility: visible;
+  display: flex;
+  justify-content: center;
 }
 
 .song-info {
-  margin-bottom: 20px;
+  margin: 0;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
 }
 
 .song-title {
@@ -1226,6 +2262,8 @@ onMounted(() => {
   margin: 0 0 8px 0;
   line-height: 1.2;
   color: #ffffff;
+  text-align: center;
+  width: 100%;
 }
 
 .song-artist {
@@ -1233,6 +2271,8 @@ onMounted(() => {
   opacity: 0.8;
   margin: 0;
   color: #ffffff;
+  text-align: center;
+  width: 100%;
 }
 
 
@@ -1248,44 +2288,110 @@ onMounted(() => {
   z-index: 99999;
 }
 
-/* 底部单行歌词显示 */
+/* 大字模式下，播放控制区域降低层级 */
+.player-content.lyrics-bg-mode .player-controls-section {
+  z-index: 99998;
+}
+
+/* 底部歌词显示 */
 .bottom-single-lyric {
   position: fixed;
-  bottom: 180px; /* 调整底部距离，确保歌词在播放器下方 */
-  left: 0;
-  right: 0;
-  text-align: center;
+  bottom: 220px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 80%;
+  max-width: 600px;
   z-index: 99998;
-  opacity: 0.8; /* 设置透明度 */
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  pointer-events: auto;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: all 0.3s ease;
 }
 
 .bottom-single-lyric:hover {
-  opacity: 1;
-  transform: scale(1.02);
+  transform: translateX(-50%) scale(1.02);
 }
 
 .bottom-lyric-content {
-  display: inline-block;
-  background: transparent; /* 设置为透明背景 */
-  padding: 3px 15px; /* 进一步减小内边距，降低高度 */
-  border-radius: 20px;
-  /* 移除模糊效果 */
-  box-shadow: none; /* 移除阴影 */
-  border: none; /* 移除边框 */
-  max-width: 80%;
-  overflow: hidden;
-  white-space: nowrap;
-  text-overflow: ellipsis;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: auto;
+  padding: 0;
+  background: transparent;
+  pointer-events: auto;
+  gap: 8px;
+}
+
+/* 歌词行通用样式 */
+.lyric-line {
+  text-align: center;
+  padding: 4px 20px;
+  white-space: normal;
+  word-wrap: break-word;
+  max-width: 90%;
+  transition: all 0.3s ease;
+  min-height: 24px;
+}
+
+/* 上一句歌词 */
+.prev-line {
+  font-size: 14px;
+  font-weight: 400;
+  color: rgba(255, 255, 255, 0.4);
+  line-height: 1.4;
+  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.4);
+}
+
+/* 当前歌词行样式 */
+.current-lyric-line {
+  font-size: 18px;
+  font-weight: 600;
+  color: #ffffff;
+  line-height: 1.6;
+  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.6);
+  animation: lyricFadeIn 0.3s ease;
+}
+
+/* 下一句歌词 */
+.next-line {
+  font-size: 14px;
+  font-weight: 400;
+  color: rgba(255, 255, 255, 0.4);
+  line-height: 1.4;
+  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.4);
+}
+
+@keyframes lyricFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 .bottom-lyric-text {
-  font-size: 14px; /* 减小字体大小 */
+  font-size: 14px;
   font-weight: 500;
   color: #ffffff;
   line-height: 1.1;
-  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.5); /* 轻微阴影增加可读性 */
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.5);
+  cursor: pointer;
+  transition: all 0.3s ease;
+  padding: 8px 16px;
+  border-radius: 8px;
+}
+
+.bottom-lyric-text:hover {
+  background: rgba(255, 255, 255, 0.1);
+  transform: scale(1.05);
 }
 
 .progress-section {
@@ -1537,9 +2643,12 @@ onMounted(() => {
 .volume-popup {
   position: fixed;
   z-index: 100000;
-  background: rgba(0, 0, 0, 0.6); /* 更透明 */
-  padding: 8px 6px; /* 减小高度 */
-  animation: volumePopupIn 0.2s ease-out;
+  background: rgba(0, 0, 0, 0.8);
+  backdrop-filter: blur(20px);
+  padding: 16px 12px;
+  border-radius: 20px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+  animation: volumePopupIn 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 @keyframes volumePopupIn {
@@ -1557,17 +2666,19 @@ onMounted(() => {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 6px; /* 减小间距 */
-  min-height: 60px; /* 减小最小高度 */
+  gap: 12px;
+  min-height: 100px;
 }
 
 /* 垂直音量滑块 */
 .volume-slider-vertical {
-  width: 4px;
-  height: 60px; /* 减小高度 */
+  width: 6px;
+  height: 100px;
   position: relative;
   cursor: pointer;
   flex: 1;
+  border-radius: 3px;
+  overflow: hidden;
 }
 
 .volume-bg-vertical {
@@ -1576,7 +2687,8 @@ onMounted(() => {
   left: 0;
   right: 0;
   bottom: 0;
-  background: rgba(255, 255, 255, 0.3);
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 3px;
 }
 
 .volume-fill-vertical {
@@ -1584,25 +2696,30 @@ onMounted(() => {
   bottom: 0;
   left: 0;
   right: 0;
-  background: #fff;
+  background: linear-gradient(to top, #60a5fa, #3b82f6);
   transition: height 0.1s ease;
-  min-height: 2px;
+  min-height: 3px;
+  border-radius: 3px;
+  box-shadow: 0 0 10px rgba(96, 165, 250, 0.5);
 }
 
 .volume-handle-vertical {
   position: absolute;
   left: 50%;
-  width: 12px;
-  height: 12px;
-  background: #fff;
+  width: 16px;
+  height: 16px;
+  background: white;
+  border-radius: 50%;
   transform: translate(-50%, 50%);
   opacity: 0;
-  transition: opacity 0.2s ease;
+  transition: all 0.2s ease;
   cursor: grab;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
 }
 
 .volume-handle-vertical:active {
   cursor: grabbing;
+  transform: translate(-50%, 50%) scale(1.2);
 }
 
 .volume-slider-vertical:hover .volume-handle-vertical {
@@ -1610,11 +2727,12 @@ onMounted(() => {
 }
 
 .volume-text-popup {
-  font-size: 11px;
-  opacity: 0.8;
+  font-size: 14px;
+  font-weight: 600;
   color: #fff;
-  min-width: 20px;
+  min-width: 30px;
   text-align: center;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
 }
 
 /* 动画 */
@@ -2060,6 +3178,21 @@ body.fullscreen-player-active > *:not(.fullscreen-player) [style*="position:fixe
 
 [data-theme="black"] .song-artist {
   color: #cccccc !important;
+}
+
+[data-theme="black"] .solid-color-background {
+  background: #000000 !important;
+  background-size: 100% 100% !important;
+  opacity: 1 !important;
+}
+
+/* 黑色主题下的音频背景波浪 */
+[data-theme="black"] .audio-wave {
+  background: radial-gradient(ellipse at center, rgba(255, 255, 255, 0.15) 0%, rgba(255, 255, 255, 0.05) 40%, transparent 70%) !important;
+}
+
+[data-theme="black"] .gradient-overlay-bg {
+  display: none !important;
 }
 
 /* 完整歌词模态框样式 */

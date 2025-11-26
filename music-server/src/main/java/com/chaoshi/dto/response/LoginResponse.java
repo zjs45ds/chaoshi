@@ -13,6 +13,7 @@ public class LoginResponse {
     private Long id;
     private String username;
     private String avatar;
+    private String backgroundUrl;
     private String token;
     private LocalDateTime createdAt;
 }

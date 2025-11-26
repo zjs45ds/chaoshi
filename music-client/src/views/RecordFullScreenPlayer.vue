@@ -1,103 +1,53 @@
-// 全屏播放页面
+// 全屏播放页面 - 唱片风格
 <template>
-  <div class="modern-player">
-    <!-- 动态背景 -->
-    <div class="background-layer">
-      <!-- 流动的颜色渐变 -->
-      <div class="color-flow"></div>
-      <!-- 模糊圆形装饰 -->
-      <div class="floating-orbs">
-        <div v-for="i in 6" :key="i" class="orb" :style="getOrbStyle(i)"></div>
-      </div>
-      <!-- 细微的网格 -->
-      <div class="subtle-grid"></div>
-    </div>
-
-    <!-- 主容器 -->
-    <div class="player-content">
-      <!-- 专辑封面区域 -->
-      <div class="album-section">
-        <div class="album-container">
-          <!-- 播放按钮悬浮层 -->
-          <div class="play-overlay" @click="togglePlay" v-if="!isPlaying">
-            <div class="play-icon">
-              <svg viewBox="0 0 24 24">
-                <path d="M8 5v14l11-7z" fill="currentColor"/>
-              </svg>
-            </div>
-          </div>
-          
-          <!-- 专辑封面 -->
-          <div class="album-wrapper" :class="{ 'playing': isPlaying }">
-            <img 
-              :src="currentDisplaySong.cover || require('@/assets/1音乐.png')" 
-              :alt="currentDisplaySong.name" 
-              class="album-cover"
-              @click="goHome"
-            />
-            <!-- vinyl唱片效果 -->
-            <div class="vinyl-record" v-if="isPlaying">
-              <div class="vinyl-center"></div>
-              <div class="vinyl-groove" v-for="i in 8" :key="i"></div>
-            </div>
-          </div>
-          
-          <!-- 音频可视化 -->
-          <div class="visualizer" v-if="isPlaying">
-            <div v-for="i in 64" :key="i" class="vis-bar" :style="getVisualizerStyle(i)"></div>
-          </div>
-        </div>
-      </div>
-      
-      <!-- 歌曲信息区域 -->
-      <div class="song-info">
-        <div class="info-card">
-          <!-- 歌曲标题 -->
-          <h1 class="song-title">{{ currentDisplaySong.name }}</h1>
-          
-          <!-- 艺术家信息 -->
-          <p class="artist-name">{{ currentDisplaySong.artist }}</p>
-          
-          <!-- 专辑信息 -->
-          <p class="album-name" v-if="currentDisplaySong.album">{{ currentDisplaySong.album }}</p>
-          
-          <!-- 进度信息 -->
-          <div class="progress-info">
-            <span class="duration">{{ formatDuration(currentDisplaySong.duration) }}</span>
-            <span class="status" :class="{ active: isPlaying }">{{ isPlaying ? 'Playing' : 'Paused' }}</span>
-          </div>
-          
-          <!-- 操作按钮 -->
-          <div class="action-buttons">
-            <button class="action-btn" @click="goToLyricPage">
-              <svg viewBox="0 0 24 24">
-                <path d="M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z"/>
-              </svg>
-              <span>歌词</span>
-            </button>
-            
-            <button class="action-btn" @click="goHome">
-              <svg viewBox="0 0 24 24">
-                <path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/>
-              </svg>
-              <span>主页</span>
-            </button>
-          </div>
-        </div>
-      </div>
-    </div>
-    
+  <div class="record-player">
     <!-- 返回按钮 -->
     <button class="back-button" @click="goHome">
       <svg viewBox="0 0 24 24">
-        <path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.42-1.41L7.83 13H20v-2z"/>
+        <path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.42-1.41L7.83 13H20v-2z" fill="currentColor"/>
       </svg>
     </button>
-    
-    <!-- 底部播放器 -->
-    <div class="bottom-player">
-    <!-- 播放器已移除 -->
-    <!-- <MusicPlayerBar /> -->
+
+    <!-- 主内容区 -->
+    <div class="player-container">
+      <!-- 唱片区域 -->
+      <div class="vinyl-section">
+        <!-- 唱臂 -->
+        <div class="tonearm" :class="{ 'playing': isPlaying }">
+          <div class="tonearm-base"></div>
+          <div class="tonearm-arm"></div>
+          <div class="tonearm-head"></div>
+        </div>
+
+        <!-- 唱片外圈 -->
+        <div class="vinyl-outer" :class="{ 'spinning': isPlaying }">
+          <!-- 唱片本体 -->
+          <div class="vinyl-disc">
+            <!-- 专辑封面 -->
+            <div class="album-art">
+              <img 
+                :src="currentDisplaySong.cover || require('@/assets/1音乐.png')" 
+                :alt="currentDisplaySong.name"
+                @click="togglePlay"
+              />
+            </div>
+            
+            <!-- 唱片纹理 -->
+            <div class="vinyl-grooves">
+              <div v-for="i in 12" :key="i" class="groove"></div>
+            </div>
+            
+            <!-- 中心标签 -->
+            <div class="vinyl-label"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 歌曲信息 -->
+      <div class="song-details">
+        <h1 class="song-name">{{ currentDisplaySong.name }}</h1>
+        <p class="artist-name">{{ currentDisplaySong.artist }}</p>
+      </div>
     </div>
   </div>
 </template>
@@ -105,17 +55,23 @@
 <script setup>
 import { computed, ref, onMounted, onUnmounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
-// 已移除播放器相关功能 - 本组件为录音播放器，不需要音乐播放功能
+import { storeToRefs } from 'pinia'
+import { useMusicPlayerStore } from '@/utils/musicPlayer'
 
 const router = useRouter()
 const route = useRoute()
+const musicPlayerStore = useMusicPlayerStore()
+
+// 从播放器 store 获取状态
+const { currentSong, isPlaying } = storeToRefs(musicPlayerStore)
+const { setPlaying } = musicPlayerStore
 
 // 默认歌曲信息
 const defaultSong = {
   id: 1,
-  name: 'Beautiful Day',
-  artist: 'Unknown Artist',
-  album: 'Greatest Hits',
+  name: '喜欢你',
+  artist: '邓紫棋',
+  album: '在音乐的时光',
   duration: 210,
   cover: 'https://qpic.y.qq.com/music_cover/N6GhicG06jmQnia2FZRicpvhQXiaLPoEJcRlnjtIlFeBXTuPgsgdFwykWg/600?n=1'
 }
@@ -188,6 +144,14 @@ function togglePlay() {
   setPlaying(newPlayingState)
 }
 
+// 时间格式化函数
+function formatDuration(seconds) {
+  if (!seconds || isNaN(seconds)) return '0:00'
+  const mins = Math.floor(seconds / 60)
+  const secs = Math.floor(seconds % 60)
+  return `${mins}:${secs.toString().padStart(2, '0')}`
+}
+
 // 导航函数
 function goToLyricPage() {
   if (route.path !== '/fullscreen-player') {
@@ -204,335 +168,231 @@ function goHome() {
 
 <style scoped>
 /* 基础容器 */
-.modern-player {
+.record-player {
   position: fixed;
   top: 0;
   left: 0;
   width: 100vw;
   height: 100vh;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(180deg, #2a2a2a 0%, #1a1a1a 100%);
   overflow: hidden;
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: center;
 }
 
-/* 动态背景 */
-.background-layer {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  z-index: 1;
-}
-
-.color-flow {
-  position: absolute;
-  width: 200%;
-  height: 200%;
-  background: linear-gradient(45deg, 
-    rgba(102, 126, 234, 0.3) 0%, 
-    rgba(118, 75, 162, 0.3) 25%,
-    rgba(255, 154, 158, 0.3) 50%,
-    rgba(250, 208, 196, 0.3) 75%,
-    rgba(102, 126, 234, 0.3) 100%);
-  animation: flowMove 20s ease-in-out infinite;
-  filter: blur(60px);
-}
-
-@keyframes flowMove {
-  0%, 100% { transform: translate(-25%, -25%) rotate(0deg); }
-  50% { transform: translate(-75%, -75%) rotate(180deg); }
-}
-
-.floating-orbs {
-  position: absolute;
-  width: 100%;
-  height: 100%;
-}
-
-.orb {
-  position: absolute;
-  background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0.05) 50%, transparent 100%);
-  border-radius: 50%;
-  filter: blur(2px);
-  animation: orbFloat 15s ease-in-out infinite;
-}
-
-@keyframes orbFloat {
-  0%, 100% { transform: translateY(0px) scale(1); }
-  50% { transform: translateY(-20px) scale(1.1); }
-}
-
-.subtle-grid {
-  position: absolute;
-  width: 100%;
-  height: 100%;
-  background-image: 
-    linear-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
-  background-size: 40px 40px;
-  opacity: 0.5;
-}
-
-/* 主内容 */
-.player-content {
+/* 主容器 */
+.player-container {
   position: relative;
   z-index: 10;
   display: flex;
+  flex-direction: column;
   align-items: center;
-  gap: 4rem;
-  max-width: 1200px;
-  padding: 2rem;
+  justify-content: flex-start;
+  gap: 3rem;
+  padding-top: 6rem;
 }
 
-/* 专辑区域 */
-.album-section {
-  flex-shrink: 0;
-}
-
-.album-container {
+/* 唱片区域 */
+.vinyl-section {
   position: relative;
-  width: 400px;
-  height: 400px;
+  width: 450px;
+  height: 450px;
 }
 
-.play-overlay {
+/* 唱臂 */
+.tonearm {
+  position: absolute;
+  top: -50px;
+  right: 50px;
+  width: 200px;
+  height: 200px;
+  z-index: 20;
+  transform-origin: 90% 10%;
+  transition: transform 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.tonearm.playing {
+  transform: rotate(25deg);
+}
+
+.tonearm-base {
   position: absolute;
   top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background: rgba(0, 0, 0, 0.4);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 20px;
-  cursor: pointer;
-  backdrop-filter: blur(10px);
-  z-index: 5;
-  transition: all 0.3s ease;
+  right: 20px;
+  width: 30px;
+  height: 30px;
+  background: radial-gradient(circle, #666 0%, #333 100%);
+  border-radius: 50%;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.5);
 }
 
-.play-overlay:hover {
-  background: rgba(0, 0, 0, 0.3);
+.tonearm-arm {
+  position: absolute;
+  top: 15px;
+  right: 35px;
+  width: 150px;
+  height: 8px;
+  background: linear-gradient(90deg, #888 0%, #555 100%);
+  border-radius: 4px;
+  transform-origin: right center;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
 }
 
-.play-icon {
-  width: 80px;
-  height: 80px;
-  color: white;
-  opacity: 0.9;
+.tonearm-head {
+  position: absolute;
+  top: 10px;
+  right: 180px;
+  width: 20px;
+  height: 18px;
+  background: linear-gradient(135deg, #999 0%, #444 100%);
+  border-radius: 50% 50% 50% 0;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.5);
+}
+
+/* 唱片外圈 */
+.vinyl-outer {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 420px;
+  height: 420px;
+  background: radial-gradient(circle, #1a1a1a 0%, #0a0a0a 100%);
+  border-radius: 50%;
+  box-shadow: 
+    0 0 0 8px #2a2a2a,
+    0 0 0 12px #1a1a1a,
+    0 20px 60px rgba(0, 0, 0, 0.8),
+    inset 0 0 30px rgba(0, 0, 0, 0.5);
   transition: transform 0.3s ease;
 }
 
-.play-overlay:hover .play-icon {
-  transform: scale(1.1);
+.vinyl-outer.spinning {
+  animation: vinylSpin 3s linear infinite;
 }
 
-.album-wrapper {
+@keyframes vinylSpin {
+  0% { transform: translate(-50%, -50%) rotate(0deg); }
+  100% { transform: translate(-50%, -50%) rotate(360deg); }
+}
+
+/* 唱片本体 */
+.vinyl-disc {
   position: relative;
   width: 100%;
   height: 100%;
-  border-radius: 20px;
+  border-radius: 50%;
+}
+
+/* 专辑封面 */
+.album-art {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 200px;
+  height: 200px;
+  border-radius: 50%;
   overflow: hidden;
   box-shadow: 
-    0 25px 50px rgba(0, 0, 0, 0.3),
-    0 0 0 1px rgba(255, 255, 255, 0.1);
+    0 0 0 2px rgba(255, 255, 255, 0.1),
+    0 8px 20px rgba(0, 0, 0, 0.6);
+  cursor: pointer;
   transition: transform 0.3s ease;
 }
 
-.album-wrapper.playing {
-  animation: subtleRotate 20s linear infinite;
+.album-art:hover {
+  transform: translate(-50%, -50%) scale(1.05);
 }
 
-@keyframes subtleRotate {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
-}
-
-.album-cover {
+.album-art img {
   width: 100%;
   height: 100%;
   object-fit: cover;
-  cursor: pointer;
-  transition: transform 0.3s ease;
 }
 
-.album-cover:hover {
-  transform: scale(1.05);
-}
-
-/* Vinyl唱片效果 */
-.vinyl-record {
+/* 唱片纹理 */
+.vinyl-grooves {
   position: absolute;
   top: 0;
   left: 0;
   width: 100%;
   height: 100%;
-  background: radial-gradient(circle, 
-    transparent 35%, 
-    rgba(0, 0, 0, 0.1) 35%, 
-    rgba(0, 0, 0, 0.1) 40%, 
-    transparent 40%);
-  animation: vinylRotate 2s linear infinite;
+  border-radius: 50%;
 }
 
-@keyframes vinylRotate {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
-}
-
-.vinyl-center {
+.groove {
   position: absolute;
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
-  width: 20px;
-  height: 20px;
-  background: rgba(0, 0, 0, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.03);
   border-radius: 50%;
 }
 
-.vinyl-groove {
+.groove:nth-child(1) { width: 90%; height: 90%; }
+.groove:nth-child(2) { width: 85%; height: 85%; }
+.groove:nth-child(3) { width: 80%; height: 80%; }
+.groove:nth-child(4) { width: 75%; height: 75%; }
+.groove:nth-child(5) { width: 70%; height: 70%; }
+.groove:nth-child(6) { width: 65%; height: 65%; }
+.groove:nth-child(7) { width: 60%; height: 60%; }
+.groove:nth-child(8) { width: 55%; height: 55%; }
+.groove:nth-child(9) { width: 50%; height: 50%; }
+.groove:nth-child(10) { width: 45%; height: 45%; }
+.groove:nth-child(11) { width: 40%; height: 40%; }
+.groove:nth-child(12) { width: 35%; height: 35%; }
+
+/* 中心标签 */
+.vinyl-label {
   position: absolute;
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
-  border: 1px solid rgba(0, 0, 0, 0.05);
+  width: 80px;
+  height: 80px;
+  background: radial-gradient(circle, #2a2a2a 0%, #1a1a1a 100%);
   border-radius: 50%;
+  box-shadow: 
+    0 0 0 2px rgba(255, 255, 255, 0.05),
+    inset 0 2px 8px rgba(0, 0, 0, 0.8);
 }
 
-.vinyl-groove:nth-child(2) { width: 60%; height: 60%; }
-.vinyl-groove:nth-child(3) { width: 70%; height: 70%; }
-.vinyl-groove:nth-child(4) { width: 80%; height: 80%; }
-.vinyl-groove:nth-child(5) { width: 90%; height: 90%; }
-
-/* 音频可视化 */
-.visualizer {
+.vinyl-label::before {
+  content: '';
   position: absolute;
-  bottom: -50px;
+  top: 50%;
   left: 50%;
-  transform: translateX(-50%);
-  width: 300px;
-  height: 40px;
-  display: flex;
-  align-items: end;
-  justify-content: center;
-  gap: 2px;
-}
-
-.vis-bar {
-  width: 3px;
-  background: linear-gradient(to top, rgba(255,255,255,0.8), rgba(255,255,255,0.4));
-  border-radius: 2px;
-  animation: visualizerPulse 0.5s ease-in-out infinite alternate;
-}
-
-@keyframes visualizerPulse {
-  0% { transform: scaleY(0.3); }
-  100% { transform: scaleY(1); }
+  transform: translate(-50%, -50%);
+  width: 15px;
+  height: 15px;
+  background: #0a0a0a;
+  border-radius: 50%;
+  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.9);
 }
 
 /* 歌曲信息 */
-.song-info {
-  flex: 1;
-  max-width: 500px;
-}
-
-.info-card {
-  background: rgba(255, 255, 255, 0.1);
-  backdrop-filter: blur(20px);
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  border-radius: 24px;
-  padding: 3rem;
+.song-details {
   text-align: center;
-}
-
-.song-title {
-  font-size: 3rem;
-  font-weight: 700;
   color: white;
-  margin: 0 0 1rem 0;
-  line-height: 1.2;
-  text-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+  margin-top: 1rem;
 }
 
-.artist-name {
-  font-size: 1.5rem;
-  color: rgba(255, 255, 255, 0.8);
+.song-name {
+  font-size: 2rem;
+  font-weight: 600;
   margin: 0 0 0.5rem 0;
-  font-weight: 500;
+  color: #ffffff;
+  text-shadow: 0 2px 10px rgba(0, 0, 0, 0.5);
 }
 
-.album-name {
+.song-details .artist-name {
   font-size: 1.1rem;
-  color: rgba(255, 255, 255, 0.6);
-  margin: 0 0 2rem 0;
   font-weight: 400;
-}
-
-.progress-info {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin: 2rem 0;
-  padding: 1rem;
-  background: rgba(255, 255, 255, 0.05);
-  border-radius: 12px;
-}
-
-.duration {
-  color: rgba(255, 255, 255, 0.7);
-  font-weight: 500;
-}
-
-.status {
-  color: rgba(255, 255, 255, 0.5);
-  font-size: 0.9rem;
-  text-transform: uppercase;
-  letter-spacing: 1px;
-  transition: color 0.3s ease;
-}
-
-.status.active {
-  color: #4ade80;
-}
-
-/* 操作按钮 */
-.action-buttons {
-  display: flex;
-  gap: 1rem;
-  justify-content: center;
-}
-
-.action-btn {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  padding: 1rem 2rem;
-  background: rgba(255, 255, 255, 0.1);
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  border-radius: 50px;
-  color: white;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  font-size: 1rem;
-  font-weight: 500;
-}
-
-.action-btn:hover {
-  background: rgba(255, 255, 255, 0.2);
-  transform: translateY(-2px);
-  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
-}
-
-.action-btn svg {
-  width: 20px;
-  height: 20px;
-  fill: currentColor;
+  margin: 0;
+  color: rgba(255, 255, 255, 0.6);
 }
 
 /* 返回按钮 */
@@ -540,7 +400,7 @@ function goHome() {
   position: fixed;
   top: 2rem;
   left: 2rem;
-  z-index: 20;
+  z-index: 30;
   width: 50px;
   height: 50px;
   background: rgba(255, 255, 255, 0.1);
@@ -563,56 +423,84 @@ function goHome() {
 .back-button svg {
   width: 24px;
   height: 24px;
-  fill: currentColor;
-}
-
-/* 底部播放器 */
-.bottom-player {
-  position: fixed;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  z-index: 20;
 }
 
 /* 响应式设计 */
-@media (max-width: 1024px) {
-  .player-content {
-    flex-direction: column;
-    gap: 2rem;
-    text-align: center;
+@media (max-width: 768px) {
+  .player-container {
+    padding-top: 4rem;
   }
   
-  .album-container {
-    width: 300px;
-    height: 300px;
+  .vinyl-section {
+    width: 350px;
+    height: 350px;
   }
   
-  .song-title {
-    font-size: 2.5rem;
+  .vinyl-outer {
+    width: 320px;
+    height: 320px;
+  }
+  
+  .album-art {
+    width: 150px;
+    height: 150px;
+  }
+  
+  .tonearm {
+    width: 150px;
+    height: 150px;
+    right: 30px;
+  }
+  
+  .tonearm-arm {
+    width: 110px;
+  }
+  
+  .song-name {
+    font-size: 1.8rem;
+  }
+  
+  .song-details .artist-name {
+    font-size: 1rem;
   }
 }
 
-@media (max-width: 768px) {
-  .player-content {
-    padding: 1rem;
+@media (max-width: 480px) {
+  .player-container {
+    padding-top: 3rem;
   }
   
-  .album-container {
-    width: 250px;
-    height: 250px;
+  .vinyl-section {
+    width: 280px;
+    height: 280px;
   }
   
-  .song-title {
-    font-size: 2rem;
+  .vinyl-outer {
+    width: 260px;
+    height: 260px;
   }
   
-  .info-card {
-    padding: 2rem;
+  .album-art {
+    width: 120px;
+    height: 120px;
   }
   
-  .action-buttons {
-    flex-direction: column;
+  .tonearm {
+    width: 120px;
+    height: 120px;
+    right: 20px;
+  }
+  
+  .tonearm-arm {
+    width: 90px;
+  }
+  
+  .song-name {
+    font-size: 1.5rem;
+  }
+  
+  .song-details .artist-name {
+    font-size: 0.9rem;
   }
 }
 </style>

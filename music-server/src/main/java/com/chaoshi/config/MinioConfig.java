@@ -1,22 +1,28 @@
 package com.chaoshi.config;
 
 import io.minio.MinioClient;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
+/**
+ * MinIO配置类
+ */
 @Configuration
 public class MinioConfig {
-
-    // MinIO服务器地址
-    private final String endpoint = "http://localhost:9000";
-    // MinIO用户名
-    private final String accessKey = "zhang";
-    // MinIO密码
-    private final String secretKey = "12345678";
     
-    // 存储桶名称 - 头像存储桶
+    // 存储桶名称常量
     public static final String AVATAR_BUCKET = "chaoshi";
-
+    
+    @Value("${minio.endpoint:http://localhost:9000}")
+    private String endpoint;
+    
+    @Value("${minio.accessKey:minioadmin}")
+    private String accessKey;
+    
+    @Value("${minio.secretKey:minioadmin}")
+    private String secretKey;
+    
     @Bean
     public MinioClient minioClient() {
         return MinioClient.builder()

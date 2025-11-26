@@ -1,4 +1,4 @@
-// 头部导航组件
+<!-- 头部导航组件 -->
 <template>
   <header class="header-nav">
     <div class="header-content">
@@ -210,18 +210,25 @@
             v-for="(bg, index) in presetBackgrounds" 
             :key="index"
             class="background-option"
-            :class="{ active: currentBackground === bg.url }"
+            :class="{ active: currentBackground === bg.url, 'load-error': bgLoadErrors.has(bg.url) }"
             @click="selectBackground(bg.url)"
           >
-            <img :src="bg.url" :alt="bg.name">
+            <img 
+              :src="bg.url" 
+              :alt="bg.name"
+              @error="handleBgLoadError(bg.url)"
+              loading="lazy"
+            >
             <div class="bg-overlay">
               <span class="bg-name">{{ bg.name }}</span>
+              <span v-if="bgLoadErrors.has(bg.url)" class="load-error-tip">加载失败</span>
             </div>
           </div>
         </div>
       </div>
       
       <div class="custom-upload">
+        <!-- ... -->
         <h4>自定义背景</h4>
         <div class="upload-area">
           <input 
@@ -258,407 +265,418 @@
       </div>
     </div>
   </el-dialog>
+
 </template>
 
 <script setup>
-import { ref, computed, onMounted, watch, onUnmounted } from 'vue'
-import { useRouter, useRoute } from 'vue-router'
-import { validateImageFile, compressImage } from '@/utils/imageUtils.js'
-import { ElMessage } from 'element-plus'
-import { searchAll, searchSuggest, getSearchHistory, saveSearchHistory, deleteSearchHistoryItem, clearSearchHistory, fuzzySearch, smartSuggest } from '@/api/search.js'
-import { getCurrentUserInfo, getUsername, getUserAvatar, initUserInfo, getCurrentUserId } from '@/utils/userStore.js'
+  import { ref, computed, onMounted, watch, onUnmounted } from 'vue'
+  import { useRouter, useRoute } from 'vue-router'
+  import { validateImageFile, compressImage } from '@/utils/imageUtils.js'
+  import { ElMessage } from 'element-plus'
+  import { searchAll, searchSuggest, getSearchHistory, saveSearchHistory, deleteSearchHistoryItem, clearSearchHistory, fuzzySearch, smartSuggest } from '@/api/search.js'
+  import { getCurrentUserInfo, getUsername, getUserAvatar, initUserInfo, getCurrentUserId, updateUserInfo, clearUserInfo } from '@/utils/userStore.js'
+  import { uploadUserBackground, updateUserBackground } from '@/api/user.js'
 
-const router = useRouter()
-const route = useRoute()
-const dialogVisible = ref(false)
-const activeTab = ref('login')
-const loginForm = ref({ username: '', password: '' })
-const registerForm = ref({ username: '', password: '', confirmPassword: '' })
+  const router = useRouter()
+  const route = useRoute()
+  const dialogVisible = ref(false)
+  const activeTab = ref('login')
+  const loginForm = ref({ username: '', password: '' })
+  const registerForm = ref({ username: '', password: '', confirmPassword: '' })
 
-const isLogin = ref(false)
-const defaultAvatar = 'https://q1.qlogo.cn/g?b=qq&nk=10000&s=100'
-const showDropdown = ref(false)
-const showTooltip = ref(false)
+  const isLogin = ref(false)
+  const defaultAvatar = 'https://q1.qlogo.cn/g?b=qq&nk=10000&s=100'
+  const showDropdown = ref(false)
+  const showTooltip = ref(false)
 
-const userInfo = getCurrentUserInfo()
-const avatarImg = computed(() => userInfo.avatar || defaultAvatar)
-const nickname = computed(() => userInfo.username || '用户')
-const currentTheme = ref(localStorage.getItem('theme') || 'pink')
-const showColorPicker = ref(false)
-const showBackgroundModal = ref(false)
-const currentBackground = ref(localStorage.getItem('userBannerBg') || '')
-const recentBackgrounds = ref(JSON.parse(localStorage.getItem('recentBackgrounds') || '[]'))
-const backgroundInput = ref(null)
+  const userInfo = getCurrentUserInfo()
+  const avatarImg = computed(() => userInfo.avatar || defaultAvatar)
+  const nickname = computed(() => userInfo.username || '用户')
+  const currentTheme = ref(localStorage.getItem('theme') || 'pink')
+  const showColorPicker = ref(false)
+  const showBackgroundModal = ref(false)
+  const currentBackground = ref(localStorage.getItem('userBannerBg') || '')
+  const recentBackgrounds = ref(JSON.parse(localStorage.getItem('recentBackgrounds') || '[]'))
+  const backgroundInput = ref(null)
+  const bgLoadErrors = ref(new Set())
 
-// 搜索相关
-const searchQuery = ref('')
-const showSearchResults = ref(false)
-const searchResults = ref([])
-const searchHistory = ref([])
-const isSearching = ref(false)
-const searchTimer = ref(null)
+  const searchQuery = ref('')
+  const showSearchResults = ref(false)
+  const searchResults = ref([])
+  const searchHistory = ref([])
+  const isSearching = ref(false)
+  const searchTimer = ref(null)
 
-const presetColors = {
-  pink: { 
-    name: '粉色', 
-    primary: '#ec4899',
-    background: '#fdf2f8',
-    backgroundCard: 'rgba(253, 242, 248, 0.95)',
-    textPrimary: '#831843',
-    textSecondary: '#be185d'
-  },
-  lightPink: { 
-    name: '浅粉色', 
-    primary: '#f7b9c8',
-    background: '#fef9fa',
-    backgroundCard: 'rgba(252, 231, 237, 0.95)',
-    textPrimary: '#4a1e2b',
-    textSecondary: '#7d4a5a'
-  },
-  blue: { 
-    name: '蓝色', 
-    primary: '#3b82f6',
-    background: '#eff6ff',
-    backgroundCard: 'rgba(239, 246, 255, 0.95)',
-    textPrimary: '#1e3a8a',
-    textSecondary: '#2563eb'
-  },
-  green: { 
-    name: '绿色', 
-    primary: '#10b981',
-    background: '#f0fdf4',
-    backgroundCard: 'rgba(240, 253, 244, 0.95)',
-    textPrimary: '#064e3b',
-    textSecondary: '#059669'
-  },
-  purple: { 
-    name: '紫色', 
-    primary: '#8b5cf6',
-    background: '#faf5ff',
-    backgroundCard: 'rgba(250, 245, 255, 0.95)',
-    textPrimary: '#4c1d95',
-    textSecondary: '#7c3aed'
-  },
-  orange: { 
-    name: '橙色', 
-    primary: '#f97316',
-    background: '#fff7ed',
-    backgroundCard: 'rgba(255, 247, 237, 0.95)',
-    textPrimary: '#7c2d12',
-    textSecondary: '#ea580c'
-  },
-  red: { 
-    name: '红色', 
-    primary: '#ef4444',
-    background: '#fef2f2',
-    backgroundCard: 'rgba(254, 242, 242, 0.95)',
-    textPrimary: '#7f1d1d',
-    textSecondary: '#dc2626'
-  },
-  black: { 
-    name: '黑色', 
-    primary: '#ffffff',
-    background: '#000000',
-    backgroundCard: 'rgba(0, 0, 0, 0.95)',
-    textPrimary: '#ffffff',
-    textSecondary: '#e5e5e5'
-  },
-  white: { 
-    name: '白色', 
-    primary: '#696969',
-    background: '#ffffff',
-    backgroundCard: 'rgba(255, 255, 255, 0.95)',
-    textPrimary: '#000000',
-    textSecondary: '#333333'
-  }
-}
-
-const presetBackgrounds = [
-  { name: '星空', url: 'https://images.unsplash.com/photo-1534796636912-3b95b3ab5986?w=1920&h=1080&fit=crop&q=80' },
-  { name: '海滩', url: 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=1920&h=1080&fit=crop&q=80' },
-  { name: '城市', url: 'https://images.unsplash.com/photo-1449824913935-59a10b8d2000?w=1920&h=1080&fit=crop&q=80' },
-  { name: '森林', url: 'https://images.unsplash.com/photo-1441974231531-c6227db76b6e?w=1920&h=1080&fit=crop&q=80' },
-  { name: '雪山', url: 'https://images.unsplash.com/photo-1464822759844-d150baec0134?w=1920&h=1080&fit=crop&q=80' },
-  { name: '日落', url: 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=1920&h=1080&fit=crop&q=80' }
-]
-
-async function checkLogin() {
-  isLogin.value = localStorage.getItem('isLogin') === '1'
-  
-  // 如果已登录，从数据库获取最新用户信息
-  if (isLogin.value) {
-    try {
-      await initUserInfo()
-      // CONSOLE LOG REMOVED: console.log('✅ HeaderNav: 用户信息已从数据库更新')
-    } catch (error) {
-      // CONSOLE LOG REMOVED: console.warn('⚠️ HeaderNav: 无法从数据库获取用户信息，使用本地缓存')
+  const presetColors = {
+    pink: { 
+      name: '粉色', 
+      primary: '#ec4899',
+      background: '#fdf2f8',
+      backgroundCard: 'rgba(253, 242, 248, 0.95)',
+      textPrimary: '#831843',
+      textSecondary: '#be185d'
+    },
+    lightPink: { 
+      name: '浅粉色', 
+      primary: '#f7b9c8',
+      background: '#fef9fa',
+      backgroundCard: 'rgba(252, 231, 237, 0.95)',
+      textPrimary: '#4a1e2b',
+      textSecondary: '#7d4a5a'
+    },
+    blue: { 
+      name: '蓝色', 
+      primary: '#3b82f6',
+      background: '#eff6ff',
+      backgroundCard: 'rgba(239, 246, 255, 0.95)',
+      textPrimary: '#1e3a8a',
+      textSecondary: '#2563eb'
+    },
+    green: { 
+      name: '绿色', 
+      primary: '#10b981',
+      background: '#f0fdf4',
+      backgroundCard: 'rgba(240, 253, 244, 0.95)',
+      textPrimary: '#064e3b',
+      textSecondary: '#059669'
+    },
+    purple: { 
+      name: '紫色', 
+      primary: '#8b5cf6',
+      background: '#faf5ff',
+      backgroundCard: 'rgba(250, 245, 255, 0.95)',
+      textPrimary: '#4c1d95',
+      textSecondary: '#7c3aed'
+    },
+    orange: { 
+      name: '橙色', 
+      primary: '#f97316',
+      background: '#fff7ed',
+      backgroundCard: 'rgba(255, 247, 237, 0.95)',
+      textPrimary: '#7c2d12',
+      textSecondary: '#ea580c'
+    },
+    red: { 
+      name: '红色', 
+      primary: '#ef4444',
+      background: '#fef2f2',
+      backgroundCard: 'rgba(254, 242, 242, 0.95)',
+      textPrimary: '#7f1d1d',
+      textSecondary: '#dc2626'
+    },
+    black: { 
+      name: '黑色', 
+      primary: '#ffffff',
+      background: '#000000',
+      backgroundCard: 'rgba(0, 0, 0, 0.95)',
+      textPrimary: '#ffffff',
+      textSecondary: '#e5e5e5'
+    },
+    white: { 
+      name: '白色', 
+      primary: '#696969',
+      background: '#ffffff',
+      backgroundCard: 'rgba(255, 255, 255, 0.95)',
+      textPrimary: '#000000',
+      textSecondary: '#333333'
     }
   }
-}
 
-// 用户信息更新处理函数
-function handleUserInfoUpdate() {
-  // CONSOLE LOG REMOVED: console.log('🔔 HeaderNav: 接收到用户信息更新事件')
+  const presetBackgrounds = [
+    { name: '星空', url: 'https://cdn.pixabay.com/photo/2017/08/30/01/05/milky-way-2695569_1280.jpg' },
+    { name: '极光', url: 'https://images.pexels.com/photos/1938348/pexels-photo-1938348.jpeg?auto=compress&cs=tinysrgb&w=1280' },
+    { name: '城市', url: 'https://images.pexels.com/photos/169647/pexels-photo-169647.jpeg?auto=compress&cs=tinysrgb&w=1280' },
+    { name: '森林', url: 'https://cdn.pixabay.com/photo/2015/12/01/20/28/road-1072823_1280.jpg' },
+    { name: '雪山', url: 'https://images.pexels.com/photos/417074/pexels-photo-417074.jpeg?auto=compress&cs=tinysrgb&w=1280' },
+    { name: '日落', url: 'https://cdn.pixabay.com/photo/2016/05/05/02/37/sunset-1373171_1280.jpg' },
+    { name: '花海', url: 'https://images.pexels.com/photos/462118/pexels-photo-462118.jpeg?auto=compress&cs=tinysrgb&w=1280' },
+    { name: '海洋', url: 'https://cdn.pixabay.com/photo/2016/11/29/05/45/astronomy-1867616_1280.jpg' }
+  ]
 
-  loadSearchHistory()
-}
-// 初始化主题
-function initTheme() {
-  const savedTheme = localStorage.getItem('theme') || 'pink'
-  if (presetColors[savedTheme]) {
-    selectPresetTheme(savedTheme, false) // 初始化时不显示消息
-  } else {
-    selectPresetTheme('pink', false) // 初始化时不显示消息
-  }
-}
-
-// 滚动事件处理函数
-function handleScroll() {
-  if (showSearchResults.value) {
-    showSearchResults.value = false
-  }
-}
-
-onMounted(() => {
-  checkLogin()
-  loadSearchHistory()
-  initTheme() // 初始化主题
-  window.addEventListener('user-info-updated', handleUserInfoUpdate)
-  document.addEventListener('click', handleClickOutside)
-  window.addEventListener('scroll', handleScroll)
-})
-onUnmounted(() => {
-  window.removeEventListener('user-info-updated', handleUserInfoUpdate)
-  document.removeEventListener('click', handleClickOutside)
-  window.removeEventListener('scroll', handleScroll)
-})
-watch(() => route.fullPath, checkLogin)
-
-const isHome = computed(() => {
-  if (route.path === '/my-music' || route.path === '/0717') return false;
-  return [
-    '/', '/artist', '/album', '/toplist', '/mv', '/song', '/playlist', '/search'
-  ].some(p => route.path === p || route.path.startsWith(p + '/'))
-})
-const isOpenPlatform = computed(() => route.path === '/open-platform')
-const isMyMusic = computed(() => route.path === '/my-music')
-const is0717 = computed(() => route.path === '/0717')
-
-function handleLogin() {
-  dialogVisible.value = false
-}
-function handleRegister() {
-  dialogVisible.value = false
-}
-function goLogin() {
-  if (route.path !== '/login') {
-    router.push('/login')
-  }
-}
-function goHome() {
-  if (route.path !== '/') {
-    router.push('/')
-  }
-}
-
-
-function goOpenPlatform() {
-  const url = router.resolve({ path: '/open-platform', query: { popup: 'true' } }).href
-  window.open(url, '_blank', 'noopener,noreferrer')
-}
-function goMyMusic() {
-  if (route.path !== '/my-music') {
-    router.push('/my-music')
-  }
-}
-function goProfile() {
-  if (route.path !== '/profile') {
-    router.push('/profile')
-  }
-  showDropdown.value = false
-}
-function selectPresetTheme(themeName, showMessage = true) {
-  currentTheme.value = themeName
-  localStorage.setItem('theme', themeName)
-  
-  // 获取主题信息
-  const theme = presetColors[themeName]
-  const root = document.documentElement
-  
-  root.setAttribute('data-theme', themeName)
-  
-  root.style.removeProperty('--primary')
-  root.style.removeProperty('--background')
-  root.style.removeProperty('--background-card')
-  root.style.removeProperty('--text-primary')
-  root.style.removeProperty('--text-secondary')
-  root.style.removeProperty('--primary-light')
-  root.style.removeProperty('--primary-dark')
-  root.style.removeProperty('--background-light')
-  root.style.removeProperty('--border')
-  
-  document.body.style.removeProperty('background-color')
-  
-  window.dispatchEvent(new CustomEvent('theme-changed', { detail: { theme: themeName, colors: theme } }))
-  
-  if (showMessage) {
-    ElMessage.success(`已切换到${theme.name}主题`)
-    showColorPicker.value = false
-  }
-}
-
-function showBackgroundSelector() {
-  showBackgroundModal.value = true
-}
-
-function selectBackground(url, isProcessed = false) {
-  currentBackground.value = url
-  
-  try {
-    localStorage.setItem('userBannerBg', url)
-    localStorage.removeItem('isCustomBackground')
+  async function checkLogin() {
+    isLogin.value = localStorage.getItem('isLogin') === '1'
     
-    if (isProcessed) {
-      localStorage.setItem('backgroundProcessed', 'true')
-    } else {
-      localStorage.removeItem('backgroundProcessed')
-    }
-    
-  } catch (error) {
-    if (error.name === 'QuotaExceededError') {
-      ElMessage.warning('背景过大，无法保存到本地，刷新页面后将恢复默认背景')
-    }
-  }
-  
-  showBackgroundModal.value = false
-  
-  if (url && !url.startsWith('data:') && !recentBackgrounds.value.includes(url)) {
-    recentBackgrounds.value.unshift(url)
-    if (recentBackgrounds.value.length > 5) {
-      recentBackgrounds.value.pop() // 只保留最近5个
-    }
-    try {
-      localStorage.setItem('recentBackgrounds', JSON.stringify(recentBackgrounds.value))
-    } catch (error) {
-    }
-  }
-  
-  applyBackgroundDirectly(url)
-  
-  window.dispatchEvent(new CustomEvent('background-changed', { detail: { url } }))
-  
-  const message = url ? '背景更换成功！' : '已移除背景！'
-  setTimeout(() => {
-    ElMessage({
-      message: message,
-      type: 'success',
-      duration: 2000,
-      showClose: true
-    })
-  }, 100) 
-}
-
-// 直接应用背景的函数
-function applyBackgroundDirectly(url) {
-  if (url) {
-    document.body.style.backgroundImage = `url(${url})`
-    document.body.style.backgroundSize = 'cover'
-    document.body.style.backgroundPosition = 'center'
-    document.body.style.backgroundRepeat = 'no-repeat'
-    document.body.style.backgroundAttachment = 'fixed'
-  } else {
-    document.body.style.backgroundImage = ''
-    document.body.style.backgroundSize = ''
-    document.body.style.backgroundPosition = ''
-    document.body.style.backgroundRepeat = ''
-    document.body.style.backgroundAttachment = ''
-  }
-}
-
-async function onBackgroundUpload(e) {
-  const file = e.target.files[0]
-  if (!file) {
-    return
-  }
-
-  // 验证文件
-  const validation = validateImageFile(file)
-  if (!validation.isValid) {
-    validation.errors.forEach(error => ElMessage.error(error))
-    return
-  }
-
-  // 显示压缩提示
-  if (validation.needsCompression) {
-    ElMessage.info('检测到图片较大，正在进行优化处理...')
-  }
-
-  try {
-    // 压缩图片
-    const result = await compressImage(file)
-    
-    // 检查压缩后的大小
-    if (parseFloat(result.compressedSize) > 3) {
-      ElMessage.warning('图片较大，建议使用更小的图片以获得更好的性能')
-    }
-
-    // CONSOLE LOG REMOVED: console.log(`图片优化完成: 原始${result.originalSize}MB -> 压缩后${result.compressedSize}MB (压缩率${result.compressionRatio}%)`)
-    
-    selectBackground(result.dataUrl, true) 
-    
-  } catch (error) {
-    // CONSOLE LOG REMOVED: console.error('图片处理失败:', error)
-    ElMessage.error('图片处理失败，请重试')
-  } finally {
-    e.target.value = ''
-  }
-}
-
-// 搜索相关方法
-function handleSearchFocus() {
-  if (searchHistory.value.length > 0) {
-    showSearchResults.value = true
-  }
-  if (searchQuery.value.trim() === '') {
-    searchResults.value = []
-  }
-}
-
-async function handleSearchInput() {
-  const keyword = searchQuery.value.trim()
-  
-  if (searchTimer.value) {
-    clearTimeout(searchTimer.value)
-    searchTimer.value = null
-  }
-  
-  if (keyword === '') {
-    showSearchResults.value = searchHistory.value.length > 0
-    searchResults.value = []
-    return
-  }
-  
-  showSearchResults.value = true
-  isSearching.value = true
-  
-  searchTimer.value = setTimeout(async () => {
-    try {
-      const response = await smartSuggest(keyword)
-      
-      if (response && response.code === 200) {
-        searchResults.value = response.data || []
-      } else {
-        // CONSOLE LOG REMOVED: console.warn('搜索建议API返回异常状态:', response?.code, response?.message)
-        searchResults.value = []
+    // 如果已登录，从数据库获取最新用户信息
+    if (isLogin.value) {
+      try {
+        await initUserInfo()
+      } catch (error) {
+        // 忽略错误
       }
-    } catch (error) {
-      // CONSOLE LOG REMOVED: console.error('获取搜索建议失败:', error)
-      searchResults.value = []
-    } finally {
-      isSearching.value = false
     }
-  }, 300)
-}
+  }
+
+  // 用户信息更新处理函数
+  function handleUserInfoUpdate() {
+    loadSearchHistory()
+  }
+  // 初始化主题
+  function initTheme() {
+    const savedTheme = localStorage.getItem('theme') || 'pink'
+    if (presetColors[savedTheme]) {
+      selectPresetTheme(savedTheme, false) // 初始化时不显示消息
+    } else {
+      selectPresetTheme('pink', false) // 初始化时不显示消息
+    }
+  }
+
+  // 滚动事件处理函数
+  function handleScroll() {
+    if (showSearchResults.value) {
+      showSearchResults.value = false
+    }
+  }
+
+  onMounted(() => {
+    checkLogin()
+    loadSearchHistory()
+    initTheme() // 初始化主题
+    window.addEventListener('user-info-updated', handleUserInfoUpdate)
+    document.addEventListener('click', handleClickOutside)
+    window.addEventListener('scroll', handleScroll)
+  })
+  onUnmounted(() => {
+    window.removeEventListener('user-info-updated', handleUserInfoUpdate)
+    document.removeEventListener('click', handleClickOutside)
+    window.removeEventListener('scroll', handleScroll)
+  })
+  watch(() => route.fullPath, checkLogin)
+
+  const isHome = computed(() => {
+    if (route.path === '/my-music' || route.path === '/0717') return false;
+    return [
+      '/', '/artist', '/album', '/toplist', '/mv', '/song', '/playlist', '/search'
+    ].some(p => route.path === p || route.path.startsWith(p + '/'))
+  })
+  const isOpenPlatform = computed(() => route.path === '/open-platform')
+  const isMyMusic = computed(() => route.path === '/my-music')
+  const is0717 = computed(() => route.path === '/0717')
+
+  function handleLogin() {
+    dialogVisible.value = false
+  }
+  function handleRegister() {
+    dialogVisible.value = false
+  }
+  function goLogin() {
+    if (route.path !== '/login') {
+      router.push('/login')
+    }
+  }
+  function goHome() {
+    if (route.path !== '/') {
+      router.push('/')
+    }
+  }
+
+  function goOpenPlatform() {
+    const url = router.resolve({ path: '/open-platform', query: { popup: 'true' } }).href
+    window.open(url, '_blank', 'noopener,noreferrer')
+  }
+  function goMyMusic() {
+    if (route.path !== '/my-music') {
+      router.push('/my-music')
+    }
+  }
+  function goProfile() {
+    if (route.path !== '/profile') {
+      router.push('/profile')
+    }
+    showDropdown.value = false
+  }
+  function selectPresetTheme(themeName, showMessage = true) {
+    currentTheme.value = themeName
+    localStorage.setItem('theme', themeName)
+    
+    // 获取主题信息
+    const theme = presetColors[themeName]
+    const root = document.documentElement
+    
+    root.setAttribute('data-theme', themeName)
+    
+    root.style.removeProperty('--primary')
+    root.style.removeProperty('--background')
+    root.style.removeProperty('--background-card')
+    root.style.removeProperty('--text-primary')
+    root.style.removeProperty('--text-secondary')
+    root.style.removeProperty('--primary-light')
+    root.style.removeProperty('--primary-dark')
+    root.style.removeProperty('--background-light')
+    root.style.removeProperty('--border')
+    
+    document.body.style.removeProperty('background-color')
+    
+    window.dispatchEvent(new CustomEvent('theme-changed', { detail: { theme: themeName, colors: theme } }))
+    
+    if (showMessage) {
+      ElMessage.success(`已切换到${theme.name}主题`)
+      showColorPicker.value = false
+    }
+  }
+
+  function showBackgroundSelector() {
+    showBackgroundModal.value = true
+  }
+
+  async function selectBackground(url, isProcessed = false, showMessage = true) {
+    currentBackground.value = url
+    
+    try {
+      localStorage.setItem('userBannerBg', url)
+      localStorage.removeItem('isCustomBackground')
+      
+      if (isProcessed) {
+        localStorage.setItem('backgroundProcessed', 'true')
+      } else {
+        localStorage.removeItem('backgroundProcessed')
+      }
+      
+      // 如果用户已登录，同步更新到服务器
+      const userId = getCurrentUserId()
+      if (userId) {
+        try {
+          await updateUserBackground(userId, url)
+          // 更新本地用户存储中的背景URL，防止刷新后被旧数据覆盖
+          const userInfo = getCurrentUserInfo()
+          if (userInfo) {
+            updateUserInfo({
+              ...userInfo,
+              backgroundUrl: url
+            })
+          }
+        } catch (err) {
+          console.error('同步背景到服务器失败:', err)
+        }
+      }
+      
+    } catch (error) {
+      if (error.name === 'QuotaExceededError') {
+        ElMessage.warning('背景过大，无法保存到本地，刷新页面后将恢复默认背景')
+      }
+    }
+    
+    showBackgroundModal.value = false
+    
+    if (url) {
+      // 如果已存在，先移除旧的位置
+      const existingIndex = recentBackgrounds.value.indexOf(url)
+      if (existingIndex > -1) {
+        recentBackgrounds.value.splice(existingIndex, 1)
+      }
+      // 添加到最前面
+      recentBackgrounds.value.unshift(url)
+      // 只保留最近8张
+      while (recentBackgrounds.value.length > 8) {
+        recentBackgrounds.value.pop()
+      }
+      try {
+        localStorage.setItem('recentBackgrounds', JSON.stringify(recentBackgrounds.value))
+      } catch (error) {
+        // 如果是上传的大图片导致存储失败，从列表中移除
+        if (error.name === 'QuotaExceededError' && url.startsWith('data:')) {
+          recentBackgrounds.value.shift()
+          ElMessage.warning('上传图片过大，无法保存到最近使用')
+        }
+      }
+    }
+    
+    applyBackgroundDirectly(url)
+    
+    window.dispatchEvent(new CustomEvent('background-changed', { detail: { url } }))
+    
+    // 只在需要时显示提示
+    if (showMessage) {
+      const message = url ? '背景更换成功！' : '已移除背景！'
+      setTimeout(() => {
+        ElMessage({
+          message: message,
+          type: 'success',
+          duration: 2000,
+          showClose: true
+        })
+      }, 100)
+    }
+  }
+
+  // 直接应用背景的函数
+  function applyBackgroundDirectly(url) {
+    if (url) {
+      document.body.style.backgroundImage = `url(${url})`
+      document.body.style.backgroundSize = 'cover'
+      document.body.style.backgroundPosition = 'center'
+      document.body.style.backgroundRepeat = 'no-repeat'
+      document.body.style.backgroundAttachment = 'fixed'
+    } else {
+      document.body.style.backgroundImage = ''
+      document.body.style.backgroundSize = ''
+      document.body.style.backgroundPosition = ''
+      document.body.style.backgroundRepeat = ''
+      document.body.style.backgroundAttachment = ''
+    }
+  }
+
+  async function onBackgroundUpload(e) {
+    const file = e.target.files[0]
+    if (!file) {
+      return
+    }
+
+    // 验证文件
+    const validation = validateImageFile(file)
+    if (!validation.isValid) {
+      validation.errors.forEach(error => ElMessage.error(error))
+      return
+    }
+
+    const userId = getCurrentUserId()
+
+    // 如果未登录，保持原有本地方案（压缩为 dataUrl 存 localStorage）
+    if (!userId) {
+      try {
+        const result = await compressImage(file)
+        selectBackground(result.dataUrl, true, false)
+        ElMessage.success('图片上传成功！')
+      } catch (error) {
+        ElMessage.error('图片处理失败，请重试')
+      } finally {
+        e.target.value = ''
+      }
+      return
+    }
+
+    try {
+      const formData = new FormData()
+      formData.append('file', file)
+      formData.append('userId', userId)
+
+      const response = await uploadUserBackground(formData)
+
+      // 后端 FileController#uploadBackground 返回 { success, message, url }
+      if (!response || response.success === false || !response.url) {
+        const msg = response?.message || '背景上传失败，请重试'
+        ElMessage.error(msg)
+        return
+      }
+
+      const url = response.url
+
+      // 使用服务器返回的 URL 作为背景，只存 URL，不再存 base64
+      selectBackground(url, false, false)
+
+      // 同步更新全局用户信息中的 backgroundUrl，保持前端状态一致
+      const info = getCurrentUserInfo()
+      updateUserInfo({
+        ...info,
+        backgroundUrl: url
+      })
+
+      ElMessage.success('背景上传成功！')
+    } catch (error) {
+      ElMessage.error('背景上传失败，请重试')
+    } finally {
+      e.target.value = ''
+    }
+  }
 
 async function performSearch(keyword) {
   if (!keyword) return
@@ -1036,14 +1054,14 @@ function handleClickOutside(e) {
   }
 }
 function logout() {
-  localStorage.removeItem('isLogin')
-  checkLogin()
+  // 调用 userStore 的清理函数，彻底清理所有用户数据
+  clearUserInfo()
+  
+  // 关闭下拉菜单
   showDropdown.value = false
   
-  // 只有在不在首页时才跳转到首页，避免冗余导航警告
-  if (route.path !== '/') {
-    router.push('/')
-  }
+  // 强制刷新页面，确保所有状态都被重置
+  window.location.reload()
 }
 </script>
 
@@ -1549,9 +1567,25 @@ function logout() {
   border-color: #31c27c;
 }
 
+.background-option.load-error {
+  opacity: 0.6;
+}
+
+.background-option.load-error img {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  min-height: 100px;
+}
+
+.load-error-tip {
+  display: block;
+  font-size: 10px;
+  color: #ff6b6b;
+  margin-top: 4px;
+}
+
 .background-option img {
   width: 100%;
-  height: 100px;
+  height: 140px;
   object-fit: cover;
   display: block;
 }

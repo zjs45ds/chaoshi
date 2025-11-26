@@ -279,10 +279,13 @@ const setBackground = (url) => {
 
 // 背景变化处理函数
 const handleBackgroundChange = (event) => {
+  console.log('OpenPlatform received background-changed event:', event.detail)
   if (event.detail && event.detail.url) {
+    console.log('Updating background to:', event.detail.url)
     setBackground(event.detail.url)
   } else {
     // 如果没有传递url，使用默认背景
+    console.log('Using default background')
     setBackground('/src/assets/跃.jpg')
   }
 }
@@ -297,13 +300,23 @@ const backgroundStyle = computed(() => ({
   transition: 'background-image 0.5s ease-in-out'
 }))
 
+// storage事件处理函数
+const handleStorageChange = (event) => {
+  if (event.key === 'userBannerBg') {
+    console.log('OpenPlatform received storage event:', event.newValue)
+    setBackground(event.newValue)
+  }
+}
+
 onMounted(() => {
   // 初始化背景
   const initialBg = getBackgroundFromStorage()
   setBackground(initialBg)
 
-  // 监听背景变化事件
+  // 监听背景变化事件（同窗口）
   window.addEventListener('background-changed', handleBackgroundChange)
+  // 监听storage事件（跨窗口）
+  window.addEventListener('storage', handleStorageChange)
   
   // 为body添加开放平台样式类
   document.body.classList.add('open-platform-page')
@@ -312,6 +325,7 @@ onMounted(() => {
 onUnmounted(() => {
   // 移除事件监听
   window.removeEventListener('background-changed', handleBackgroundChange)
+  window.removeEventListener('storage', handleStorageChange)
   
   // 移除开放平台样式类
   document.body.classList.remove('open-platform-page')

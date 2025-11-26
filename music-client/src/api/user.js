@@ -17,6 +17,14 @@ export const updateUserProfile = (userId, profileData) =>
 export const updateUserAvatar = (formData) => 
   request.upload('/api/files/upload', formData)
 
+// 上传用户背景（文件上传）
+export const uploadUserBackground = (formData) =>
+  request.upload('/api/files/background', formData)
+
+// 更新用户背景URL
+export const updateUserBackground = (userId, backgroundUrl) =>
+  request.put('/api/user/background', { backgroundUrl }, { params: { userId } })
+
 // 检查用户名是否可用
 export const checkUsernameAvailability = (username, currentUserId = null) => {
   const params = { username }

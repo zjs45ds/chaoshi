@@ -86,8 +86,9 @@ export const getUserFavoriteMvs = (userId) => {
  */
 export const favoriteSong = (songId, userId, isFavorited) => {
   const action = isFavorited ? 'unlike' : 'like'
-  return request.post(`/api/songs/${songId}/favorite`, null, {
-    params: { userId, action }
+  // 使用song.js中的API，参数顺序是(userId, songId, action)
+  return request.post('/api/songs/favorite', {}, {
+    params: { userId, songId, action }
   })
 }
 
@@ -124,9 +125,8 @@ export const getUserFavoriteSongs = (userId) => {
 export const toggleFavorite = async (type, itemId, userId, currentStatus) => {
   switch (type) {
     case 'song':
-      // 修正参数顺序：song.js中favoriteSong需要(userId, songId, action)
-      const action = currentStatus ? 'unlike' : 'like'
-      return await favoriteSong(userId, itemId, action)
+      // favoriteSong参数顺序：(songId, userId, isFavorited)
+      return await favoriteSong(itemId, userId, currentStatus)
     case 'album':
       return await favoriteAlbum(itemId, userId, currentStatus)
     case 'mv':

@@ -1,5 +1,6 @@
 import { createRouter, createWebHistory, isNavigationFailure, NavigationFailureType } from 'vue-router'
 import { handleError } from '@/utils/errorHandler.js'
+import { ElMessage } from 'element-plus'
 
 // ====== 核心页面（同步加载，首次访问必需） ======
 import Home from './views/Home.vue'
@@ -51,7 +52,7 @@ const routes = [
     meta: {
       title: '歌手',
       keepAlive: true,
-      requireAuth: false,
+      requireAuth: true,
       preload: true
     }
   },
@@ -62,7 +63,7 @@ const routes = [
     meta: {
       title: '歌手详情',
       keepAlive: false,
-      requireAuth: false
+      requireAuth: true
     }
   },
   {
@@ -72,7 +73,7 @@ const routes = [
     meta: {
       title: '排行榜',
       keepAlive: true,
-      requireAuth: false,
+      requireAuth: true,
       preload: true
     }
   },
@@ -83,7 +84,7 @@ const routes = [
     meta: {
       title: '排行榜详情',
       keepAlive: false,
-      requireAuth: false
+      requireAuth: true
     }
   },
   {
@@ -93,7 +94,7 @@ const routes = [
     meta: {
       title: '专辑',
       keepAlive: true,
-      requireAuth: false,
+      requireAuth: true,
       preload: true
     }
   },
@@ -104,7 +105,7 @@ const routes = [
     meta: {
       title: '专辑详情',
       keepAlive: false,
-      requireAuth: false
+      requireAuth: true
     }
   },
   {
@@ -114,7 +115,7 @@ const routes = [
     meta: {
       title: 'MV',
       keepAlive: true,
-      requireAuth: false
+      requireAuth: true
     }
   },
   {
@@ -124,7 +125,7 @@ const routes = [
     meta: {
       title: 'MV详情',
       keepAlive: false,
-      requireAuth: false
+      requireAuth: true
     }
   },
   {
@@ -134,7 +135,7 @@ const routes = [
     meta: {
       title: '歌曲详情',
       keepAlive: false,
-      requireAuth: false
+      requireAuth: true
     }
   },
   {
@@ -164,7 +165,7 @@ const routes = [
     meta: {
       title: '我的音乐',
       keepAlive: true,
-      requireAuth: false // 改为false，允许未登录用户访问，在组件内部处理登录检查
+      requireAuth: false // 允许访问，在组件内部处理登录检查
     }
   },
   {
@@ -195,7 +196,7 @@ const routes = [
     meta: {
       title: '开放平台',
       keepAlive: false,
-      requireAuth: false,
+      requireAuth: true,
       preload: true
     }
   },
@@ -206,7 +207,7 @@ const routes = [
     meta: {
       title: '全屏播放器',
       keepAlive: false,
-      requireAuth: false,
+      requireAuth: true,
       hideNav: true
     }
   },
@@ -217,7 +218,7 @@ const routes = [
     meta: {
       title: '游戏',
       keepAlive: false,
-      requireAuth: false
+      requireAuth: true
     }
   },
   {
@@ -227,7 +228,7 @@ const routes = [
     meta: {
       title: '0717',
       keepAlive: false,
-      requireAuth: false,
+      requireAuth: true,
       preload: true
     }
   },
@@ -268,25 +269,64 @@ const router = createRouter({
 // 保存原始的 push 方法
 const originalPush = router.push
 router.push = function push(location) {
+  // 获取目标路径字符串
+  const getPath = (loc) => {
+    if (typeof loc === 'string') return loc
+    if (loc.path) return loc.path
+    return ''
+  }
+  
+  // 检查是否为快速连续导航到相同路径
+  const targetPath = getPath(location)
+  const currentPath = this.currentRoute.value.path
+  
+  // 如果是相同路径，直接返回成功
+  if (targetPath === currentPath) {
+    return Promise.resolve(this.currentRoute.value)
+  }
+  
+  // 执行导航并处理各种失败情况
   return originalPush.call(this, location).catch(err => {
     // 忽略导航重复和导航取消的警告
     if (isNavigationFailure(err, NavigationFailureType.duplicated) || 
         isNavigationFailure(err, NavigationFailureType.cancelled)) {
-      return Promise.resolve()
+      return Promise.resolve(this.currentRoute.value)
     }
-    return Promise.reject(err)
+    
+    // 对于其他类型的导航失败，仍然记录错误但不抛出异常
+    // console.error('路由导航失败:', err)
+    return Promise.resolve(this.currentRoute.value)
   })
 }
 
 // 保存原始的 replace 方法
 const originalReplace = router.replace
-router.replace = function replace(location) {
-  return originalReplace.call(this, location).catch(err => {
+router.replace = function replace(location, onComplete, onAbort) {
+  // 获取目标路径字符串
+  const getPath = (loc) => {
+    if (typeof loc === 'string') return loc
+    if (loc.path) return loc.path
+    return ''
+  }
+  
+  // 检查是否为快速连续导航到相同路径
+  const targetPath = getPath(location)
+  const currentPath = this.currentRoute.value.path
+  
+  // 如果是相同路径，直接返回成功
+  if (targetPath === currentPath) {
+    return Promise.resolve(this.currentRoute.value)
+  }
+  
+  return originalReplace.call(this, location, onComplete, onAbort).catch(err => {
     if (isNavigationFailure(err, NavigationFailureType.duplicated) || 
         isNavigationFailure(err, NavigationFailureType.cancelled)) {
-      return Promise.resolve()
+      return Promise.resolve(this.currentRoute.value)
     }
-    return Promise.reject(err)
+    
+    // 对于其他类型的导航失败，仍然记录错误但不抛出异常
+    // console.error('路由导航失败:', err)
+    return Promise.resolve(this.currentRoute.value)
   })
 }
 
@@ -299,14 +339,44 @@ router.beforeEach((to, from, next) => {
       document.title = `${to.meta.title} - 潮石音乐`
     }
 
-    // 检查登录状态
-    const isLogin = localStorage.getItem('isLogin') === '1'
+    // 检查登录状态，同时检查localStorage和sessionStorage
+    const isLogin = localStorage.getItem('isLogin') === '1' || sessionStorage.getItem('isLogin') === '1'
     const requireAuth = to.meta?.requireAuth
 
     if (requireAuth && !isLogin) {
-      // 需要登录但未登录，跳转到登录页
+      // 需要登录但未登录，显示提示并跳转到我的音乐页面
+      const pageNames = {
+        'Artist': '歌手页面',
+        'ArtistDetail': '歌手详情',
+        'Album': '新碟页面',
+        'AlbumDetail': '专辑详情',
+        'Toplist': '排行榜',
+        'ToplistDetail': '排行榜详情',
+        'MV': 'MV页面',
+        'MvDetail': 'MV详情',
+        'SongDetail': '歌曲详情',
+        'PlaylistDetail': '歌单详情',
+        'Game': '游戏',
+        '0717': '精彩瞬间',
+        'OpenPlatform': '开放平台',
+        'RecordFullScreenPlayer': '全屏播放器',
+        'User': '个人中心',
+        'Profile': '个人资料'
+      }
+      
+      const pageName = pageNames[to.name] || '该页面'
+      
+      ElMessage({
+        message: `请先登录后再访问${pageName}`,
+        type: 'warning',
+        duration: 500,
+        customClass: 'auth-required-message',
+        offset: 80
+      })
+      
+      // 跳转到我的音乐页面（我的音乐页面会显示登录界面）
       next({
-        path: '/login',
+        path: '/my-music',
         query: { redirect: to.fullPath }
       })
       return
@@ -314,14 +384,9 @@ router.beforeEach((to, from, next) => {
 
     // 如果已登录且访问登录页，重定向到首页
     if (isLogin && to.path === '/login') {
-      // 避免重复导航到首页
-      if (from.path !== '/') {
-        next('/')
-        return
-      } else {
-        next(false) // 阻止导航
-        return
-      }
+      // 已登录用户访问登录页，直接重定向到首页
+      next('/')
+      return
     }
 
     next()

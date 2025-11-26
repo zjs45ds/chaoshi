@@ -1,6 +1,7 @@
 // 0717.vue
 <template>
   <div class="xue-theme-page">
+
     <!-- 顶部英雄区域 -->
     <div class="hero-section">
       <div class="hero-background" :style="heroBackgroundStyle"></div>
@@ -17,10 +18,6 @@
           </BoxReveal>
         </a>
         <p class="hero-subtitle">音乐才子 · 创作歌手 · 演员</p>
-        <div class="hero-badge">
-          <span><LetterPullup :words="'出道20周年'" :delay="0.08" /></span>
-          <span class="celebration-icon">🎉</span>
-        </div>
         <Marquee 
           :pause-on-hover="true"
           :line1-duration="30"
@@ -1254,12 +1251,7 @@
           </BoxReveal>
         </h2>
         <div class="gallery-grid">
-          <div class="gallery-item" :style="{backgroundImage: 'url(https://picsum.photos/seed/album1/400/300)'}"></div>
-          <div class="gallery-item" :style="{backgroundImage: 'url(https://picsum.photos/seed/album2/400/300)'}"></div>
-          <div class="gallery-item" :style="{backgroundImage: 'url(https://picsum.photos/seed/album3/400/300)'}"></div>
-          <div class="gallery-item" :style="{backgroundImage: 'url(https://picsum.photos/seed/album4/400/300)'}"></div>
-          <div class="gallery-item" :style="{backgroundImage: 'url(https://picsum.photos/seed/album5/400/300)'}"></div>
-          <div class="gallery-item" :style="{backgroundImage: 'url(https://picsum.photos/seed/album6/400/300)'}"></div>
+          <img v-for="(photo, index) in xuezqPhotos" :key="index" :src="photo" :alt="`薛之谦精彩瞬间 ${index + 1}`" class="gallery-item" />
         </div>
       </div>
     </div>
@@ -1288,6 +1280,25 @@ export default {
         filter: 'brightness(0.4)',
         transform: 'scale(1.02)'
       },
+      
+      // 薛之谦精彩瞬间照片（演唱会现场照片）
+      xuezqPhotos: [
+        'http://localhost:9000/chaoshi/jc/精彩瞬间1.jpg',
+        'http://localhost:9000/chaoshi/背景/薛之谦1.jpg',
+        'http://localhost:9000/chaoshi/背景/薛之谦2.jpg',
+        'http://localhost:9000/chaoshi/背景/薛之谦3.jpg',
+        'http://localhost:9000/chaoshi/背景/薛之谦4.jpg',
+        'http://localhost:9000/chaoshi/背景/薛之谦5.jpg',
+        'http://localhost:9000/chaoshi/背景/万兽之王.jpg',
+        'https://wx3.sinaimg.cn/mw690/001lRKvwly1i645f8mbavj6223334qv602.jpg',
+        'https://wx4.sinaimg.cn/mw690/001lRKvwly1i645hh5jswj62233347wk02.jpg',
+        'https://wx2.sinaimg.cn/mw690/001lRKvwly1i6309nfxh5j62233347wj02.jpg',
+        'https://wx3.sinaimg.cn/mw690/001lRKvwgy1i34n33h6rbj62p81sve8202.jpg',
+        'https://wx4.sinaimg.cn/mw690/001lRKvwgy1i34n9scl6bj62p81ste8402.jpg',
+        'https://wx4.sinaimg.cn/mw690/001lRKvwgy1i21lag02nlj63eo540u1502.jpg',
+        'https://wx4.sinaimg.cn/mw690/001lRKvwly1i12pfewwanj61su230npd02.jpg',
+        'https://wx2.sinaimg.cn/mw690/001lRKvwly1i6309qj2rij62253347wj02.jpg'
+      ],
       
       // 跟踪当前展开的演唱会
       expandedConcert: null,
@@ -1406,7 +1417,7 @@ export default {
           title: '认真的雪',
           year: '2006年',
           type: '单曲',
-          image: 'https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=300&h=300&fit=crop&q=80',
+          image: 'https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?w=400&h=400&fit=crop',
           achievements: ['雪碧中国原创音乐流行榜最受欢迎新人奖', '东方风云榜最佳新人奖'],
           description: '薛之谦的成名作，奠定了其在华语乐坛的地位。深情的演唱和真挚的情感表达深受听众喜爱。'
         },
@@ -1415,7 +1426,7 @@ export default {
           title: '演员',
           year: '2015年',
           type: '单曲',
-          image: 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=300&h=300&fit=crop&q=80',
+          image: 'https://images.unsplash.com/photo-1514320291840-2e0a9bf2a9ae?w=400&h=400&fit=crop',
           achievements: ['全球华语歌曲排行榜年度金曲', 'MV播放量破亿'],
           description: '薛之谦复出后的代表作之一，以其独特的创作风格和深刻的歌词内容获得广泛认可。'
         },
@@ -1424,7 +1435,7 @@ export default {
           title: '丑八怪',
           year: '2013年',
           type: '单曲',
-          image: 'https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=300&h=300&fit=crop&q=80',
+          image: 'https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=400&h=400&fit=crop',
           achievements: ['各大音乐平台热门单曲', '演唱会必唱曲目'],
           description: '一首充满自嘲和幽默的作品，展现了薛之谦独特的音乐个性和创作才华。'
         },
@@ -1433,7 +1444,7 @@ export default {
           title: '绅士',
           year: '2015年',
           type: '单曲',
-          image: 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=300&h=300&fit=crop&q=80',
+          image: 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=400&h=400&fit=crop',
           achievements: ['华语流行音乐榜前十', '各大音乐节点播率极高'],
           description: '展现了薛之谦在音乐创作上的成熟和多样性，歌曲旋律朗朗上口。'
         },
@@ -1442,7 +1453,7 @@ export default {
           title: '刚刚好',
           year: '2016年',
           type: '单曲',
-          image: 'https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=300&h=300&fit=crop&q=80',
+          image: 'https://images.unsplash.com/photo-1470225620780-dba8ba36b745?w=400&h=400&fit=crop',
           achievements: ['年度热门金曲', '各大音乐平台冠军单曲'],
           description: '温暖治愈的情歌，体现了薛之谦细腻的情感表达能力。'
         },
@@ -1451,9 +1462,45 @@ export default {
           title: '天外来物',
           year: '2020年',
           type: '专辑',
-          image: 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=300&h=300&fit=crop&q=80',
+          image: 'https://images.unsplash.com/photo-1508700115892-45ecd05ae2ad?w=400&h=400&fit=crop',
           achievements: ['年度最佳专辑提名', '全国巡回演唱会主题'],
           description: '薛之谦近年来的重要作品，展现了其音乐创作的新高度和艺术追求。'
+        },
+        {
+          id: 7,
+          title: '暧昧',
+          year: '2016年',
+          type: '单曲',
+          image: 'https://images.unsplash.com/photo-1487180144351-b8472da7d491?w=400&h=400&fit=crop',
+          achievements: ['年度十大金曲', 'KTV热门点唱歌曲'],
+          description: '一首描写暧昧情感的歌曲，旋律动听，歌词细腻，深受年轻听众喜爱。'
+        },
+        {
+          id: 8,
+          title: '像风一样',
+          year: '2017年',
+          type: '单曲',
+          image: 'https://images.unsplash.com/photo-1459749411175-04bf5292ceea?w=400&h=400&fit=crop',
+          achievements: ['各大音乐平台热门单曲', '演唱会经典曲目'],
+          description: '充满诗意的歌词和优美的旋律，展现了薛之谦的浪漫情怀。'
+        },
+        {
+          id: 9,
+          title: '其实',
+          year: '2018年',
+          type: '单曲',
+          image: 'https://images.unsplash.com/photo-1501612780327-45045538702b?w=400&h=400&fit=crop',
+          achievements: ['华语流行音乐榜冠军', '年度最受欢迎情歌'],
+          description: '一首感人至深的情歌，薛之谦用真挚的情感打动了无数听众的心。'
+        },
+        {
+          id: 10,
+          title: '动物世界',
+          year: '2018年',
+          type: '单曲',
+          image: 'https://images.unsplash.com/photo-1415201364774-f6f0bb35f28f?w=400&h=400&fit=crop',
+          achievements: ['电影《动物世界》主题曲', '年度最佳影视歌曲'],
+          description: '为电影《动物世界》创作的主题曲，展现了薛之谦在影视音乐创作上的才华。'
         }
       ]
     };
@@ -1473,7 +1520,8 @@ export default {
       const concert = this.concerts.find(c => c.name === concertName);
       if (!concert) return 0;
       return concert.detail.reduce((total, item) => total + item.场次, 0);
-    }
+    },
+
   },
   mounted() {
     // 为body添加CSS类，以应用0717页面特定的样式
@@ -1487,6 +1535,8 @@ export default {
 </script>
 
 <style scoped>
+
+
 /* 全局样式 */
 .xue-theme-page {
   min-height: 100vh;
@@ -2244,25 +2294,42 @@ blockquote footer {
 }
 
 .gallery-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(400px, 1fr));
-  gap: 1.5rem;
+  column-count: 3;
+  column-gap: 1.5rem;
   margin-top: 2rem;
 }
 
 .gallery-item {
-  height: 300px;
+  width: 100%;
+  height: auto;
+  margin-bottom: 1.5rem;
   border-radius: 10px;
-  overflow: hidden;
-  background-size: cover;
-  background-position: center;
+  object-fit: cover;
   transition: all 0.3s ease;
   box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+  cursor: pointer;
+  break-inside: avoid;
+  display: block;
 }
 
 .gallery-item:hover {
-  transform: scale(1.03);
-  box-shadow: 0 15px 30px rgba(0,0,0,0.2);
+  transform: scale(1.05);
+  box-shadow: 0 15px 30px rgba(0,0,0,0.3);
+  z-index: 10;
+}
+
+/* 响应式：小屏幕显示2列 */
+@media (max-width: 768px) {
+  .gallery-grid {
+    column-count: 2;
+  }
+}
+
+/* 响应式：超小屏幕显示1列 */
+@media (max-width: 480px) {
+  .gallery-grid {
+    column-count: 1;
+  }
 }
 
 /* 动画 */

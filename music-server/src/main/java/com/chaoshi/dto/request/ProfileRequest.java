@@ -1,9 +1,8 @@
 package com.chaoshi.dto.request;
 
 import lombok.Data;
-
 /**
- * 个人资料更新请求DTO
+ * 用户个人资料更新请求DTO
  */
 @Data
 public class ProfileRequest {
@@ -13,4 +12,5 @@ public class ProfileRequest {
     private String phone;
     private String bio;
     private String avatar;
+
 }

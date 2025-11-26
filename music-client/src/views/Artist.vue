@@ -34,23 +34,25 @@ const artists = ref([])
 const loading = ref(true)
 const error = ref(null)
 
-// 获取歌手列表 - 保持原始数据库顺序
 const fetchArtists = async () => {
   try {
     loading.value = true
     error.value = null
     
-    const response = await getArtistList(1, 50) // 获取前50个歌手
+    const response = await getArtistList(1, 1000) // 获取全部歌手数据（设置较大的值确保包含所有歌手）
     
     // 处理API返回的数据
     if (response && response.code === 200) {
+      let artistList = []
       if (response.data && response.data.content) {
-        artists.value = response.data.content
+        artistList = response.data.content
       } else if (response.data && Array.isArray(response.data)) {
-        artists.value = response.data
-      } else {
-        artists.value = []
+        artistList = response.data
       }
+      
+      // 根据id从小到大排序
+      artistList.sort((a, b) => (a.id || 0) - (b.id || 0))
+      artists.value = artistList
     } else {
       artists.value = []
       error.value = response?.message || '获取歌手数据失败'

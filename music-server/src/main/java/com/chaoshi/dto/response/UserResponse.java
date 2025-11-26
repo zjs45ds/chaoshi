@@ -16,6 +16,7 @@ public class UserResponse {
     private String phone;
     private String avatar;
     private String bio;
+    private String backgroundUrl;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 }

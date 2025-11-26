@@ -15,16 +15,27 @@ const favoriteStatus = reactive(new Map()) // songId -> boolean
  * 获取用户ID
  */
 export const getUserId = () => {
-  let userId = localStorage.getItem('userId')
+  // 尝试从localStorage获取用户信息
+  const userInfo = localStorage.getItem('userInfo')
   
-  // 如果没有用户ID，使用默认用户ID以便测试
-  if (!userId) {
-    userId = '1' // 默认使用用户ID为1
-    localStorage.setItem('userId', userId)
-    // CONSOLE LOG REMOVED: console.log('👤 使用默认用户ID:', userId)
+  if (userInfo) {
+    try {
+      const user = JSON.parse(userInfo)
+      return user.id || user.userId || null
+    } catch (e) {
+      console.error('解析用户信息失败:', e)
+    }
   }
   
-  return userId
+  // 尝试直接获取userId
+  const userId = localStorage.getItem('userId')
+  if (userId) {
+    return userId
+  }
+  
+  // 如果都没有，返回null表示未登录
+  console.warn('用户未登录，无法获取用户ID')
+  return null
 }
 
 /**

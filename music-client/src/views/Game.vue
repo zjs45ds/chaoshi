@@ -95,7 +95,7 @@ const maxSteps = ref(BASE_MAX_STEPS) // 最大步数
 const targetScore = ref(BASE_TARGET_SCORE) // 目标分数
 const showLevelUpDialog = ref(false) // 是否显示关卡升级对话框
 
-// 初始化游戏
+// 初始化游戏棋盘和基础状态（不修改关卡配置）
 function initGame() {
   const board = []
   for (let i = 0; i < ROWS; i++) {
@@ -120,12 +120,6 @@ function initGame() {
   steps.value = 0
   gameOver.value = false
   isPaused.value = false
-  // 重置关卡
-  if (gameOver.value) {
-    level.value = 1
-    maxSteps.value = BASE_MAX_STEPS
-    targetScore.value = BASE_TARGET_SCORE
-  }
 }
 
 // 暂停游戏
@@ -345,7 +339,7 @@ if (score.value >= targetScore.value) {
     // 移除后立即填充
     fillEmptyCells()
     
-    // 清除缓存，因为游戏板已更改
+    // 清理缓存，因为游戏板已更改
     lastBoardHash.value = '';
     possibleMatchesCache.value = null;
     
@@ -361,16 +355,22 @@ if (score.value >= targetScore.value) {
 
 // 继续到下一关卡
 function continueToNextLevel() {
-  showLevelUpDialog.value = false;
-  level.value++;
-  // 重置分数
-  score.value = 0;
-  // 动态计算下一关的最大步数（随关卡增加而增加）
-  maxSteps.value = BASE_MAX_STEPS + (level.value - 1) * MAX_STEPS_INCREMENT;
-  // 重置步数为当前关卡的最大步数
-  steps.value = maxSteps.value;
-  // 动态计算下一关的目标分数
-  targetScore.value = BASE_TARGET_SCORE + (level.value - 1) * TARGET_SCORE_INCREMENT;
+  showLevelUpDialog.value = false
+  // 进入下一关
+  level.value++
+
+  // 根据关卡动态计算目标分数和最大步数
+  targetScore.value = BASE_TARGET_SCORE + (level.value - 1) * TARGET_SCORE_INCREMENT
+  maxSteps.value = BASE_MAX_STEPS + (level.value - 1) * MAX_STEPS_INCREMENT
+
+  // 重置分数和步数
+  score.value = 0
+  steps.value = 0
+  gameOver.value = false
+  isPaused.value = false
+
+  // 重新生成棋盘
+  initGame()
 }
 
 // 再玩一次当前关卡

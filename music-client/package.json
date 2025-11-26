@@ -27,17 +27,22 @@
   "devDependencies": {
     "@babel/plugin-proposal-decorators": "^7.28.0",
     "@babel/plugin-transform-class-properties": "^7.27.1",
+    "@element-plus/icons-vue": "^2.3.2",
+    "@testing-library/vue": "^8.1.0",
     "@types/node": "^20.9.1",
     "@vitejs/plugin-vue": "^6.0.0",
     "@vitejs/plugin-vue-jsx": "^5.0.1",
+    "@vue/test-utils": "^2.4.6",
     "@vue/tsconfig": "^0.5.1",
     "autoprefixer": "^10.4.21",
+    "jsdom": "^27.2.0",
     "postcss": "^8.5.6",
     "sass-embedded": "^1.89.2",
     "tailwindcss": "^4.1.12",
     "terser": "^5.44.0",
     "typescript": "^5.2.2",
     "vite": "^6.3.5",
-    "vite-plugin-vue-devtools": "^7.7.7"
+    "vite-plugin-vue-devtools": "^7.7.7",
+    "vitest": "^4.0.9"
   }
 }

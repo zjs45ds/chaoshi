@@ -43,22 +43,38 @@ export default defineConfig(({ command, mode }) => {
     },
 
     // 开发服务器配置
+    // npm run dev (development) → 3000端口（发布用，有代理）
+    // npm run start (production) → 3001端口（开发测试用，无代理）
     server: {
-      port: 3000,
+      port: isDevelopment ? 3000 : 3001,
       open: true,
       cors: true,
-      // 代理配置
-      proxy: {
+      // 隐藏服务器启动信息
+      logLevel: 'warn',
+      // 代理配置（仅在development模式下启用，即3000端口）
+      proxy: isDevelopment ? {
         '/api': {
           target: 'http://localhost:8081',
           changeOrigin: true,
           secure: false,
-          rewrite: (path) => path
+          rewrite: (path) => path,
+          // 配置代理以支持文件上传
+          configure: (proxy, options) => {
+            proxy.on('proxyReq', (proxyReq, req, res) => {
+              // 对于文件上传请求，保持原始请求头
+              if (req.headers['content-type']?.includes('multipart/form-data')) {
+                // 移除content-length，让代理自动计算
+                proxyReq.removeHeader('content-length')
+              }
+            })
+          }
         }
-      },
+      } : undefined,
       // HMR 配置
       hmr: {
-        overlay: true
+        overlay: true,
+        // 隐藏 HMR 连接信息
+        clientLogLevel: 'warn'
       }
     },
 

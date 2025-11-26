@@ -108,6 +108,7 @@ public class UserServiceImpl implements UserService {
             loginResponse.setId(user.getId());
             loginResponse.setUsername(user.getUsername());
             loginResponse.setAvatar(user.getAvatar());
+            loginResponse.setBackgroundUrl(user.getBackgroundUrl());
             loginResponse.setToken(token);
             loginResponse.setCreatedAt(user.getCreatedAt());
             
@@ -272,6 +273,19 @@ public class UserServiceImpl implements UserService {
         }
         
         return success;
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public boolean updateUserBackground(Long userId, String backgroundUrl) {
+        log.info("[USER SERVICE] 更新用户背景: userId={}, backgroundUrl={}", userId, backgroundUrl);
+        User user = userMapper.selectById(userId);
+        if (user == null) {
+            throw new RuntimeException("用户不存在");
+        }
+        user.setBackgroundUrl(backgroundUrl);
+        user.setUpdatedAt(LocalDateTime.now());
+        return userMapper.updateUser(user) > 0;
     }
     
     /**

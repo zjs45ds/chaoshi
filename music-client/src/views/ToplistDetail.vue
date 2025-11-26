@@ -254,7 +254,9 @@ const playCurrentSong = async (song) => {
       // CONSOLE LOG REMOVED: console.log('🎯 调用playByIndex(0)')
       const result = await playByIndex(0)
       // CONSOLE LOG REMOVED: console.log('✅ playByIndex结果:', result)
-      ElMessage.success(`开始播放: ${song.name}`)
+      if (result) {
+        ElMessage.success(`开始播放: ${song.name}`)
+      }
     } else {
       // 如果歌曲不在列表中，只添加这一首歌曲到第一位并播放
       // CONSOLE LOG REMOVED: console.log('📥 添加单首歌曲到播放列表第一位:', song.name)
@@ -262,7 +264,9 @@ const playCurrentSong = async (song) => {
       // CONSOLE LOG REMOVED: console.log('🎯 调用playByIndex(0)')
       const result = await playByIndex(0)
       // CONSOLE LOG REMOVED: console.log('✅ playByIndex结果:', result)
-      ElMessage.success(`开始播放: ${song.name}`)
+      if (result) {
+        ElMessage.success(`开始播放: ${song.name}`)
+      }
     }
     
     // CONSOLE LOG REMOVED: console.log('📋 操作后播放列表长度:', playlist.value.length)

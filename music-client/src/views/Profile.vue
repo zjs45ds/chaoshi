@@ -159,22 +159,21 @@
           </div>
           
           <div class="profile-actions">
-            <button 
-              class="save-btn" 
-              @click="activeTab === 'info' ? saveProfile() : savePassword()"
-              :disabled="loading || saving || savingPassword"
-            >
-              <span v-if="saving || savingPassword">保存中...</span>
-              <span v-else>保存更改</span>
-            </button>
-            <button 
-              class="cancel-btn" 
-              @click="activeTab === 'info' ? resetProfile() : resetPasswordForm()"
-              :disabled="loading || saving || savingPassword"
-            >
-              重置
-            </button>
-          </div>
+      <button 
+        class="save-btn" 
+        :disabled="loading || saving || savingPassword"
+      >
+        <span v-if="saving || savingPassword">保存中...</span>
+        <span v-else>保存更改</span>
+      </button>
+      <button 
+        class="cancel-btn" 
+        @click="activeTab === 'info' ? resetProfile() : resetPasswordForm()"
+        :disabled="loading || saving || savingPassword"
+      >
+        重置
+      </button>
+    </div>
         </div>
       </div>
     </div>
@@ -623,6 +622,11 @@ async function savePassword() {
 onMounted(() => {
   loadUserProfile()
 })
+
+// 切换背景设置显示状态
+const toggleBackgroundSettings = () => {
+  showBackgroundSettings.value = !showBackgroundSettings.value
+}
 </script>
 
 <style scoped>
